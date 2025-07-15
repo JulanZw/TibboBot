@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Guild {
+  id                String  @id @default(uuid())
+  guildId           String  @unique
+  countChannelId    String? @unique
+  countNumber       Int     @default(0)
+  todayIsChannelId  String? @unique
+  birthdayChannelId String? @unique
+}
+
+model User {
+  discordId  String    @id
+  birthday   DateTime?
+  points     Int
+  char_count Int
+  msg_count  Int
+}
