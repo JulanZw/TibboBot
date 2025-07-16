@@ -7,6 +7,17 @@ const wolCommand = commandBuilder(
   'magic',
   'does some magic (bot owner only)',
   async interaction => {
+    if(!process.env.OWNER_DISCORD_ID){
+      console.error('Current id: ',process.env.OWNER_DISCORD_ID);
+      return await interaction.reply('No set owner ID');
+    }
+
+    if(!process.env.WOL_MAC || process.env.WOL_IP){
+      console.error('Current MAC: ',process.env.WOL_MAC);
+      console.error('Current IP: ',process.env.WOL_IP);
+      return await interaction.reply('No set IP or MAC');
+    }
+
     if (interaction.user.id === process.env.OWNER_DISCORD_ID) {
       await interaction.reply('magic...');
       wol.wake(process.env.WOL_MAC, {
@@ -89,7 +100,7 @@ const addPointsCommand = commandBuilder(
 );
 
 const leaderboardCommand = commandBuilder(
-  'pointboard',
+  'leaderboard',
   'Shows the top users on the pointboard.',
   async (interaction,client) => {
     try{
@@ -100,7 +111,7 @@ const leaderboardCommand = commandBuilder(
       }
 
       const leaderboard = 
-      users.slice(0,10).map(async (row, index) => {
+      await Promise.all(users.slice(0,10).map(async (row, index) => {
         try {
             const user = await client.users.fetch(row.discordId);
             const username = user ? user.username : 'Unknown User';
@@ -109,7 +120,7 @@ const leaderboardCommand = commandBuilder(
             console.error("Error fetching user:", error);
             return `${index + 1}. Unknown User: ${row.msg_count} messages, ${row.char_count} characters`;
         }
-      });
+      }));
 
       const leaderboardString = leaderboard.join('\n');
 
@@ -206,7 +217,7 @@ const pointBoardCommand = commandBuilder(
         return await interaction.reply("No user data available for the leaderboard.");
       }
 
-      const pointboard = users.map(async (row,index) => {
+      const pointboard = await Promise.all(users.map(async (row,index) => {
         try {
           const user = await client.users.fetch(row.discordId);
           const username = user ? user.username : 'Unknown User';
@@ -215,7 +226,7 @@ const pointBoardCommand = commandBuilder(
           console.error("Error fetching user:", error);
           return `${index + 1}. Unknown User: ${row.points} points`;
         }
-      });
+      }));
 
       const pointboardString = pointboard.join('\n');
 
@@ -233,12 +244,14 @@ const pointBoardCommand = commandBuilder(
   }
 )
 
-const commands: { 
-  data: SlashCommandBuilder, 
-  name: string, 
-  description: string, 
-  execute: Promise<any> | any }[]
-= [
+interface Command {
+  data: SlashCommandBuilder;
+  name: string;
+  description: string;
+  execute: (...args: any[]) => Promise<any> | any;
+}
+
+export const commands: Command[] = [
   wolCommand,addPointsCommand,leaderboardCommand,helpCommand,pingCommand,messagesCommand,pointBoardCommand
 ]
 
