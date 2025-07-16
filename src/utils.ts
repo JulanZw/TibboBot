@@ -1,4 +1,4 @@
-import { Client, PartialGroupDMChannel } from 'discord.js';
+import { ChatInputCommandInteraction, Client, PartialGroupDMChannel, SlashCommandBuilder } from 'discord.js';
 
 export function logWithTime(message: string): void {
   const now = new Date();
@@ -20,4 +20,26 @@ export async function logToChannel(message: string, client: Client): Promise<voi
   } catch (error) {
     logWithTime(`Error fetching or sending message to channel: ${(error as Error).message}`);
   }
+}
+
+export function commandBuilder(
+  name: string,
+  description: string,
+  execute: (interaction: ChatInputCommandInteraction) => Promise<any> | any,
+  customize?: (builder: SlashCommandBuilder) => SlashCommandBuilder
+) {
+  let builder = new SlashCommandBuilder()
+    .setName(name)
+    .setDescription(description);
+
+  if (customize) {
+    builder = customize(builder);
+  }
+
+  return {
+    data: builder,
+    name,
+    description,
+    execute
+  };
 }

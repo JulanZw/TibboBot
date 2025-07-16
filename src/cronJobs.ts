@@ -51,7 +51,11 @@ export function setupCronJobs(client: Client): void {
       }
 
       const channel = rawChannel as TextChannel;
-      const randomDelay = Math.floor(Math.random() * 3001); // 0–3000 ms
+      let randomDelay = Math.floor(Math.random() * 3001); // 0–3000 ms
+
+      if(randomDelay<0){
+        randomDelay=1500;
+      }
 
       await new Promise(resolve => setTimeout(resolve, randomDelay));
       await sendDailyMessage(randomDelay, client);

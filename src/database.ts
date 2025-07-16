@@ -16,13 +16,13 @@ async function updateUserCharMsgCount(discordId: string, charCount: number, msgC
   });
 }
 
-async function insertUserData(discordId: string, charCount: number, msgCount: number) {
+async function insertUserData(discordId: string, charCount: number, msgCount: number, points: number = 0) {
   const newUser = await prisma.user.create({
     data: {
       discordId,
       char_count: charCount,
       msg_count: msgCount,
-      points: 0,
+      points: points,
     }
   });
   logWithTime(`Inserted new data for user ${discordId}: char_count = ${charCount}, msg_count = ${msgCount}`);
@@ -143,6 +143,13 @@ async function checkAndUpdateCount(guildId: string, providedNumber: number): Pro
   return isCorrect;
 }
 
+async function getPointGiverOfGuild(guildId: string){
+  const giver = await prisma.guild.findUnique({
+    where: { guildId },
+    select: { pointGiver: true }
+  })
+}
+
 export {
   getUserData,
   updateUserCharMsgCount,
@@ -157,5 +164,6 @@ export {
   setTodayIsChannel,
   setBirthdayChannel,
   checkAndUpdateCount,
-  getAllTodayIsChannels
+  getAllTodayIsChannels,
+  getPointGiverOfGuild
 };
