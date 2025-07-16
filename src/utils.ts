@@ -25,7 +25,7 @@ export async function logToChannel(message: string, client: Client): Promise<voi
 export function commandBuilder(
   name: string,
   description: string,
-  execute: (interaction: ChatInputCommandInteraction) => Promise<any> | any,
+  execute: (interaction: ChatInputCommandInteraction, client: Client) => Promise<any> | any,
   customize?: (builder: SlashCommandBuilder) => SlashCommandBuilder
 ) {
   let builder = new SlashCommandBuilder()

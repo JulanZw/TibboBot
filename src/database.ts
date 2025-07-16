@@ -3,12 +3,6 @@ import { logWithTime } from './utils';
 
 const prisma = new PrismaClient();
 
-async function getUserData(discordId: string) {
-  return await prisma.user.findUnique({
-    where: { discordId }
-  });
-}
-
 async function updateUserCharMsgCount(discordId: string, charCount: number, msgCount: number) {
   return await prisma.user.update({
     where: { discordId },
@@ -29,7 +23,7 @@ async function insertUserData(discordId: string, charCount: number, msgCount: nu
   return newUser;
 }
 
-async function getAllUserData() {
+async function getAllUserData(): Promise<{ discordId: string; char_count: number, msg_count: number; }[]> {
   return await prisma.user.findMany({
     orderBy: { char_count: 'desc' },
     select: {
@@ -40,10 +34,23 @@ async function getAllUserData() {
   });
 }
 
-async function getAllUserDataTodayIs() {
+async function getUserData(id: string): Promise<{ discordId: string; char_count: number, msg_count: number; }> {
+  return await prisma.user.findUique({
+    where: { discordId: id },
+    select: {
+      discordId: true,
+      char_count: true,
+      msg_count: true
+    }
+  });
+}
+
+async function getAllUserDataTodayIs(): Promise<{ discordId: string; points: number; }[]> {
   const rows = await prisma.user.findMany({
     orderBy: { points: 'desc' },
+    take: 10,
     select: { discordId: true, points: true }
+    
   });
   logWithTime('Pointboard requested');
   return rows;
@@ -61,7 +68,7 @@ async function updateUserPoints(discordId: string, points: number, interaction: 
 async function getUserPoints(discordId: string) {
   return await prisma.user.findUnique({
     where: { discordId },
-    select: { points: true }
+    select: { discordId: true, points: true }
   });
 }
 
