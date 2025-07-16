@@ -45,13 +45,13 @@ const addPointsCommand = commandBuilder(
   'adds points to the user (can only be used by the servers point giver)',
   async interaction => {
     if (!interaction.guild) {
-        return await interaction.reply(`This command can only be used in a server.`);
+      return await interaction.reply(`This command can only be used in a server.`);
     }
 
     const pointGiverId = await getPointGiverOfGuild(interaction.guild.id) ?? "";
 
     if (interaction.user.id !== pointGiverId) {
-        return await interaction.reply(`You cannot give points!`);
+      return await interaction.reply(`You cannot give points!`);
     }
     const targetUser = interaction.options.getUser('target');
     const amount = interaction.options.getInteger('amount');
@@ -73,11 +73,11 @@ const addPointsCommand = commandBuilder(
           await updateUserPoints(targetUser.id,amount+row.points,interaction);
       }
       if(targetUser.id === '1173596942194966571'){
-          await interaction.reply(`Thank you <@${interaction.user.id}> for the ${amount} points`);
-          logWithTime(`Points were given to the bot`);
+        await interaction.reply(`Thank you <@${interaction.user.id}> for the ${amount} points`);
+        logWithTime(`Points were given to the bot`);
       }else{
-          await interaction.reply(`Added ${amount} points for ${targetUser.username}.`);
-          logWithTime(`Points were given to \'${targetUser.username}\'`);
+        await interaction.reply(`Added ${amount} points for ${targetUser.username}.`);
+        logWithTime(`Points were given to \'${targetUser.username}\'`);
       }
     } catch (err) {
       console.error("Error updating user points:", err.message);
@@ -113,12 +113,12 @@ const leaderboardCommand = commandBuilder(
       const leaderboard = 
       await Promise.all(users.slice(0,10).map(async (row, index) => {
         try {
-            const user = await client.users.fetch(row.discordId);
-            const username = user ? user.username : 'Unknown User';
-            return `${index + 1}. ${username}: ${row.msg_count} messages, ${row.char_count} characters`;
+          const user = await client.users.fetch(row.discordId);
+          const username = user ? user.username : 'Unknown User';
+          return `${index + 1}. ${username}: ${row.msg_count} messages, ${row.char_count} characters`;
         } catch (error) {
-            console.error("Error fetching user:", error);
-            return `${index + 1}. Unknown User: ${row.msg_count} messages, ${row.char_count} characters`;
+          console.error("Error fetching user:", error);
+          return `${index + 1}. Unknown User: ${row.msg_count} messages, ${row.char_count} characters`;
         }
       }));
 
@@ -148,13 +148,13 @@ const helpCommand = commandBuilder(
       .setTitle('List of Available Commands')
       .setDescription('Here are the commands you can use:')
       .addFields(
-          { name: '/help', value: 'Displays all commands.' },
-          { name: '/ping', value: 'Responds with "pong".' },
-          { name: '/messages <username>', value: 'Displays the character count and message count for a user.' },
-          { name: '/leaderboard', value: 'Displays the users with the most characters and messages.' },
-          { name: '/cat', value: 'Responds with a cat picture.' },
-          { name: '/addpoints', value: 'Give points to a user.' },
-          { name: '/pointboard', value: 'Displays the users with the most points.' }
+        { name: '/help', value: 'Displays all commands.' },
+        { name: '/ping', value: 'Responds with "pong".' },
+        { name: '/messages <username>', value: 'Displays the character count and message count for a user.' },
+        { name: '/leaderboard', value: 'Displays the users with the most characters and messages.' },
+        { name: '/cat', value: 'Responds with a cat picture.' },
+        { name: '/addpoints', value: 'Give points to a user.' },
+        { name: '/pointboard', value: 'Displays the users with the most points.' }
       )
       .setTimestamp();
 
