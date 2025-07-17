@@ -1,4 +1,5 @@
-import { ChatInputCommandInteraction, Client, PartialGroupDMChannel, SlashCommandBuilder } from 'discord.js';
+import { ChatInputCommandInteraction, Client, Interaction, Message, PartialGroupDMChannel, SlashCommandBuilder } from 'discord.js';
+import { addGuild, getGuild, getUserData, insertUserData, updateUserCharMsgCount } from './database';
 
 export function logWithTime(message: string): void {
   const now = new Date();
@@ -39,7 +40,37 @@ export function commandBuilder(
   return {
     data: builder,
     name,
-    description,
     execute
   };
+}
+
+export async function checkAdmin(interaction: ChatInputCommandInteraction){
+  return interaction.memberPermissions?.has('Administrator');
+}
+
+export async function updateCounts(message){
+  const userId = message.author.id;
+	const messageLength = message.content.length;
+
+  const row = await getUserData(userId);
+  if (row) {
+    const newCharCount = row.char_count + messageLength;
+    const newMsgCount = row.msg_count + 1;
+    await updateUserCharMsgCount(userId, newCharCount, newMsgCount);
+    logWithTime(`Updated user messages and characters for ${message.author.id} [${message.author.username}]`);
+  } else {
+    await insertUserData(userId, messageLength, 1);
+    logWithTime(`Added new user for counting messages and characters for ${message.author.id} [${message.author.username}]`);
+  }
+}
+
+export async function ensureGuildExistance(messageOrInteraction: Interaction | Message ){
+  const guildId = messageOrInteraction.guildId;
+
+  if(!guildId) return;
+
+  const guild = await getGuild(guildId);
+  if(!guild){
+    await addGuild(guildId);
+  }
 }

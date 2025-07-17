@@ -1,7 +1,7 @@
 import { EmbedBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder } from "discord.js";
-import { commandBuilder,logWithTime } from "./utils";
+import { checkAdmin, commandBuilder,ensureGuildExistance,logWithTime } from "./utils";
 import wol from 'wol';
-import { getAllUserData, getAllUserDataTodayIs, getPointGiverOfGuild, getUserData, getUserPoints, insertUserData, updateUserPoints } from "./database";
+import { getAllUserData, getAllUserDataTodayIs, getGuild, getPointGiverOfGuild, getUserData, getUserPoints, insertUserData, setPointGiverOfGuild, setTodayIsChannel, updateUserPoints } from "./database";
 
 const wolCommand = commandBuilder(
   'magic',
@@ -80,7 +80,7 @@ const addPointsCommand = commandBuilder(
         logWithTime(`Points were given to \'${targetUser.username}\'`);
       }
     } catch (err) {
-      console.error("Error updating user points:", err.message);
+      console.error("Error updating user points:", err);
       await interaction.reply("An error occurred while adding points.");
     }
   },
@@ -133,7 +133,7 @@ const leaderboardCommand = commandBuilder(
       await interaction.reply({ embeds: [leaderboardEmbed] });
       logWithTime('Leaderboard command executed.');
     } catch (err) {
-      console.error("Error getting point board:",err.message)
+      console.error("Error getting point board:",err)
       await interaction.reply("An error occurred while getting the point leaderboard.");
     }
   }
@@ -192,15 +192,15 @@ const messagesCommand = commandBuilder(
         logWithTime(`User ${targetUser.username} has no message data.`);
       }
     } catch (err) {
-      console.error("Error fetching user data:", err.message);
+      console.error("Error fetching user data:", err);
       await interaction.reply("An error occurred while fetching user data.");
     }
   },
   builder => {
     builder.addUserOption(option =>
-        option.setName('target')
-            .setDescription('The user to check')
-            .setRequired(true)
+      option.setName('target')
+        .setDescription('The user to check')
+        .setRequired(true)
     )
     return builder;
   }    
@@ -238,21 +238,133 @@ const pointBoardCommand = commandBuilder(
       await interaction.reply({ embeds: [pointboardEmbed] });
       logWithTime('Pointboard command executed.');
     } catch (err) {
-      console.error("Error fetching pointboard data:", err.message);
+      console.error("Error fetching pointboard data:", err);
       await interaction.reply("An error occurred while fetching the pointboard.");
     }
+  }
+);
+
+const catCommand = commandBuilder(
+  'cat',
+  'Sends a random cat picture.',
+  async interaction =>
+  {
+    try{
+      const response = await fetch('https://api.thecatapi.com/v1/images/search');
+      const data = await response.json();
+      const imageUrl = data[0].url;
+
+      const catEmbed = new EmbedBuilder()
+        .setColor('#3F48CC')
+        .setTitle("Here's a cat for you!")
+        .setImage(imageUrl)
+        .setTimestamp();
+
+      await interaction.reply({ embeds: [catEmbed] });
+
+      logWithTime('Cat command executed.');
+    } catch (err) {
+      console.error('Error fetching cat image:', err);
+      await interaction.reply('Sorry, I couldn\'t fetch a cat image at the moment.');
+    }
+  }
+);
+
+const setPointGiverCommand = commandBuilder(
+  'set_point_giver',
+  'Sets the point giver for this server. (admin only)',
+  async interaction => {
+    if(!interaction.guildId){
+      return await interaction.reply('This command can only be used in a server.')
+    }
+
+    await ensureGuildExistance(interaction);
+
+    const guild = await getGuild(interaction.guildId);
+
+    if(!guild){
+      return await interaction.reply(`Guild is not in the database. You should never see this message, contact the bot owner please.`);
+    }
+
+    if(!(await checkAdmin(interaction))){
+      return await interaction.reply('Only an admin can use this command.');
+    }
+
+    const targetUser = interaction.options.getUser('target');
+
+    if(!targetUser){
+      return await interaction.reply('No target user was provided.');
+    }
+
+    await setPointGiverOfGuild(interaction.guildId,targetUser.id);
+    await interaction.reply(guild.todayIsChannelId ? `set <@${targetUser.id}> as the server's point giver` : `set <@${targetUser.id}> as the server's point giver. Dont forget to also set a todayIs channel!`);
+  },
+  builder => {
+    builder.addUserOption(option =>
+      option.setName('target')
+        .setDescription('The user put as point giver')
+        .setRequired(true)
+    )
+    return builder;
+  } 
+);
+
+const setTodayIsChannelCommand = commandBuilder(
+  'setTodayIsChannel',
+  'Sets the channel the bot will send the "today is x" message to. (admin only)',
+  async interaction => {
+    if(!interaction.guildId){
+      return await interaction.reply('This command can only be used in a server.')
+    }
+
+    await ensureGuildExistance(interaction);
+
+    const guild = await getGuild(interaction.guildId);
+
+    if(!guild){
+      return await interaction.reply(`Guild is not in the database. You should never see this message, contact the bot owner please.`);
+    }
+
+    if(!(await checkAdmin(interaction))){
+      return await interaction.reply('Only an admin can use this command.');
+    }
+
+    const targetChannel = interaction.options.getString('target');
+
+    if(!targetChannel){
+      return await interaction.reply('No target channel was provided.');
+    }
+
+    await setTodayIsChannel(guild.guildId,targetChannel);
+    await interaction.reply(guild.pointGiverId ? `set <#${targetChannel}> as the server's today is channel` : `set <#${targetChannel}> as the server's point giver. Dont forget to also set a point giver!`);
+  },
+  builder => {
+    builder.addStringOption(option =>
+      option.setName('target')
+        .setDescription('The channel the bot will send the message to.')
+        .setRequired(true)
+    )
+    return builder;
   }
 )
 
 interface Command {
   data: SlashCommandBuilder;
   name: string;
-  description: string;
   execute: (...args: any[]) => Promise<any> | any;
 }
 
 export const commands: Command[] = [
-  wolCommand,addPointsCommand,leaderboardCommand,helpCommand,pingCommand,messagesCommand,pointBoardCommand
+  wolCommand,
+  addPointsCommand,
+  leaderboardCommand,
+  helpCommand,
+  pingCommand,
+  messagesCommand,
+  pointBoardCommand,
+  catCommand,
+  setPointGiverCommand,
+  setTodayIsChannelCommand
 ]
 
 export const commandsToRegister: RESTPostAPIChatInputApplicationCommandsJSONBody[] = commands.map(command => command.data.toJSON());

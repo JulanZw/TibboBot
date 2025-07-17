@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -9,19 +8,38 @@ datasource db {
 }
 
 model Guild {
-  id                String  @id @default(uuid())
-  guildId           String  @unique
-  countChannelId    String? @unique
-  countNumber       Int     @default(0)
-  todayIsChannelId  String? @unique
-  birthdayChannelId String? @unique
-  pointGiver        String? @unique
+  guildId           String   @id
+  countChannelId    String?
+  countNumber       Int      @default(0)
+  todayIsChannelId  String?
+  birthdayChannelId String?
+
+  pointGiverId      String?
+  pointGiver        User?    @relation(fields: [pointGiverId], references: [discordId])
+
+  birthdays         Birthday[]
 }
 
 model User {
-  discordId  String    @id
-  birthday   DateTime?
-  points     Int
-  char_count Int
-  msg_count  Int
+  discordId   String     @id
+  points      Int
+  char_count  Int
+  msg_count   Int
+
+  pointGiverIn Guild[]
+
+  birthdays   Birthday[]
+}
+
+model Birthday {
+  id         String   @id @default(uuid())
+  birthday   DateTime
+
+  guildId    String
+  userId     String
+
+  guild      Guild    @relation(fields: [guildId], references: [guildId])
+  user       User     @relation(fields: [userId], references: [discordId])
+
+  @@unique([guildId, userId])
 }

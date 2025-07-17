@@ -1,9 +1,8 @@
 
-import { Client, GatewayIntentBits, REST, Routes } from 'discord.js';
+import { Client, GatewayIntentBits, Interaction, Message, REST, Routes } from 'discord.js';
 import { setupCronJobs } from './cronJobs';
-import { logWithTime } from './utils';
+import { ensureGuildExistance, logWithTime, updateCounts } from './utils';
 import { commands, commandsToRegister } from './commands';
-import { getUserData, insertUserData, updateUserCharMsgCount } from './database';
 
 const token = process.env.DISCORD_TOKEN;
 
@@ -35,29 +34,14 @@ client.once('ready', async () =>{
 	}
 });
 
-client.on('messageCreate', async (message) => {
+client.on('messageCreate', async (message: Message) => {
 	if (message.author.bot) return;
-
-	const userId = message.author.id;
-	const messageLength = message.content.length;
-
-	try {
-		const row = await getUserData(userId);
-		if (row) {
-			const newCharCount = row.char_count + messageLength;
-			const newMsgCount = row.msg_count + 1;
-			await updateUserCharMsgCount(userId, newCharCount, newMsgCount);
-			logWithTime(`Updated user messages and characters for ${message.author.id} [${message.author.username}]`);
-		} else {
-			await insertUserData(userId, messageLength, 1);
-			logWithTime(`Added new user for counting messages and characters for ${message.author.id} [${message.author.username}]`);
-		}
-	} catch (err) {
-		console.error('Error processing user data:', err.message);
-	}
+	await updateCounts(message);
+	await ensureGuildExistance(message);
 });
 
-client.on('interactionCreate', async (interaction) => {
+client.on('interactionCreate', async (interaction: Interaction) => {
+	await ensureGuildExistance(interaction);
 	if (!interaction.isCommand()) return;
 
 	const command = commands.find(command => command.name === interaction.commandName);
