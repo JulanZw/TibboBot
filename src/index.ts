@@ -1,7 +1,7 @@
 
 import { Client, GatewayIntentBits, Interaction, Message, REST, Routes } from 'discord.js';
 import { setupCronJobs } from './cronJobs';
-import { ensureGuildExistance, logWithTime, updateCounts } from './utils';
+import { checkAdmin, ensureGuildExistance, logWithTime, updateCounts } from './utils';
 import { commands, commandsToRegister } from './commands';
 
 const token = process.env.DISCORD_TOKEN;
@@ -49,6 +49,14 @@ client.on('interactionCreate', async (interaction: Interaction) => {
 	if (!command) {
 		return interaction.reply({ content: `Unknown command: ${interaction.commandName}`, ephemeral: true });
 	}
+
+	if(command.guildOnly && !interaction.guildId){
+    return await interaction.reply('This command can only be used in a server.');
+	}
+
+	if(command.adminOnly && !(await checkAdmin(interaction))){
+    return await interaction.reply('Only an admin can use this command.');
+  }
 
 	try {
 		await command.execute(interaction, client);

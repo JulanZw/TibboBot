@@ -125,11 +125,12 @@ async function checkAndUpdateCount(guildId: string, providedNumber: number): Pro
   return isCorrect;
 }
 
-async function getPointGiverOfGuild(guildId: string){
-  return await prisma.guild.findUnique({
+async function getPointGiverIdOfGuild(guildId: string){
+  const pointGiver = await prisma.guild.findUnique({
     where: { guildId },
-    select: { pointGiver: true }
+    select: { pointGiverId: true }
   })
+  return pointGiver?.pointGiverId
 }
 
 async function setPointGiverOfGuild(guildId: string, pointGiverId: string) {
@@ -227,7 +228,7 @@ export {
   setTodayIsChannel,
   setBirthdayChannel,
   checkAndUpdateCount,
-  getPointGiverOfGuild,
+  getPointGiverIdOfGuild,
   setPointGiverOfGuild,
   addGuild,
   getGuild,

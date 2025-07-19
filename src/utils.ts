@@ -1,5 +1,6 @@
 import { ChatInputCommandInteraction, Client, Interaction, Message, PartialGroupDMChannel, SlashCommandBuilder } from 'discord.js';
 import { addGuild, getGuild, getUserData, insertUserData, updateUserCharMsgCount } from './database';
+import { Command } from './commands';
 
 export function logWithTime(message: string): void {
   const now = new Date();
@@ -23,12 +24,30 @@ export async function logToChannel(message: string, client: Client): Promise<voi
   }
 }
 
+/**
+ * A utility function to easily create a Discord slash command.
+ *
+ * Supports optional customization of the command builder, and flags to mark
+ * the command as admin-only or guild-only for internal logic.
+ *
+ * @param name - The name of the command (used in Discord).
+ * @param description - A short description of the command.
+ * @param execute - The function to execute when the command is run.
+ * @param adminOnly - Whether this command is restricted to admins only (used for internal checks). Default false.
+ * @param guildOnly - Whether this command can only be used in a server (used for internal checks). Default false.
+ * @param customize - Optional callback to customize the SlashCommandBuilder with additional options.
+ *
+ * @returns {Command} The constructed command object.
+ */
+
 export function commandBuilder(
   name: string,
   description: string,
   execute: (interaction: ChatInputCommandInteraction, client: Client) => Promise<any> | any,
+  adminOnly: boolean = false,
+  guildOnly: boolean = false,
   customize?: (builder: SlashCommandBuilder) => SlashCommandBuilder
-) {
+): Command {
   let builder = new SlashCommandBuilder()
     .setName(name)
     .setDescription(description);
@@ -40,11 +59,13 @@ export function commandBuilder(
   return {
     data: builder,
     name,
+    adminOnly,
+    guildOnly,
     execute
   };
 }
 
-export async function checkAdmin(interaction: ChatInputCommandInteraction){
+export async function checkAdmin(interaction: Interaction){
   return interaction.memberPermissions?.has('Administrator');
 }
 

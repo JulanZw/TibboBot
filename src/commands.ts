@@ -1,7 +1,7 @@
 import { EmbedBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder } from "discord.js";
 import { checkAdmin, commandBuilder,ensureGuildExistance,logWithTime } from "./utils";
 import wol from 'wol';
-import { getAllUserData, getAllUserDataTodayIs, getGuild, getPointGiverOfGuild, getUserData, getUserPoints, insertUserData, setPointGiverOfGuild, setTodayIsChannel, updateUserPoints } from "./database";
+import { getAllUserData, getAllUserDataTodayIs, getGuild, getPointGiverIdOfGuild, getUserData, getUserPoints, insertUserData, setPointGiverOfGuild, setTodayIsChannel, updateUserPoints } from "./database";
 
 const wolCommand = commandBuilder(
   'magic',
@@ -44,15 +44,16 @@ const addPointsCommand = commandBuilder(
   'addpoints',
   'adds points to the user (can only be used by the servers point giver)',
   async interaction => {
-    if (!interaction.guild) {
-      return await interaction.reply(`This command can only be used in a server.`);
-    }
+    const pointGiverId = await getPointGiverIdOfGuild(interaction.guildId as string);
 
-    const pointGiverId = await getPointGiverOfGuild(interaction.guild.id) ?? "";
+    if(!pointGiverId){
+      return await interaction.reply('This server doesnt have a point giver')
+    }
 
     if (interaction.user.id !== pointGiverId) {
-      return await interaction.reply(`You cannot give points!`);
+      return await interaction.reply(`Only <@${pointGiverId}> can give points`);
     }
+
     const targetUser = interaction.options.getUser('target');
     const amount = interaction.options.getInteger('amount');
 
@@ -84,6 +85,8 @@ const addPointsCommand = commandBuilder(
       await interaction.reply("An error occurred while adding points.");
     }
   },
+  false,
+  true,
   builder => {
     builder.addUserOption(option =>
       option.setName('target')
@@ -101,7 +104,7 @@ const addPointsCommand = commandBuilder(
 
 const leaderboardCommand = commandBuilder(
   'leaderboard',
-  'Shows the top users on the pointboard.',
+  'Shows the top users on the message count board.',
   async (interaction,client) => {
     try{
       const users = await getAllUserData();
@@ -136,7 +139,7 @@ const leaderboardCommand = commandBuilder(
       console.error("Error getting point board:",err)
       await interaction.reply("An error occurred while getting the point leaderboard.");
     }
-  }
+  },
 );
 
 const helpCommand = commandBuilder(
@@ -196,6 +199,8 @@ const messagesCommand = commandBuilder(
       await interaction.reply("An error occurred while fetching user data.");
     }
   },
+  false,
+  false,
   builder => {
     builder.addUserOption(option =>
       option.setName('target')
@@ -241,7 +246,7 @@ const pointBoardCommand = commandBuilder(
       console.error("Error fetching pointboard data:", err);
       await interaction.reply("An error occurred while fetching the pointboard.");
     }
-  }
+  },
 );
 
 const catCommand = commandBuilder(
@@ -274,20 +279,10 @@ const setPointGiverCommand = commandBuilder(
   'set_point_giver',
   'Sets the point giver for this server. (admin only)',
   async interaction => {
-    if(!interaction.guildId){
-      return await interaction.reply('This command can only be used in a server.')
-    }
-
-    await ensureGuildExistance(interaction);
-
-    const guild = await getGuild(interaction.guildId);
+    const guild = await getGuild(interaction.guildId as string);
 
     if(!guild){
       return await interaction.reply(`Guild is not in the database. You should never see this message, contact the bot owner please.`);
-    }
-
-    if(!(await checkAdmin(interaction))){
-      return await interaction.reply('Only an admin can use this command.');
     }
 
     const targetUser = interaction.options.getUser('target');
@@ -296,9 +291,11 @@ const setPointGiverCommand = commandBuilder(
       return await interaction.reply('No target user was provided.');
     }
 
-    await setPointGiverOfGuild(interaction.guildId,targetUser.id);
+    await setPointGiverOfGuild(interaction.guildId as string,targetUser.id);
     await interaction.reply(guild.todayIsChannelId ? `set <@${targetUser.id}> as the server's point giver` : `set <@${targetUser.id}> as the server's point giver. Dont forget to also set a todayIs channel!`);
   },
+  true,
+  true,
   builder => {
     builder.addUserOption(option =>
       option.setName('target')
@@ -313,20 +310,10 @@ const setTodayIsChannelCommand = commandBuilder(
   'setTodayIsChannel',
   'Sets the channel the bot will send the "today is x" message to. (admin only)',
   async interaction => {
-    if(!interaction.guildId){
-      return await interaction.reply('This command can only be used in a server.')
-    }
-
-    await ensureGuildExistance(interaction);
-
-    const guild = await getGuild(interaction.guildId);
+    const guild = await getGuild(interaction.guildId as string); // ? this gets checked in the main loop before it reaches this
 
     if(!guild){
       return await interaction.reply(`Guild is not in the database. You should never see this message, contact the bot owner please.`);
-    }
-
-    if(!(await checkAdmin(interaction))){
-      return await interaction.reply('Only an admin can use this command.');
     }
 
     const targetChannel = interaction.options.getString('target');
@@ -338,6 +325,8 @@ const setTodayIsChannelCommand = commandBuilder(
     await setTodayIsChannel(guild.guildId,targetChannel);
     await interaction.reply(guild.pointGiverId ? `set <#${targetChannel}> as the server's today is channel` : `set <#${targetChannel}> as the server's point giver. Dont forget to also set a point giver!`);
   },
+  true,
+  true,
   builder => {
     builder.addStringOption(option =>
       option.setName('target')
@@ -346,11 +335,25 @@ const setTodayIsChannelCommand = commandBuilder(
     )
     return builder;
   }
-)
+);
 
-interface Command {
+/**
+ * Represents a Discord slash command definition.
+ *
+ * Used internally to register and execute slash commands,
+ * and to apply custom restrictions like admin or guild-only use.
+ *
+ * @property data - The actual slash command builder used for Discord.
+ * @property name - The name of the command.
+ * @property adminOnly - Whether the command can only be executed by an admin (internal check).
+ * @property guildOnly - Whether the command can only be executed in a guild (internal check).
+ * @property execute - The function that runs when the command is used.
+ */
+export interface Command {
   data: SlashCommandBuilder;
   name: string;
+  adminOnly: boolean;
+  guildOnly: boolean;
   execute: (...args: any[]) => Promise<any> | any;
 }
 
