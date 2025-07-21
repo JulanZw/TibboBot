@@ -1,7 +1,7 @@
-import { EmbedBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder } from "discord.js";
-import { checkAdmin, commandBuilder,ensureGuildExistance,logWithTime } from "./utils";
+import { ChannelType, EmbedBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder } from "discord.js";
+import { checkAdmin, commandBuilder,ensureGuildExistance,formatDate,logWithTime } from "./utils";
 import wol from 'wol';
-import { getAllUserData, getAllUserDataTodayIs, getGuild, getPointGiverIdOfGuild, getUserData, getUserPoints, insertUserData, setPointGiverOfGuild, setTodayIsChannel, updateUserPoints } from "./database";
+import { getAllUserData, getAllUserDataTodayIs, getGuild, getPointGiverIdOfGuild, getUserData, getUserPoints, insertUserData, setBirthday, setBirthdayChannel, setCountChannel, setPointGiverOfGuild, setTodayIsChannel, updateUserPoints } from "./database";
 
 const wolCommand = commandBuilder(
   'magic',
@@ -316,22 +316,125 @@ const setTodayIsChannelCommand = commandBuilder(
       return await interaction.reply(`Guild is not in the database. You should never see this message, contact the bot owner please.`);
     }
 
-    const targetChannel = interaction.options.getString('target');
+    const targetChannel = interaction.options.getChannel('target');
 
     if(!targetChannel){
       return await interaction.reply('No target channel was provided.');
     }
 
-    await setTodayIsChannel(guild.guildId,targetChannel);
+    await setTodayIsChannel(guild.guildId,targetChannel.id);
     await interaction.reply(guild.pointGiverId ? `set <#${targetChannel}> as the server's today is channel` : `set <#${targetChannel}> as the server's point giver. Dont forget to also set a point giver!`);
   },
   true,
   true,
   builder => {
-    builder.addStringOption(option =>
+    builder.addChannelOption(option =>
       option.setName('target')
-        .setDescription('The channel the bot will send the message to.')
+        .setDescription('The channel the bot will send the birthday messages to.')
         .setRequired(true)
+        .addChannelTypes(ChannelType.GuildText)
+    )
+    return builder;
+  }
+);
+
+const setBirthdayChannelCommand = commandBuilder(
+  'setbirthdaychannel',
+  'Sets the birthday channel of the guild (admin only)',
+  async interaction => {
+    const guild = await getGuild(interaction.guildId as string); // ? this gets checked in the main loop before it reaches this
+
+    if(!guild){
+      return await interaction.reply(`Guild is not in the database. You should never see this message, contact the bot owner please.`);
+    }
+
+    const targetChannel = interaction.options.getChannel('target');
+
+    if(!targetChannel){
+      return await interaction.reply('No target channel was provided.');
+    }
+
+    await setBirthdayChannel(guild.guildId,targetChannel.id)
+    await interaction.reply(`set <#${targetChannel}> as the server's birthday channel`);
+  },
+  true,
+  true,
+  builder => {
+    builder.addChannelOption(option =>
+      option.setName('target')
+        .setDescription('The channel the bot will send the birthday messages to.')
+        .setRequired(true)
+        .addChannelTypes(ChannelType.GuildText)
+    )
+    return builder;
+  }
+);
+
+const setBirthdayCommand = commandBuilder(
+  'setBirthday',
+  'Set your birthday for this server',
+  async interaction => {
+    const guild = await getGuild(interaction.guildId as string); // ? this gets checked in the main loop before it reaches this
+
+    if(!guild){
+      return await interaction.reply(`Guild is not in the database. You should never see this message, contact the bot owner please.`);
+    }
+
+    const date = interaction.options.getString('date');
+
+    if(!date){
+      return await interaction.reply('No birthday was provided');
+    }
+
+    const birthday = new Date(date);
+
+    const newBirthday = await setBirthday(guild.guildId,interaction.user.id,birthday);
+    
+    if(!newBirthday){
+      return await interaction.reply('Something went wrong while setting your birthday...');
+    } else {
+      return await interaction.reply(`Set birthday for <@${newBirthday.userId}> on ${formatDate(newBirthday.birthday)}`);
+    }
+  },
+  false,
+  true,
+  builder => {
+    builder.addStringOption(option =>
+    option.setName("date")
+      .setDescription("Enter a date (YYYY-MM-DD)")
+      .setRequired(true)
+    )
+    return builder;
+  },
+);
+
+const setCountChannelCommand = commandBuilder(
+  'setcountchannel',
+  'Sets the count channel of the guild (admin only)',
+  async interaction => {
+    const guild = await getGuild(interaction.guildId as string); // ? this gets checked in the main loop before it reaches this
+
+    if(!guild){
+      return await interaction.reply(`Guild is not in the database. You should never see this message, contact the bot owner please.`);
+    }
+
+    const targetChannel = interaction.options.getChannel('target');
+
+    if(!targetChannel){
+      return await interaction.reply('No target channel was provided.');
+    }
+
+    await setCountChannel(guild.guildId,targetChannel.id)
+    await interaction.reply(`set <#${targetChannel}> as the server's count channel`);
+  },
+  true,
+  true,
+  builder => {
+    builder.addChannelOption(option =>
+      option.setName('target')
+        .setDescription('Sets the channel where members can count to infinity.')
+        .setRequired(true)
+        .addChannelTypes(ChannelType.GuildText)
     )
     return builder;
   }
@@ -367,7 +470,10 @@ export const commands: Command[] = [
   pointBoardCommand,
   catCommand,
   setPointGiverCommand,
-  setTodayIsChannelCommand
+  setTodayIsChannelCommand,
+  setBirthdayChannelCommand,
+  setBirthdayCommand,
+  setCountChannelCommand
 ]
 
 export const commandsToRegister: RESTPostAPIChatInputApplicationCommandsJSONBody[] = commands.map(command => command.data.toJSON());

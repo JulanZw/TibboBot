@@ -21,6 +21,7 @@
     "eslint": "^9.31.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.5.1",
+    "mathjs": "^14.5.3",
     "node-cron": "^3.0.3",
     "node-fetch": "^3.3.2",
     "prettier": "^3.6.2",

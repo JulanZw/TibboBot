@@ -1,5 +1,5 @@
-import { ChatInputCommandInteraction, Client, Interaction, Message, PartialGroupDMChannel, SlashCommandBuilder } from 'discord.js';
-import { addGuild, getGuild, getUserData, insertUserData, updateUserCharMsgCount } from './database';
+import { ChannelType, ChatInputCommandInteraction, Client, Interaction, Message, PartialGroupDMChannel, SlashCommandBuilder } from 'discord.js';
+import { addGuild, getGuild, getUserData, insertUserData, setCountChannel, updateUserCharMsgCount } from './database';
 import { Command } from './commands';
 
 export function logWithTime(message: string): void {
@@ -85,13 +85,35 @@ export async function updateCounts(message){
   }
 }
 
-export async function ensureGuildExistance(messageOrInteraction: Interaction | Message ){
-  const guildId = messageOrInteraction.guildId;
+/**
+ * Util function to ensure a guild exists in the database. It checks if its in the database and if not it creates it.
+ * 
+ * @param messageOrInteraction - the interaction or message that will provide the ID
+ */
 
-  if(!guildId) return;
-
+export async function ensureGuildExistance(guildId: string ) {
   const guild = await getGuild(guildId);
-  if(!guild){
-    await addGuild(guildId);
+  return guild ? guild : await addGuild(guildId);
+}
+
+/**
+ * Util function for formatting a Date like 2000-01-01 into January 1st
+ * 
+ * @param date - the date that needs formatting
+ * @returns the formatted date
+ */
+
+export function formatDate(date: Date): string {
+  const daySuffix = getDaySuffix(date.getDate());
+  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) + daySuffix;
+}
+
+function getDaySuffix(day: number): string {
+  if (day > 3 && day < 21) return 'th';
+  switch (day % 10) {
+    case 1: return 'st';
+    case 2: return 'nd';
+    case 3: return 'rd';
+    default: return 'th';
   }
 }

@@ -203,12 +203,28 @@ async function deleteBirthday(guildId: string, userId: string) {
   });
 }
 
-async function getAllBirthdaysInGuild(guildId: string) {
-  return prisma.birthday.findMany({
+async function getCountChannelOfGuild(guildId: string){
+  return prisma.guild.findUnique({
     where: { guildId },
-    include: {
-      user: true
-    }
+    select: { countChannelId: true }
+  })
+}
+
+async function getAllBirthdaysInGuildForGivenDate(guildId: string, date: Date) {
+  const targetMonth = date.getUTCMonth();
+  const targetDate = date.getUTCDate();
+
+  const birthdays = await prisma.birthday.findMany({
+    where: { guildId },
+    include: { user: true }
+  });
+
+  return birthdays.filter(entry => {
+    const bday = new Date(entry.birthday);
+    return (
+      bday.getUTCMonth() === targetMonth &&
+      bday.getUTCDate() === targetDate
+    );
   });
 }
 
@@ -235,6 +251,7 @@ export {
   setBirthday,
   getBirthday,
   deleteBirthday,
-  getAllBirthdaysInGuild,
-  getAllGuilds
+  getAllBirthdaysInGuildForGivenDate,
+  getAllGuilds,
+  getCountChannelOfGuild
 };

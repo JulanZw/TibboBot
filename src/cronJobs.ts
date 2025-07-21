@@ -1,26 +1,10 @@
 import cron from 'node-cron';
 import { Client, PartialGroupDMChannel, TextChannel } from 'discord.js';
-import { logWithTime } from './utils';
+import { formatDate, logWithTime } from './utils';
 import {
-  getAllBirthdaysInGuild,
+  getAllBirthdaysInGuildForGivenDate,
   getAllGuilds,
 } from './database';
-
-function formatDate(date: Date): string {
-  const options: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric' };
-  const daySuffix = getDaySuffix(date.getDate());
-  return date.toLocaleDateString('en-US', options) + daySuffix;
-}
-
-function getDaySuffix(day: number): string {
-  if (day > 3 && day < 21) return 'th';
-  switch (day % 10) {
-    case 1: return 'st';
-    case 2: return 'nd';
-    case 3: return 'rd';
-    default: return 'th';
-  }
-}
 
 export function setupCronJobs(client: Client): void {
   cron.schedule('0 0 * * *', async () => {
@@ -66,10 +50,10 @@ export function setupCronJobs(client: Client): void {
             return;
           }
 
-          const birthdays = await getAllBirthdaysInGuild(guild.guildId);
+          const birthdays = await getAllBirthdaysInGuildForGivenDate(guild.guildId, new Date());
 
           await Promise.allSettled(birthdays.map(birthday =>
-            channel.send(`🎉 Happy Birthday <@${birthday.user.discordId}>!`)
+            channel.send(`🎉 Happy Birthday <@${birthday.userId}>!`)
           ));
         } catch (err) {
           logWithTime(`Failed to send birthday messages in guild ${guild.guildId}: ${err}`);

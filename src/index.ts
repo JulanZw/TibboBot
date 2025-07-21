@@ -3,6 +3,8 @@ import { Client, GatewayIntentBits, Interaction, Message, REST, Routes } from 'd
 import { setupCronJobs } from './cronJobs';
 import { checkAdmin, ensureGuildExistance, logWithTime, updateCounts } from './utils';
 import { commands, commandsToRegister } from './commands';
+import { checkAndUpdateCount, getCountChannelOfGuild, getGuild } from './database';
+import { evaluate } from 'mathjs';
 
 const token = process.env.DISCORD_TOKEN;
 
@@ -37,11 +39,39 @@ client.once('ready', async () =>{
 client.on('messageCreate', async (message: Message) => {
 	if (message.author.bot) return;
 	await updateCounts(message);
-	await ensureGuildExistance(message);
+	if (message.guildId) {
+		const guild = await ensureGuildExistance(message.guildId);
+
+		if(!guild.countChannelId || guild.countChannelId !== message.channelId) return;
+
+		const content = message.content.trim();
+
+		try {
+			const result = evaluate(content);
+
+			if (typeof result === 'number' && isFinite(result)) {
+				const number: number = Math.round(result);
+				const success = await checkAndUpdateCount(guild.guildId, number);
+
+				if (!success) {
+					await message.react('❌');
+					await message.reply(`<@${message.author.id}> entered a wrong number! Next number is 1...`);
+				} else {
+					await message.react('✅');
+				}
+			}
+
+		} catch (err) {
+			logWithTime(`Invalid math expression: "${content}" — ${err}`);
+		}
+	}
 });
 
 client.on('interactionCreate', async (interaction: Interaction) => {
-	await ensureGuildExistance(interaction);
+	if(interaction.guildId){
+		await ensureGuildExistance(interaction.guildId);
+	}
+
 	if (!interaction.isCommand()) return;
 
 	const command = commands.find(command => command.name === interaction.commandName);
