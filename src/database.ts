@@ -3,14 +3,14 @@ import { logWithTime } from './utils';
 
 const prisma = new PrismaClient();
 
-async function updateUserCharMsgCount(discordId: string, charCount: number, msgCount: number) {
+async function updateUserCharMsgCount(discordId: string, charCount: bigint, msgCount: number) {
   return await prisma.user.update({
     where: { discordId },
     data: { char_count: charCount, msg_count: msgCount }
   });
 }
 
-async function insertUserData(discordId: string, charCount: number, msgCount: number, points: number = 0) {
+async function insertUserData(discordId: string, charCount: bigint, msgCount: number, points: bigint = BigInt(0)) {
   const newUser = await prisma.user.create({
     data: {
       discordId,
@@ -23,7 +23,7 @@ async function insertUserData(discordId: string, charCount: number, msgCount: nu
   return newUser;
 }
 
-async function getAllUserData(): Promise<{ discordId: string; char_count: number, msg_count: number; }[]> {
+async function getAllUserData() {
   return await prisma.user.findMany({
     orderBy: { char_count: 'desc' },
     select: {
@@ -34,7 +34,7 @@ async function getAllUserData(): Promise<{ discordId: string; char_count: number
   });
 }
 
-async function getUserData(id: string): Promise<{ discordId: string; char_count: number, msg_count: number; } | null> {
+async function getUserData(id: string) {
   return await prisma.user.findUnique({
     where: { discordId: id },
     select: {
@@ -45,7 +45,7 @@ async function getUserData(id: string): Promise<{ discordId: string; char_count:
   });
 }
 
-async function getAllUserDataTodayIs(): Promise<{ discordId: string; points: number; }[]> {
+async function getAllUserDataTodayIs(): Promise<{ discordId: string; points: bigint; }[]> {
   const rows = await prisma.user.findMany({
     orderBy: { points: 'desc' },
     take: 10,
@@ -56,7 +56,7 @@ async function getAllUserDataTodayIs(): Promise<{ discordId: string; points: num
   return rows;
 }
 
-async function updateUserPoints(discordId: string, points: number, interaction: any) {
+async function updateUserPoints(discordId: string, points: bigint, interaction: any) {
   const user = await prisma.user.update({
     where: { discordId },
     data: { points }
@@ -139,7 +139,7 @@ async function setPointGiverOfGuild(guildId: string, pointGiverId: string) {
   });
 
   if (!giver) {
-    giver = await insertUserData(pointGiverId, 0, 0);
+    giver = await insertUserData(pointGiverId, BigInt(0), 0);
   }
 
   await prisma.guild.update({

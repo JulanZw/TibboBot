@@ -1,5 +1,5 @@
-import { ChannelType, EmbedBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder } from "discord.js";
-import { checkAdmin, commandBuilder,ensureGuildExistance,formatDate,logWithTime } from "./utils";
+import { EmbedBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder } from "discord.js";
+import { channelOption, commandBuilder,formatDate,integerOption,logWithTime, stringOption, userOption } from "./utils";
 import wol from 'wol';
 import { getAllUserData, getAllUserDataTodayIs, getGuild, getPointGiverIdOfGuild, getUserData, getUserPoints, insertUserData, setBirthday, setBirthdayChannel, setCountChannel, setPointGiverOfGuild, setTodayIsChannel, updateUserPoints } from "./database";
 
@@ -69,9 +69,9 @@ const addPointsCommand = commandBuilder(
     try {
       const row = await getUserPoints(targetUser.id);
       if(!row){
-          await insertUserData(targetUser.id,0,0,amount);
+        await insertUserData(targetUser.id,BigInt(0),0,BigInt(amount));
       }else{
-          await updateUserPoints(targetUser.id,amount+row.points,interaction);
+        await updateUserPoints(targetUser.id,BigInt(amount)+row.points,interaction);
       }
       if(targetUser.id === '1173596942194966571'){
         await interaction.reply(`Thank you <@${interaction.user.id}> for the ${amount} points`);
@@ -88,16 +88,8 @@ const addPointsCommand = commandBuilder(
   false,
   true,
   builder => {
-    builder.addUserOption(option =>
-      option.setName('target')
-        .setDescription('The user to give points to')
-        .setRequired(true)
-    );
-    builder.addIntegerOption(option =>
-      option.setName('amount')
-        .setDescription('The amount of points to give')
-        .setRequired(true)
-    );
+    builder.addUserOption(userOption('taget','The user to give points to'));
+    builder.addIntegerOption(integerOption('amount','The amount of points to give'));
     return builder;
   },
 );
@@ -151,13 +143,10 @@ const helpCommand = commandBuilder(
       .setTitle('List of Available Commands')
       .setDescription('Here are the commands you can use:')
       .addFields(
-        { name: '/help', value: 'Displays all commands.' },
-        { name: '/ping', value: 'Responds with "pong".' },
-        { name: '/messages <username>', value: 'Displays the character count and message count for a user.' },
-        { name: '/leaderboard', value: 'Displays the users with the most characters and messages.' },
-        { name: '/cat', value: 'Responds with a cat picture.' },
-        { name: '/addpoints', value: 'Give points to a user.' },
-        { name: '/pointboard', value: 'Displays the users with the most points.' }
+        commands.map(cmd => ({
+          name: `/${cmd.name}`,
+          value: cmd.description
+        }))
       )
       .setTimestamp();
 
@@ -202,11 +191,7 @@ const messagesCommand = commandBuilder(
   false,
   false,
   builder => {
-    builder.addUserOption(option =>
-      option.setName('target')
-        .setDescription('The user to check')
-        .setRequired(true)
-    )
+    builder.addUserOption(userOption('target','The user to check'));
     return builder;
   }    
 );
@@ -297,11 +282,7 @@ const setPointGiverCommand = commandBuilder(
   true,
   true,
   builder => {
-    builder.addUserOption(option =>
-      option.setName('target')
-        .setDescription('The user put as point giver')
-        .setRequired(true)
-    )
+    builder.addUserOption(userOption('target','The user put as point giver'));
     return builder;
   } 
 );
@@ -328,12 +309,7 @@ const setTodayIsChannelCommand = commandBuilder(
   true,
   true,
   builder => {
-    builder.addChannelOption(option =>
-      option.setName('target')
-        .setDescription('The channel the bot will send the birthday messages to.')
-        .setRequired(true)
-        .addChannelTypes(ChannelType.GuildText)
-    )
+    builder.addChannelOption(channelOption('taget','The channel the bot will send the birthday messages to.'));
     return builder;
   }
 );
@@ -360,12 +336,7 @@ const setBirthdayChannelCommand = commandBuilder(
   true,
   true,
   builder => {
-    builder.addChannelOption(option =>
-      option.setName('target')
-        .setDescription('The channel the bot will send the birthday messages to.')
-        .setRequired(true)
-        .addChannelTypes(ChannelType.GuildText)
-    )
+    builder.addChannelOption(channelOption('taget','The channel the bot will send the birthday messages to.'));
     return builder;
   }
 );
@@ -399,11 +370,7 @@ const setBirthdayCommand = commandBuilder(
   false,
   true,
   builder => {
-    builder.addStringOption(option =>
-    option.setName("date")
-      .setDescription("Enter a date (YYYY-MM-DD)")
-      .setRequired(true)
-    )
+    builder.addStringOption(stringOption('date','Enter a date (YYYY-MM-DD)'));
     return builder;
   },
 );
@@ -430,12 +397,7 @@ const setCountChannelCommand = commandBuilder(
   true,
   true,
   builder => {
-    builder.addChannelOption(option =>
-      option.setName('target')
-        .setDescription('Sets the channel where members can count to infinity.')
-        .setRequired(true)
-        .addChannelTypes(ChannelType.GuildText)
-    )
+    builder.addChannelOption(channelOption('taget','Sets the channel where members can count to infinity.'));
     return builder;
   }
 );
@@ -448,6 +410,7 @@ const setCountChannelCommand = commandBuilder(
  *
  * @property data - The actual slash command builder used for Discord.
  * @property name - The name of the command.
+ * @property description - The description of the command.
  * @property adminOnly - Whether the command can only be executed by an admin (internal check).
  * @property guildOnly - Whether the command can only be executed in a guild (internal check).
  * @property execute - The function that runs when the command is used.
@@ -455,6 +418,7 @@ const setCountChannelCommand = commandBuilder(
 export interface Command {
   data: SlashCommandBuilder;
   name: string;
+  description: string;
   adminOnly: boolean;
   guildOnly: boolean;
   execute: (...args: any[]) => Promise<any> | any;

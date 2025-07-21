@@ -1,4 +1,4 @@
-import { ChannelType, ChatInputCommandInteraction, Client, Interaction, Message, PartialGroupDMChannel, SlashCommandBuilder } from 'discord.js';
+import { ChannelType, ChatInputCommandInteraction, Client, Interaction, Message, PartialGroupDMChannel, SlashCommandBuilder, SlashCommandChannelOption, SlashCommandIntegerOption, SlashCommandStringOption, SlashCommandUserOption } from 'discord.js';
 import { addGuild, getGuild, getUserData, insertUserData, setCountChannel, updateUserCharMsgCount } from './database';
 import { Command } from './commands';
 
@@ -44,25 +44,17 @@ export function commandBuilder(
   name: string,
   description: string,
   execute: (interaction: ChatInputCommandInteraction, client: Client) => Promise<any> | any,
-  adminOnly: boolean = false,
-  guildOnly: boolean = false,
-  customize?: (builder: SlashCommandBuilder) => SlashCommandBuilder
+  adminOnly = false,
+  guildOnly = false,
+  customize: (builder: SlashCommandBuilder) => SlashCommandBuilder = b => b
 ): Command {
-  let builder = new SlashCommandBuilder()
-    .setName(name)
-    .setDescription(description);
+  const builder = customize(
+    new SlashCommandBuilder()
+      .setName(name)
+      .setDescription(description)
+  );
 
-  if (customize) {
-    builder = customize(builder);
-  }
-
-  return {
-    data: builder,
-    name,
-    adminOnly,
-    guildOnly,
-    execute
-  };
+  return { data: builder, name, description, adminOnly, guildOnly, execute };
 }
 
 export async function checkAdmin(interaction: Interaction){
@@ -117,3 +109,54 @@ function getDaySuffix(day: number): string {
     default: return 'th';
   }
 }
+
+
+type AllowedChannelType =
+  | ChannelType.GuildText
+  | ChannelType.GuildVoice
+  | ChannelType.GuildCategory
+  | ChannelType.GuildAnnouncement
+  | ChannelType.AnnouncementThread
+  | ChannelType.PublicThread
+  | ChannelType.PrivateThread
+  | ChannelType.GuildStageVoice
+  | ChannelType.GuildForum
+  | ChannelType.GuildMedia;
+
+export const userOption = (
+  name: string,
+  desc: string,
+  required = true
+) => (opt: SlashCommandUserOption) =>
+  opt.setName(name)
+  .setDescription(desc)
+  .setRequired(required);
+
+export const integerOption = (
+  name: string,
+  desc: string,
+  required = true
+) => (opt: SlashCommandIntegerOption) =>
+  opt.setName(name)
+  .setDescription(desc)
+  .setRequired(required);
+
+export const stringOption = (
+  name: string,
+  desc: string,
+  required = true
+) => (opt: SlashCommandStringOption) =>
+  opt.setName(name)
+  .setDescription(desc)
+  .setRequired(required);
+
+export const channelOption = (
+  name: string,
+  desc: string,
+  required = true,
+  channelType: AllowedChannelType | AllowedChannelType[] = [ChannelType.GuildText]
+) => (opt: SlashCommandChannelOption) =>
+  opt.setName(name)
+  .setDescription(desc)
+  .setRequired(required)
+  .addChannelTypes(...(Array.isArray(channelType) ? channelType : [channelType]));

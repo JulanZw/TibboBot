@@ -22,8 +22,8 @@ model Guild {
 
 model User {
   discordId   String     @id
-  points      Int
-  char_count  Int
+  points      BigInt
+  char_count  BigInt
   msg_count   Int
 
   pointGiverIn Guild[]
