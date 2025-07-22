@@ -1,16 +1,17 @@
 import { PrismaClient } from '@prisma/client';
 import { logWithTime } from './utils';
 
-const prisma = new PrismaClient();
 
-async function updateUserCharMsgCount(discordId: string, charCount: bigint, msgCount: number) {
+export const prisma = new PrismaClient();
+
+export async function updateUserCharMsgCount(discordId: string, charCount: bigint, msgCount: number) {
   return await prisma.user.update({
     where: { discordId },
     data: { char_count: charCount, msg_count: msgCount }
   });
 }
 
-async function insertUserData(discordId: string, charCount: bigint, msgCount: number, points: bigint = BigInt(0)) {
+export async function insertUserData(discordId: string, charCount: bigint, msgCount: number, points: bigint = BigInt(0)) {
   const newUser = await prisma.user.create({
     data: {
       discordId,
@@ -23,7 +24,7 @@ async function insertUserData(discordId: string, charCount: bigint, msgCount: nu
   return newUser;
 }
 
-async function getAllUserData() {
+export async function getAllUserData() {
   return await prisma.user.findMany({
     orderBy: { char_count: 'desc' },
     select: {
@@ -34,7 +35,7 @@ async function getAllUserData() {
   });
 }
 
-async function getUserData(id: string) {
+export async function getUserData(id: string) {
   return await prisma.user.findUnique({
     where: { discordId: id },
     select: {
@@ -45,7 +46,7 @@ async function getUserData(id: string) {
   });
 }
 
-async function getAllUserDataTodayIs(): Promise<{ discordId: string; points: bigint; }[]> {
+export async function getAllUserDataTodayIs(): Promise<{ discordId: string; points: bigint; }[]> {
   const rows = await prisma.user.findMany({
     orderBy: { points: 'desc' },
     take: 10,
@@ -56,7 +57,7 @@ async function getAllUserDataTodayIs(): Promise<{ discordId: string; points: big
   return rows;
 }
 
-async function updateUserPoints(discordId: string, points: bigint, interaction: any) {
+export async function updateUserPoints(discordId: string, points: bigint, interaction: any) {
   const user = await prisma.user.update({
     where: { discordId },
     data: { points }
@@ -65,14 +66,14 @@ async function updateUserPoints(discordId: string, points: bigint, interaction: 
   return user;
 }
 
-async function getUserPoints(discordId: string) {
+export async function getUserPoints(discordId: string) {
   return await prisma.user.findUnique({
     where: { discordId },
     select: { discordId: true, points: true }
   });
 }
 
-async function setCountChannel(guildId: string, channelId: string) {
+export async function setCountChannel(guildId: string, channelId: string) {
   return await prisma.guild.upsert({
     where: { guildId },
     update: { countChannelId: channelId },
@@ -83,7 +84,7 @@ async function setCountChannel(guildId: string, channelId: string) {
   });
 }
 
-async function setTodayIsChannel(guildId: string, channelId: string) {
+export async function setTodayIsChannel(guildId: string, channelId: string) {
   return await prisma.guild.upsert({
     where: { guildId },
     update: { todayIsChannelId: channelId },
@@ -94,7 +95,7 @@ async function setTodayIsChannel(guildId: string, channelId: string) {
   });
 }
 
-async function setBirthdayChannel(guildId: string, channelId: string) {
+export async function setBirthdayChannel(guildId: string, channelId: string) {
   return await prisma.guild.upsert({
     where: { guildId },
     update: { birthdayChannelId: channelId },
@@ -105,7 +106,7 @@ async function setBirthdayChannel(guildId: string, channelId: string) {
   });
 }
 
-async function checkAndUpdateCount(guildId: string, providedNumber: number): Promise<boolean> {
+export async function checkAndUpdateCount(guildId: string, providedNumber: number): Promise<boolean> {
   const guild = await prisma.guild.findUnique({
     where: { guildId },
     select: { countNumber: true }
@@ -125,7 +126,7 @@ async function checkAndUpdateCount(guildId: string, providedNumber: number): Pro
   return isCorrect;
 }
 
-async function getPointGiverIdOfGuild(guildId: string){
+export async function getPointGiverIdOfGuild(guildId: string){
   const pointGiver = await prisma.guild.findUnique({
     where: { guildId },
     select: { pointGiverId: true }
@@ -133,7 +134,7 @@ async function getPointGiverIdOfGuild(guildId: string){
   return pointGiver?.pointGiverId
 }
 
-async function setPointGiverOfGuild(guildId: string, pointGiverId: string) {
+export async function setPointGiverOfGuild(guildId: string, pointGiverId: string) {
   let giver = await prisma.user.findUnique({
     where: { discordId: pointGiverId },
   });
@@ -152,19 +153,19 @@ async function setPointGiverOfGuild(guildId: string, pointGiverId: string) {
   });
 }
 
-async function addGuild( guildId: string ) {
+export async function addGuild( guildId: string ) {
   return await prisma.guild.create({
     data: { guildId }
   });
 }
 
-async function getGuild( guildId: string ) {
+export async function getGuild( guildId: string ) {
   return await prisma.guild.findUnique({
     where: { guildId }
   });
 }
 
-async function setBirthday(guildId: string, userId: string, birthday: Date) {
+export async function setBirthday(guildId: string, userId: string, birthday: Date) {
   return prisma.birthday.upsert({
     where: {
       guildId_userId: {
@@ -181,7 +182,7 @@ async function setBirthday(guildId: string, userId: string, birthday: Date) {
   });
 }
 
-async function getBirthday(guildId: string, userId: string) {
+export async function getBirthday(guildId: string, userId: string) {
   return prisma.birthday.findUnique({
     where: {
       guildId_userId: {
@@ -192,7 +193,7 @@ async function getBirthday(guildId: string, userId: string) {
   });
 }
 
-async function deleteBirthday(guildId: string, userId: string) {
+export async function deleteBirthday(guildId: string, userId: string) {
   return prisma.birthday.delete({
     where: {
       guildId_userId: {
@@ -203,14 +204,14 @@ async function deleteBirthday(guildId: string, userId: string) {
   });
 }
 
-async function getCountChannelOfGuild(guildId: string){
+export async function getCountChannelOfGuild(guildId: string){
   return prisma.guild.findUnique({
     where: { guildId },
     select: { countChannelId: true }
   })
 }
 
-async function getAllBirthdaysInGuildForGivenDate(guildId: string, date: Date) {
+export async function getAllBirthdaysInGuildForGivenDate(guildId: string, date: Date) {
   const targetMonth = date.getUTCMonth();
   const targetDate = date.getUTCDate();
 
@@ -228,30 +229,65 @@ async function getAllBirthdaysInGuildForGivenDate(guildId: string, date: Date) {
   });
 }
 
-async function getAllGuilds(){
+export async function getAllGuilds(){
   return prisma.guild.findMany();
 }
 
-export {
-  getUserData,
-  updateUserCharMsgCount,
-  insertUserData,
-  getAllUserData,
-  getAllUserDataTodayIs,
-  updateUserPoints,
-  getUserPoints,
-  setCountChannel,
-  setTodayIsChannel,
-  setBirthdayChannel,
-  checkAndUpdateCount,
-  getPointGiverIdOfGuild,
-  setPointGiverOfGuild,
-  addGuild,
-  getGuild,
-  setBirthday,
-  getBirthday,
-  deleteBirthday,
-  getAllBirthdaysInGuildForGivenDate,
-  getAllGuilds,
-  getCountChannelOfGuild
-};
+export async function addReactionRole(
+  guildId: string,
+  messageId: string,
+  channelId: string,
+  emoji: string,
+  roleId: string
+) {
+  return await prisma.reactionRoles.create({
+    data: {
+      guildId,
+      messageId,
+      channelId,
+      emoji,
+      role: roleId,
+    },
+  });
+}
+
+export async function getRoleForReaction(
+  guildId: string,
+  messageId: string,
+  emoji: string
+) {
+  return await prisma.reactionRoles.findUnique({
+    where: {
+      guildId_messageId_emoji: {
+        guildId,
+        messageId,
+        emoji,
+      },
+    },
+  });
+}
+
+export async function deleteReactionRolesByMessage(messageId: string) {
+  return await prisma.reactionRoles.deleteMany({
+    where: {
+      messageId,
+    },
+  });
+}
+
+export async function deleteReactionRole(
+  guildId: string,
+  messageId: string,
+  emoji: string
+) {
+  return await prisma.reactionRoles.delete({
+    where: {
+      guildId_messageId_emoji: {
+        guildId,
+        messageId,
+        emoji,
+      },
+    },
+  });
+}
+

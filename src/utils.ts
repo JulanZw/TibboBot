@@ -1,5 +1,5 @@
 import { ChannelType, ChatInputCommandInteraction, Client, Interaction, Message, PartialGroupDMChannel, SlashCommandBuilder, SlashCommandChannelOption, SlashCommandIntegerOption, SlashCommandStringOption, SlashCommandUserOption } from 'discord.js';
-import { addGuild, getGuild, getUserData, insertUserData, setCountChannel, updateUserCharMsgCount } from './database';
+import { addGuild, getGuild, getUserData, insertUserData, updateUserCharMsgCount } from './database';
 import { Command } from './commands';
 
 export function logWithTime(message: string): void {
@@ -39,7 +39,6 @@ export async function logToChannel(message: string, client: Client): Promise<voi
  *
  * @returns {Command} The constructed command object.
  */
-
 export function commandBuilder(
   name: string,
   description: string,
@@ -61,18 +60,18 @@ export async function checkAdmin(interaction: Interaction){
   return interaction.memberPermissions?.has('Administrator');
 }
 
-export async function updateCounts(message){
+export async function updateCounts(message: Message){
   const userId = message.author.id;
 	const messageLength = message.content.length;
 
   const row = await getUserData(userId);
   if (row) {
-    const newCharCount = row.char_count + messageLength;
+    const newCharCount = row.char_count + BigInt(messageLength);
     const newMsgCount = row.msg_count + 1;
     await updateUserCharMsgCount(userId, newCharCount, newMsgCount);
     logWithTime(`Updated user messages and characters for ${message.author.id} [${message.author.username}]`);
   } else {
-    await insertUserData(userId, messageLength, 1);
+    await insertUserData(userId, BigInt(messageLength), 1);
     logWithTime(`Added new user for counting messages and characters for ${message.author.id} [${message.author.username}]`);
   }
 }
@@ -81,8 +80,8 @@ export async function updateCounts(message){
  * Util function to ensure a guild exists in the database. It checks if its in the database and if not it creates it.
  * 
  * @param messageOrInteraction - the interaction or message that will provide the ID
+ * @returns the found or created guild
  */
-
 export async function ensureGuildExistance(guildId: string ) {
   const guild = await getGuild(guildId);
   return guild ? guild : await addGuild(guildId);
@@ -94,13 +93,12 @@ export async function ensureGuildExistance(guildId: string ) {
  * @param date - the date that needs formatting
  * @returns the formatted date
  */
-
-export function formatDate(date: Date): string {
+export function formatDate(date: Date) {
   const daySuffix = getDaySuffix(date.getDate());
   return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) + daySuffix;
 }
 
-function getDaySuffix(day: number): string {
+function getDaySuffix(day: number) {
   if (day > 3 && day < 21) return 'th';
   switch (day % 10) {
     case 1: return 'st';
@@ -110,8 +108,7 @@ function getDaySuffix(day: number): string {
   }
 }
 
-
-type AllowedChannelType =
+type AllowedChannelTypeChannelOption =
   | ChannelType.GuildText
   | ChannelType.GuildVoice
   | ChannelType.GuildCategory
@@ -154,9 +151,16 @@ export const channelOption = (
   name: string,
   desc: string,
   required = true,
-  channelType: AllowedChannelType | AllowedChannelType[] = [ChannelType.GuildText]
+  channelType: AllowedChannelTypeChannelOption | AllowedChannelTypeChannelOption[] = [ChannelType.GuildText]
 ) => (opt: SlashCommandChannelOption) =>
   opt.setName(name)
   .setDescription(desc)
   .setRequired(required)
   .addChannelTypes(...(Array.isArray(channelType) ? channelType : [channelType]));
+
+export const pendingReactionRoleSetups = new Map <string, {
+  interaction: ChatInputCommandInteraction,
+  emojiRoleMap: Record<string, string>,
+  channelId: string,
+  targetChannelId: string
+} >();

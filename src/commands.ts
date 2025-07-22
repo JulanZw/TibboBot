@@ -1,12 +1,12 @@
 import { EmbedBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder } from "discord.js";
-import { channelOption, commandBuilder,formatDate,integerOption,logWithTime, stringOption, userOption } from "./utils";
+import { channelOption, commandBuilder,formatDate,integerOption,logWithTime, pendingReactionRoleSetups, stringOption, userOption } from "./utils";
 import wol from 'wol';
 import { getAllUserData, getAllUserDataTodayIs, getGuild, getPointGiverIdOfGuild, getUserData, getUserPoints, insertUserData, setBirthday, setBirthdayChannel, setCountChannel, setPointGiverOfGuild, setTodayIsChannel, updateUserPoints } from "./database";
 
 const wolCommand = commandBuilder(
   'magic',
   'does some magic (bot owner only)',
-  async interaction => {
+  async (interaction, client) => {
     if(!process.env.OWNER_DISCORD_ID){
       console.error('Current id: ',process.env.OWNER_DISCORD_ID);
       return await interaction.reply('No set owner ID');
@@ -43,7 +43,7 @@ const wolCommand = commandBuilder(
 const addPointsCommand = commandBuilder(
   'addpoints',
   'adds points to the user (can only be used by the servers point giver)',
-  async interaction => {
+  async (interaction, client) => {
     const pointGiverId = await getPointGiverIdOfGuild(interaction.guildId as string);
 
     if(!pointGiverId){
@@ -137,7 +137,7 @@ const leaderboardCommand = commandBuilder(
 const helpCommand = commandBuilder(
   'help',
   'Displays all commands.',
-  async interaction => {
+  async (interaction, client) => {
     const helpEmbed = new EmbedBuilder()
       .setColor('#3F48CC')
       .setTitle('List of Available Commands')
@@ -158,7 +158,7 @@ const helpCommand = commandBuilder(
 const pingCommand = commandBuilder(
   'ping',
   'Responds with "pong" to check if the bot is online.',
-  async interaction => {
+  async (interaction, client) => {
     await interaction.reply('pong');
     logWithTime('Ping command executed');
   }
@@ -167,7 +167,7 @@ const pingCommand = commandBuilder(
 const messagesCommand = commandBuilder(
   'messages',
   'Displays the message count for a specified user.',
-  async interaction => {
+  async (interaction, client) => {
     try{
       const targetUser = interaction.options.getUser('target');
       
@@ -237,7 +237,7 @@ const pointBoardCommand = commandBuilder(
 const catCommand = commandBuilder(
   'cat',
   'Sends a random cat picture.',
-  async interaction =>
+  async (interaction, client) =>
   {
     try{
       const response = await fetch('https://api.thecatapi.com/v1/images/search');
@@ -263,7 +263,7 @@ const catCommand = commandBuilder(
 const setPointGiverCommand = commandBuilder(
   'set_point_giver',
   'Sets the point giver for this server. (admin only)',
-  async interaction => {
+  async (interaction, client) => {
     const guild = await getGuild(interaction.guildId as string);
 
     if(!guild){
@@ -290,7 +290,7 @@ const setPointGiverCommand = commandBuilder(
 const setTodayIsChannelCommand = commandBuilder(
   'setTodayIsChannel',
   'Sets the channel the bot will send the "today is x" message to. (admin only)',
-  async interaction => {
+  async (interaction, client) => {
     const guild = await getGuild(interaction.guildId as string); // ? this gets checked in the main loop before it reaches this
 
     if(!guild){
@@ -316,8 +316,8 @@ const setTodayIsChannelCommand = commandBuilder(
 
 const setBirthdayChannelCommand = commandBuilder(
   'setbirthdaychannel',
-  'Sets the birthday channel of the guild (admin only)',
-  async interaction => {
+  'Sets the birthday channel of the guild. (admin only)',
+  async (interaction, client) => {
     const guild = await getGuild(interaction.guildId as string); // ? this gets checked in the main loop before it reaches this
 
     if(!guild){
@@ -344,7 +344,7 @@ const setBirthdayChannelCommand = commandBuilder(
 const setBirthdayCommand = commandBuilder(
   'setBirthday',
   'Set your birthday for this server',
-  async interaction => {
+  async (interaction, client) => {
     const guild = await getGuild(interaction.guildId as string); // ? this gets checked in the main loop before it reaches this
 
     if(!guild){
@@ -377,8 +377,8 @@ const setBirthdayCommand = commandBuilder(
 
 const setCountChannelCommand = commandBuilder(
   'setcountchannel',
-  'Sets the count channel of the guild (admin only)',
-  async interaction => {
+  'Sets the count channel of the guild. (admin only)',
+  async (interaction, client) => {
     const guild = await getGuild(interaction.guildId as string); // ? this gets checked in the main loop before it reaches this
 
     if(!guild){
@@ -398,6 +398,39 @@ const setCountChannelCommand = commandBuilder(
   true,
   builder => {
     builder.addChannelOption(channelOption('taget','Sets the channel where members can count to infinity.'));
+    return builder;
+  }
+);
+
+export const reactionRolesCommand = commandBuilder(
+  'reactionroles',
+  'Set up a reaction role message dynamically. (admin only)',
+  async (interaction, client) => {
+    const userId = interaction.user.id;
+
+    const targetChannel = interaction.options.getChannel('target');
+
+    if(!targetChannel){
+      return await interaction.reply('No target channel was provided.');
+    }
+
+    pendingReactionRoleSetups.set(userId, {
+      interaction,
+      emojiRoleMap: {},
+      channelId: interaction.channelId,
+      targetChannelId: targetChannel.id
+    });
+
+    await interaction.reply({
+      content:
+        'Please send the emoji + role pairs in this format: `🟥 @RedTeam`\nSend `done` when finished.',
+      ephemeral: true
+    });
+  },
+  true,
+  true,
+  builder => {
+    builder.addChannelOption(channelOption('taget','The channel where reaction message will be in.'));
     return builder;
   }
 );

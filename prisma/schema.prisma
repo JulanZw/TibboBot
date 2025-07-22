@@ -32,7 +32,6 @@ model User {
 }
 
 model Birthday {
-  id         String   @id @default(uuid())
   birthday   DateTime
 
   guildId    String
@@ -42,4 +41,15 @@ model Birthday {
   user       User     @relation(fields: [userId], references: [discordId])
 
   @@unique([guildId, userId])
+}
+
+model ReactionRoles {
+  id        String   @id @default(cuid())
+  messageId String
+  channelId String
+  emoji     String
+  role      String
+  guildId   String
+
+  @@unique([guildId, messageId, emoji])
 }
