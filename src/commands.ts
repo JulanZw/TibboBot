@@ -1,5 +1,5 @@
 import { EmbedBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder } from "discord.js";
-import { channelOption, commandBuilder,formatDate,integerOption,logWithTime, pendingReactionRoleSetups, stringOption, userOption } from "./utils";
+import { botId, channelOption, commandBuilder,formatDate,integerOption,logWithTime, pendingReactionRoleSetups, stringOption, userOption } from "./utils";
 import wol from 'wol';
 import { getAllUserData, getAllUserDataTodayIs, getGuild, getPointGiverIdOfGuild, getUserData, getUserPoints, insertUserData, setBirthday, setBirthdayChannel, setCountChannel, setPointGiverOfGuild, setTodayIsChannel, updateUserPoints } from "./database";
 
@@ -66,23 +66,18 @@ const addPointsCommand = commandBuilder(
       logWithTime(`Error: Could not add \'${amount}\' points for \'${targetUser.username}\' as negative values are not accepted.`);
     }
 
-    try {
-      const row = await getUserPoints(targetUser.id);
-      if(!row){
-        await insertUserData(targetUser.id,BigInt(0),0,BigInt(amount));
-      }else{
-        await updateUserPoints(targetUser.id,BigInt(amount)+row.points,interaction);
-      }
-      if(targetUser.id === '1173596942194966571'){
-        await interaction.reply(`Thank you <@${interaction.user.id}> for the ${amount} points`);
-        logWithTime(`Points were given to the bot`);
-      }else{
-        await interaction.reply(`Added ${amount} points for ${targetUser.username}.`);
-        logWithTime(`Points were given to \'${targetUser.username}\'`);
-      }
-    } catch (err) {
-      console.error("Error updating user points:", err);
-      await interaction.reply("An error occurred while adding points.");
+    const row = await getUserPoints(targetUser.id);
+    if(!row){
+      await insertUserData(targetUser.id,BigInt(0),0,BigInt(amount));
+    }else{
+      await updateUserPoints(targetUser.id,BigInt(amount)+row.points,interaction);
+    }
+    if(targetUser.id === botId){
+      await interaction.reply(`Thank you <@${interaction.user.id}> for the ${amount} points`);
+      logWithTime(`${amount} points were given to the bot`);
+    }else{
+      await interaction.reply(`Added ${amount} points for ${targetUser.username}.`);
+      logWithTime(`${amount} points were given to \'${targetUser.username}\'`);
     }
   },
   false,
@@ -98,39 +93,34 @@ const leaderboardCommand = commandBuilder(
   'leaderboard',
   'Shows the top users on the message count board.',
   async (interaction,client) => {
-    try{
-      const users = await getAllUserData();
+    const users = await getAllUserData();
 
-      if(!users || users.length===0){
-        return await interaction.reply("No user data available for the leaderboard.");
-      }
-
-      const leaderboard = 
-      await Promise.all(users.slice(0,10).map(async (row, index) => {
-        try {
-          const user = await client.users.fetch(row.discordId);
-          const username = user ? user.username : 'Unknown User';
-          return `${index + 1}. ${username}: ${row.msg_count} messages, ${row.char_count} characters`;
-        } catch (error) {
-          console.error("Error fetching user:", error);
-          return `${index + 1}. Unknown User: ${row.msg_count} messages, ${row.char_count} characters`;
-        }
-      }));
-
-      const leaderboardString = leaderboard.join('\n');
-
-      const leaderboardEmbed = 
-      new EmbedBuilder()
-        .setColor('#3F48CC')
-        .setTitle('Leaderboard')
-        .setDescription(leaderboardString)
-        .setTimestamp();
-      await interaction.reply({ embeds: [leaderboardEmbed] });
-      logWithTime('Leaderboard command executed.');
-    } catch (err) {
-      console.error("Error getting point board:",err)
-      await interaction.reply("An error occurred while getting the point leaderboard.");
+    if(!users || users.length===0){
+      return await interaction.reply("No user data available for the leaderboard.");
     }
+
+    const leaderboard = 
+    await Promise.all(users.slice(0,10).map(async (row, index) => {
+      try {
+        const user = await client.users.fetch(row.discordId);
+        const username = user ? user.username : 'Unknown User';
+        return `${index + 1}. ${username}: ${row.msg_count} messages, ${row.char_count} characters`;
+      } catch (error) {
+        console.error("Error fetching user:", error);
+        return `${index + 1}. Unknown User: ${row.msg_count} messages, ${row.char_count} characters`;
+      }
+    }));
+
+    const leaderboardString = leaderboard.join('\n');
+
+    const leaderboardEmbed = 
+    new EmbedBuilder()
+      .setColor('#3F48CC')
+      .setTitle('Leaderboard')
+      .setDescription(leaderboardString)
+      .setTimestamp();
+    await interaction.reply({ embeds: [leaderboardEmbed] });
+    logWithTime('Leaderboard command executed.');
   },
 );
 
@@ -168,24 +158,19 @@ const messagesCommand = commandBuilder(
   'messages',
   'Displays the message count for a specified user.',
   async (interaction, client) => {
-    try{
-      const targetUser = interaction.options.getUser('target');
-      
-      if(!targetUser){
-        return await interaction.reply('No target user was provided.')
-      }
+    const targetUser = interaction.options.getUser('target');
+    
+    if(!targetUser){
+      return await interaction.reply('No target user was provided.')
+    }
 
-      const user = await getUserData(targetUser.id);
-      if(user){
-        await interaction.reply(`User ${targetUser.username} has sent ${user.char_count} charachters in ${user.msg_count} message(s).`);
-        logWithTime(`User ${targetUser.username}'s stats: char_count = ${user.char_count}, msg_count = ${user.msg_count}`);
-      }else{
-        await interaction.reply(`User ${targetUser.username} has not sent any messages yet.`);
-        logWithTime(`User ${targetUser.username} has no message data.`);
-      }
-    } catch (err) {
-      console.error("Error fetching user data:", err);
-      await interaction.reply("An error occurred while fetching user data.");
+    const user = await getUserData(targetUser.id);
+    if(user){
+      await interaction.reply(`User ${targetUser.username} has sent ${user.char_count} charachters in ${user.msg_count} message(s).`);
+      logWithTime(`User ${targetUser.username}'s stats: char_count = ${user.char_count}, msg_count = ${user.msg_count}`);
+    }else{
+      await interaction.reply(`User ${targetUser.username} has not sent any messages yet.`);
+      logWithTime(`User ${targetUser.username} has no message data.`);
     }
   },
   false,
@@ -200,37 +185,32 @@ const pointBoardCommand = commandBuilder(
   'pointboard',
   'Shows the top users on the pointboard.',
   async (interaction, client) => {
-    try{
-      const users = await getAllUserDataTodayIs();
+    const users = await getAllUserDataTodayIs();
 
-      if(!users || users.length===0){
-        return await interaction.reply("No user data available for the leaderboard.");
-      }
-
-      const pointboard = await Promise.all(users.map(async (row,index) => {
-        try {
-          const user = await client.users.fetch(row.discordId);
-          const username = user ? user.username : 'Unknown User';
-          return `${index + 1}. ${username}: ${row.points} points`;
-        } catch (error) {
-          console.error("Error fetching user:", error);
-          return `${index + 1}. Unknown User: ${row.points} points`;
-        }
-      }));
-
-      const pointboardString = pointboard.join('\n');
-
-      const pointboardEmbed = new EmbedBuilder()
-        .setColor('#3F48CC')
-        .setTitle('Pointboard')
-        .setDescription(pointboardString)
-        .setTimestamp();
-      await interaction.reply({ embeds: [pointboardEmbed] });
-      logWithTime('Pointboard command executed.');
-    } catch (err) {
-      console.error("Error fetching pointboard data:", err);
-      await interaction.reply("An error occurred while fetching the pointboard.");
+    if(!users || users.length===0){
+      return await interaction.reply("No user data available for the leaderboard.");
     }
+
+    const pointboard = await Promise.all(users.map(async (row,index) => {
+      try {
+        const user = await client.users.fetch(row.discordId);
+        const username = user ? user.username : 'Unknown User';
+        return `${index + 1}. ${username}: ${row.points} points`;
+      } catch (error) {
+        console.error("Error fetching user:", error);
+        return `${index + 1}. Unknown User: ${row.points} points`;
+      }
+    }));
+
+    const pointboardString = pointboard.join('\n');
+
+    const pointboardEmbed = new EmbedBuilder()
+      .setColor('#3F48CC')
+      .setTitle('Pointboard')
+      .setDescription(pointboardString)
+      .setTimestamp();
+    await interaction.reply({ embeds: [pointboardEmbed] });
+    logWithTime('Pointboard command executed.');
   },
 );
 

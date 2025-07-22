@@ -53,7 +53,31 @@ export function commandBuilder(
       .setDescription(description)
   );
 
-  return { data: builder, name, description, adminOnly, guildOnly, execute };
+  return {
+    data: builder,
+    name,
+    description,
+    adminOnly,
+    guildOnly,
+    execute: async (interaction, client) =>
+      safeExecute(interaction, () => execute(interaction, client)),
+  };
+}
+
+async function safeExecute(
+  interaction: ChatInputCommandInteraction,
+  fn: () => Promise<any> | any
+) {
+  try {
+    await fn();
+  } catch (err) {
+    console.error(err);
+    if (interaction.replied || interaction.deferred) {
+      await interaction.followUp("An unexpected error occurred.");
+    } else {
+      await interaction.reply("An unexpected error occurred.");
+    }
+  }
 }
 
 export async function checkAdmin(interaction: Interaction){
@@ -164,3 +188,5 @@ export const pendingReactionRoleSetups = new Map <string, {
   channelId: string,
   targetChannelId: string
 } >();
+
+export const botId = process.env.BOT_ID ?? '0';
