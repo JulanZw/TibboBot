@@ -3,7 +3,7 @@ import { Client, EmbedBuilder, GatewayIntentBits, Interaction, Message, Partials
 import { setupCronJobs } from './cronJobs';
 import { checkAdmin, ensureGuildExistance, logWithTime, pendingReactionRoleSetups, updateCounts } from './utils';
 import { commands, commandsToRegister } from './commands';
-import { addReactionRole, checkAndUpdateCount, getRoleForReaction } from './database';
+import { addReactionRole, checkAndUpdateCount, getLastCountUser, getRoleForReaction } from './database';
 import { evaluate } from 'mathjs';
 
 const token = process.env.DISCORD_TOKEN;
@@ -54,11 +54,15 @@ client.on('messageCreate', async (message: Message) => {
 				if (typeof result === 'number' && isFinite(result)) {
 					const number: number = Math.round(result);
 					const success = await checkAndUpdateCount(guild.guildId, number);
+					const lastCountUser = await getLastCountUser(guild.guildId);
 
 					if (!success) {
 						await message.react('❌');
 						await message.reply(`<@${message.author.id}> entered a wrong number! Next number is 1...`);
-					} else {
+					} else if(lastCountUser && lastCountUser === message.author.id){
+						await message.react('❌');
+						await message.reply(`Only count on yourself, not with yourself... Next number is 1...`);
+					}else {
 						await message.react('✅');
 					}
 				}

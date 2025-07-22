@@ -11,11 +11,7 @@ export function setupCronJobs(client: Client): void {
     try {
       let randomDelay = Math.floor(Math.random() * 3001); // 0–3000 ms
 
-      if (randomDelay < 0) {
-        randomDelay = 1500;
-      }
-
-      await new Promise(resolve => setTimeout(resolve, randomDelay));
+      await new Promise(resolve => setTimeout(resolve, randomDelay < 0 ? 1500 : randomDelay)); // the delay below 0 happend once so this is just in case
 
       const guilds = await getAllGuilds();
       const formattedDate = formatDate(new Date());

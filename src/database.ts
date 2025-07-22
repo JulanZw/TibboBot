@@ -291,3 +291,11 @@ export async function deleteReactionRole(
   });
 }
 
+export async function getLastCountUser(guildId: string){
+  const lastCountUser = await prisma.guild.findUnique({
+    where: { guildId },
+    select: { lastCountUser: true }
+  })
+  return lastCountUser?.lastCountUser;
+}
+

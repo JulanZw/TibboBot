@@ -8,21 +8,21 @@ export function logWithTime(message: string): void {
   console.log(`[${timestamp}] ${message}`);
 }
 
-export async function logToChannel(message: string, client: Client): Promise<void> {
-  const now = new Date();
-  const timestamp = now.toISOString().replace('T', ' ').slice(0, 19);
+// export async function logToChannel(message: string, client: Client): Promise<void> {
+//   const now = new Date();
+//   const timestamp = now.toISOString().replace('T', ' ').slice(0, 19);
   
-  try {
-    const channel = await client.channels.fetch('1323669455426818139');
-    if (channel?.isTextBased() && !(channel instanceof PartialGroupDMChannel)) {
-      await channel.send(`[${timestamp}] ${message}`);
-    } else {
-      logWithTime("Channel not found or is not text-based");
-    }
-  } catch (error) {
-    logWithTime(`Error fetching or sending message to channel: ${(error as Error).message}`);
-  }
-}
+//   try {
+//     const channel = await client.channels.fetch('1323669455426818139');
+//     if (channel?.isTextBased() && !(channel instanceof PartialGroupDMChannel)) {
+//       await channel.send(`[${timestamp}] ${message}`);
+//     } else {
+//       logWithTime("Channel not found or is not text-based");
+//     }
+//   } catch (error) {
+//     logWithTime(`Error fetching or sending message to channel: ${(error as Error).message}`);
+//   }
+// }
 
 /**
  * A utility function to easily create a Discord slash command.
@@ -88,10 +88,10 @@ export async function updateCounts(message: Message){
   const userId = message.author.id;
 	const messageLength = message.content.length;
 
-  const row = await getUserData(userId);
-  if (row) {
-    const newCharCount = row.char_count + BigInt(messageLength);
-    const newMsgCount = row.msg_count + 1;
+  const user = await getUserData(userId);
+  if (user) {
+    const newCharCount = user.char_count + BigInt(messageLength);
+    const newMsgCount = user.msg_count + 1;
     await updateUserCharMsgCount(userId, newCharCount, newMsgCount);
     logWithTime(`Updated user messages and characters for ${message.author.id} [${message.author.username}]`);
   } else {

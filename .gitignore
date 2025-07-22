@@ -1,4 +1,5 @@
-.env
+/.env
+/src/.env
 /src/ZWutils.db
 todayis_bot.iml
 .idea/
