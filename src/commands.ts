@@ -1,43 +1,33 @@
 import { EmbedBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder } from "discord.js";
-import { botId, channelOption, commandBuilder,formatDate,integerOption,logWithTime, pendingReactionRoleSetups, stringOption, userOption } from "./utils";
+import { commandBuilder,formatDate,logWithTime, pendingReactionRoleSetups, PermissionLevel } from "./utils";
 import wol from 'wol';
 import { getAllUserData, getAllUserDataTodayIs, getGuild, getPointGiverIdOfGuild, getUserData, getUserPoints, insertUserData, setBirthday, setBirthdayChannel, setCountChannel, setPointGiverOfGuild, setTodayIsChannel, updateUserPoints } from "./database";
+import { channelOption, integerOption, stringOption, userOption } from "./options";
 
 const wolCommand = commandBuilder(
   'magic',
   'does some magic (bot owner only)',
   async (interaction, client) => {
-    if(!process.env.OWNER_DISCORD_ID){
-      console.error('Current id: ',process.env.OWNER_DISCORD_ID);
-      return await interaction.reply('No set owner ID');
-    }
-
     if(!process.env.WOL_MAC || process.env.WOL_IP){
       console.error('Current MAC: ',process.env.WOL_MAC);
       console.error('Current IP: ',process.env.WOL_IP);
       return await interaction.reply('No set IP or MAC');
     }
 
-    if (interaction.user.id === process.env.OWNER_DISCORD_ID) {
-      await interaction.reply('magic...');
-      wol.wake(process.env.WOL_MAC, {
-        address: process.env.WOL_IP,
-        port: 9
-      }, function (error) {
-        if (error) {
-          logWithTime('Error:'+ error);
-        } else {
-          logWithTime('WOL command executed.');
-        }
-      });
-    } else {
-      await interaction.reply('You didn’t say the magic word...');
-      logWithTime(
-        'WOL command attempted by someone else:'+
-        interaction.user.username
-      );
-    }
-  }
+    await interaction.reply('magic...');
+    wol.wake(process.env.WOL_MAC, {
+      address: process.env.WOL_IP,
+      port: 9
+    }, function (error) {
+      if (error) {
+        logWithTime('Error:'+ error);
+      } else {
+        logWithTime('WOL command executed.');
+      }
+    });
+  },
+  false,
+  'owner'
 );
 
 const addPointsCommand = commandBuilder(
@@ -72,7 +62,7 @@ const addPointsCommand = commandBuilder(
     }else{
       await updateUserPoints(targetUser.id,BigInt(amount)+row.points,interaction);
     }
-    if(targetUser.id === botId){
+    if(targetUser.id === (process.env.BOT_ID ?? '0')){
       await interaction.reply(`Thank you <@${interaction.user.id}> for the ${amount} points`);
       logWithTime(`${amount} points were given to the bot`);
     }else{
@@ -81,7 +71,7 @@ const addPointsCommand = commandBuilder(
     }
   },
   false,
-  true,
+  'admin',
   builder => {
     builder.addUserOption(userOption('taget','The user to give points to'));
     builder.addIntegerOption(integerOption('amount','The amount of points to give'));
@@ -122,6 +112,8 @@ const leaderboardCommand = commandBuilder(
     await interaction.reply({ embeds: [leaderboardEmbed] });
     logWithTime('Leaderboard command executed.');
   },
+  false,
+  'user'
 );
 
 const helpCommand = commandBuilder(
@@ -142,7 +134,9 @@ const helpCommand = commandBuilder(
 
     await interaction.reply({ embeds: [helpEmbed] });
     logWithTime('Help command executed.');
-  }
+  },
+  false,
+  'user'
 );
 
 const pingCommand = commandBuilder(
@@ -151,7 +145,9 @@ const pingCommand = commandBuilder(
   async (interaction, client) => {
     await interaction.reply('pong');
     logWithTime('Ping command executed');
-  }
+  },
+  false,
+  'user'
 );
 
 const messagesCommand = commandBuilder(
@@ -174,7 +170,7 @@ const messagesCommand = commandBuilder(
     }
   },
   false,
-  false,
+  'user',
   builder => {
     builder.addUserOption(userOption('target','The user to check'));
     return builder;
@@ -212,6 +208,8 @@ const pointBoardCommand = commandBuilder(
     await interaction.reply({ embeds: [pointboardEmbed] });
     logWithTime('Pointboard command executed.');
   },
+  false,
+  'user'
 );
 
 const catCommand = commandBuilder(
@@ -237,7 +235,9 @@ const catCommand = commandBuilder(
       console.error('Error fetching cat image:', err);
       await interaction.reply('Sorry, I couldn\'t fetch a cat image at the moment.');
     }
-  }
+  },
+  false,
+  'user'
 );
 
 const setPointGiverCommand = commandBuilder(
@@ -260,7 +260,7 @@ const setPointGiverCommand = commandBuilder(
     await interaction.reply(guild.todayIsChannelId ? `set <@${targetUser.id}> as the server's point giver` : `set <@${targetUser.id}> as the server's point giver. Dont forget to also set a todayIs channel!`);
   },
   true,
-  true,
+  'admin',
   builder => {
     builder.addUserOption(userOption('target','The user put as point giver'));
     return builder;
@@ -287,7 +287,7 @@ const setTodayIsChannelCommand = commandBuilder(
     await interaction.reply(guild.pointGiverId ? `set <#${targetChannel}> as the server's today is channel` : `set <#${targetChannel}> as the server's point giver. Dont forget to also set a point giver!`);
   },
   true,
-  true,
+  'admin',
   builder => {
     builder.addChannelOption(channelOption('taget','The channel the bot will send the birthday messages to.'));
     return builder;
@@ -314,7 +314,7 @@ const setBirthdayChannelCommand = commandBuilder(
     await interaction.reply(`set <#${targetChannel}> as the server's birthday channel`);
   },
   true,
-  true,
+  'admin',
   builder => {
     builder.addChannelOption(channelOption('taget','The channel the bot will send the birthday messages to.'));
     return builder;
@@ -348,7 +348,7 @@ const setBirthdayCommand = commandBuilder(
     }
   },
   false,
-  true,
+  'admin',
   builder => {
     builder.addStringOption(stringOption('date','Enter a date (YYYY-MM-DD)'));
     return builder;
@@ -375,7 +375,7 @@ const setCountChannelCommand = commandBuilder(
     await interaction.reply(`set <#${targetChannel}> as the server's count channel`);
   },
   true,
-  true,
+  'admin',
   builder => {
     builder.addChannelOption(channelOption('taget','Sets the channel where members can count to infinity.'));
     return builder;
@@ -408,7 +408,7 @@ export const reactionRolesCommand = commandBuilder(
     });
   },
   true,
-  true,
+  'admin',
   builder => {
     builder.addChannelOption(channelOption('taget','The channel where reaction message will be in.'));
     return builder;
@@ -432,7 +432,7 @@ export interface Command {
   data: SlashCommandBuilder;
   name: string;
   description: string;
-  adminOnly: boolean;
+  permissionLevel: PermissionLevel;
   guildOnly: boolean;
   execute: (...args: any[]) => Promise<any> | any;
 }
@@ -454,5 +454,4 @@ export const commands: Command[] = [
 ]
 
 export const commandsToRegister: RESTPostAPIChatInputApplicationCommandsJSONBody[] = commands.map(command => command.data.toJSON());
-
 

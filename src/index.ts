@@ -1,15 +1,16 @@
 
 import { Client, EmbedBuilder, GatewayIntentBits, Interaction, Message, Partials, REST, Routes, TextChannel } from 'discord.js';
 import { setupCronJobs } from './cronJobs';
-import { checkAdmin, ensureGuildExistance, logWithTime, pendingReactionRoleSetups, updateCounts } from './utils';
+import { ensureGuildExistance, logWithTime, pendingReactionRoleSetups, updateCounts } from './utils';
 import { commands, commandsToRegister } from './commands';
 import { addReactionRole, checkAndUpdateCount, getLastCountUser, getRoleForReaction } from './database';
 import { evaluate } from 'mathjs';
 
 const token = process.env.DISCORD_TOKEN;
+const ownerId = process.env.OWNER_DISCORD_ID
 
-if(!token){
-	console.error('Token not set.');
+if(!token || !ownerId){
+	console.error('Token or owner id not set.');
 	process.exit(1);
 }
 
@@ -150,8 +151,8 @@ client.on('interactionCreate', async (interaction: Interaction) => {
     return await interaction.reply('This command can only be used in a server.');
 	}
 
-	if(command.adminOnly && !(await checkAdmin(interaction))){
-    return await interaction.reply('Only an admin can use this command.');
+	if(command.permissionLevel === 'owner' && interaction.user.id !== ownerId){
+    return await interaction.reply('You didn’t say the magic word...');
   }
 
 	try {

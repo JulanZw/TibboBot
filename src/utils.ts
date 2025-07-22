@@ -1,4 +1,4 @@
-import { ChannelType, ChatInputCommandInteraction, Client, Interaction, Message, PartialGroupDMChannel, SlashCommandBuilder, SlashCommandChannelOption, SlashCommandIntegerOption, SlashCommandStringOption, SlashCommandUserOption } from 'discord.js';
+import { ChatInputCommandInteraction, Client, Message, PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
 import { addGuild, getGuild, getUserData, insertUserData, updateUserCharMsgCount } from './database';
 import { Command } from './commands';
 
@@ -8,6 +8,7 @@ export function logWithTime(message: string): void {
   console.log(`[${timestamp}] ${message}`);
 }
 
+// ! What to do with this
 // export async function logToChannel(message: string, client: Client): Promise<void> {
 //   const now = new Date();
 //   const timestamp = now.toISOString().replace('T', ' ').slice(0, 19);
@@ -23,6 +24,19 @@ export function logWithTime(message: string): void {
 //     logWithTime(`Error fetching or sending message to channel: ${(error as Error).message}`);
 //   }
 // }
+
+export type PermissionLevel = "user" | "admin" | "owner";
+
+function getPermissionsForLevel(level: PermissionLevel): bigint | null {
+  switch (level) {
+    case "admin":
+      return PermissionFlagsBits.Administrator;
+    case "owner":
+      return BigInt(0); // disable the command by default
+    default:
+      return null;
+  }
+}
 
 /**
  * A utility function to easily create a Discord slash command.
@@ -43,21 +57,22 @@ export function commandBuilder(
   name: string,
   description: string,
   execute: (interaction: ChatInputCommandInteraction, client: Client) => Promise<any> | any,
-  adminOnly = false,
-  guildOnly = false,
+  guildOnly,
+  permissionLevel: PermissionLevel,
   customize: (builder: SlashCommandBuilder) => SlashCommandBuilder = b => b
 ): Command {
   const builder = customize(
     new SlashCommandBuilder()
       .setName(name)
       .setDescription(description)
+      .setDefaultMemberPermissions(getPermissionsForLevel(permissionLevel))
   );
 
   return {
     data: builder,
     name,
     description,
-    adminOnly,
+    permissionLevel,
     guildOnly,
     execute: async (interaction, client) =>
       safeExecute(interaction, () => execute(interaction, client)),
@@ -80,10 +95,12 @@ async function safeExecute(
   }
 }
 
-export async function checkAdmin(interaction: Interaction){
-  return interaction.memberPermissions?.has('Administrator');
-}
+// ! This can go?
+// export async function checkAdmin(interaction: Interaction){
+//   return interaction.memberPermissions?.has('Administrator');
+// }
 
+// * Move this to database.ts?
 export async function updateCounts(message: Message){
   const userId = message.author.id;
 	const messageLength = message.content.length;
@@ -132,61 +149,12 @@ function getDaySuffix(day: number) {
   }
 }
 
-type AllowedChannelTypeChannelOption =
-  | ChannelType.GuildText
-  | ChannelType.GuildVoice
-  | ChannelType.GuildCategory
-  | ChannelType.GuildAnnouncement
-  | ChannelType.AnnouncementThread
-  | ChannelType.PublicThread
-  | ChannelType.PrivateThread
-  | ChannelType.GuildStageVoice
-  | ChannelType.GuildForum
-  | ChannelType.GuildMedia;
-
-export const userOption = (
-  name: string,
-  desc: string,
-  required = true
-) => (opt: SlashCommandUserOption) =>
-  opt.setName(name)
-  .setDescription(desc)
-  .setRequired(required);
-
-export const integerOption = (
-  name: string,
-  desc: string,
-  required = true
-) => (opt: SlashCommandIntegerOption) =>
-  opt.setName(name)
-  .setDescription(desc)
-  .setRequired(required);
-
-export const stringOption = (
-  name: string,
-  desc: string,
-  required = true
-) => (opt: SlashCommandStringOption) =>
-  opt.setName(name)
-  .setDescription(desc)
-  .setRequired(required);
-
-export const channelOption = (
-  name: string,
-  desc: string,
-  required = true,
-  channelType: AllowedChannelTypeChannelOption | AllowedChannelTypeChannelOption[] = [ChannelType.GuildText]
-) => (opt: SlashCommandChannelOption) =>
-  opt.setName(name)
-  .setDescription(desc)
-  .setRequired(required)
-  .addChannelTypes(...(Array.isArray(channelType) ? channelType : [channelType]));
-
+/**
+ * In-memory storage for the role react message building proces
+ */
 export const pendingReactionRoleSetups = new Map <string, {
   interaction: ChatInputCommandInteraction,
   emojiRoleMap: Record<string, string>,
   channelId: string,
   targetChannelId: string
 } >();
-
-export const botId = process.env.BOT_ID ?? '0';
