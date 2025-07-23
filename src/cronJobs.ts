@@ -1,9 +1,11 @@
 import cron from 'node-cron';
 import { Client, PartialGroupDMChannel, TextChannel } from 'discord.js';
-import { formatDate, logWithTime } from './utils';
+import { formatDate, getDateKey, logWithTime, reminderDaysCache } from './utils';
 import {
+  deleteReminder,
   getAllBirthdaysInGuildForGivenDate,
   getAllGuilds,
+  getRemindersBetween,
 } from './database';
 
 export function setupCronJobs(client: Client): void {
@@ -56,8 +58,25 @@ export function setupCronJobs(client: Client): void {
         }
       }));
 
+      // Rebuild reminder cache
+      const start = new Date();
+      const end = new Date();
+      end.setDate(end.getDate() + 7);
+
+      const upcomingReminders = await getRemindersBetween(start,end);
+
+      reminderDaysCache.clear();
+      for (const reminder of upcomingReminders) {
+        const dateKey = getDateKey(reminder.remindAt);
+        
+        if (!reminderDaysCache.has(dateKey)) {
+          reminderDaysCache.set(dateKey, []);
+        }
+
+        reminderDaysCache.get(dateKey)!.push(reminder);
+      }
     } catch (error) {
-      console.error("Error in daily cron job:", error);
+      logWithTime("Error in daily cron job:"+error,'error',true);
     }
   });
 
@@ -70,7 +89,33 @@ export function setupCronJobs(client: Client): void {
         logWithTime("Error: Channel not found or not text-based.");
       }
     } catch (error) {
-      console.error("Error in yearly cron job:", error);
+      logWithTime("Error in yearly cron job:"+error,'error',true);
     }
   });
+
+  cron.schedule('* * * * *', async () => {
+    try{
+      const now = new Date();
+      const todayKey = getDateKey(now);
+      const reminders = reminderDaysCache.get(todayKey);
+      if (!reminders) return;
+
+      const due = reminders.filter(r => r.remindAt <= now);
+
+      await Promise.allSettled(due.map(async reminder => {
+        try {
+          const user = await client.users.fetch(reminder.userId);
+          await user.send(`Reminder: ${reminder.message}`);
+        } catch (err) {
+          logWithTime("Failed to send reminder: " + err, 'error', true);
+        }
+        await deleteReminder(reminder.id);
+
+        const index = reminders.indexOf(reminder);
+        if (index !== -1) reminders.splice(index, 1);
+      }));
+    }catch (err){
+      logWithTime("Something went wrong while sending reminders"+err,'error',true);
+    }
+  })
 }

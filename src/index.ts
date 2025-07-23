@@ -1,9 +1,9 @@
 
 import { Client, EmbedBuilder, GatewayIntentBits, Interaction, Message, Partials, REST, Routes, TextChannel } from 'discord.js';
 import { setupCronJobs } from './cronJobs';
-import { ensureGuildExistance, logWithTime, pendingReactionRoleSetups, updateCounts } from './utils';
+import { ensureGuildExistance, logWithTime, pendingReactionRoleSetups } from './utils';
 import { commands, commandsToRegister } from './commands';
-import { addReactionRole, checkAndUpdateCount, getLastCountUser, getRoleForReaction } from './database';
+import { addReactionRole, checkAndUpdateCount, getLastCountUser, getRoleForReaction, updateCounts } from './database';
 import { evaluate } from 'mathjs';
 
 const token = process.env.DISCORD_TOKEN;
@@ -217,4 +217,7 @@ client.on('messageReactionRemove', async (reaction, user) => {
   }
 });
 
-client.login(process.env.DISCORD_TOKEN).then(() => logWithTime(`logged in as ${client.user!.username}#${client.user!.discriminator}`))
+client.login(process.env.DISCORD_TOKEN)
+.then(() => logWithTime(
+		`logged in as ${client.user ? `${client.user.username}#${client.user.discriminator}` : 'ERROR' }`
+	));

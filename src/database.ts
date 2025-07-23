@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { logWithTime } from './utils';
+import { Message } from 'discord.js';
 
 
 export const prisma = new PrismaClient();
@@ -298,4 +299,68 @@ export async function getLastCountUser(guildId: string){
   })
   return lastCountUser?.lastCountUser;
 }
+
+export async function updateCounts(message: Message){
+  const userId = message.author.id;
+	const messageLength = message.content.length;
+
+  const user = await getUserData(userId);
+
+  if (user) {
+    const newCharCount = user.char_count + BigInt(messageLength);
+    const newMsgCount = user.msg_count + 1;
+    await updateUserCharMsgCount(userId, newCharCount, newMsgCount);
+    logWithTime(`Updated user messages and characters for ${message.author.id} [${message.author.username}]`);
+  } else {
+    await insertUserData(userId, BigInt(messageLength), 1);
+    logWithTime(`Added new user for counting messages and characters for ${message.author.id} [${message.author.username}]`);
+  }
+}
+
+export async function createReminder(userId: string, message: string, remindAt: Date) {
+  return await prisma.reminders.create({
+    data: {
+      userId,
+      message,
+      remindAt,
+      createdAt: new Date(),
+    },
+  });
+}
+
+export async function getUserReminders(userId: string) {
+  return await prisma.reminders.findMany({
+    where: { userId },
+    orderBy: { remindAt: "asc" },
+  });
+}
+
+export async function getDueReminders(until: Date) {
+  return await prisma.reminders.findMany({
+    where: {
+      remindAt: {
+        lte: until,
+      },
+    },
+  });
+}
+
+export async function getRemindersBetween(start: Date, end: Date) {
+  return await prisma.reminders.findMany({
+    where: {
+      remindAt: {
+        gte: start,
+        lt: end
+      }
+    },
+  });
+}
+
+export async function deleteReminder(id: string) {
+  await prisma.reminders.delete({
+    where: { id },
+  });
+}
+
+
 

@@ -1,8 +1,8 @@
-import { EmbedBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder } from "discord.js";
-import { commandBuilder,formatDate,logWithTime, pendingReactionRoleSetups, PermissionLevel } from "./utils";
+import { EmbedBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder } from 'discord.js';
+import { commandBuilder,formatDate,getDateKey,logWithTime, parseDurationOrDate, pendingReactionRoleSetups, PermissionLevel, reminderDaysCache } from './utils';
 import wol from 'wol';
-import { getAllUserData, getAllUserDataTodayIs, getGuild, getPointGiverIdOfGuild, getUserData, getUserPoints, insertUserData, setBirthday, setBirthdayChannel, setCountChannel, setPointGiverOfGuild, setTodayIsChannel, updateUserPoints } from "./database";
-import { channelOption, integerOption, stringOption, userOption } from "./options";
+import { createReminder, getAllUserData, getAllUserDataTodayIs, getGuild, getPointGiverIdOfGuild, getUserData, getUserPoints, getUserReminders, insertUserData, setBirthday, setBirthdayChannel, setCountChannel, setPointGiverOfGuild, setTodayIsChannel, updateUserPoints } from './database';
+import { channelOption, integerOption, stringOption, userOption } from './options';
 
 const wolCommand = commandBuilder(
   'magic',
@@ -20,9 +20,7 @@ const wolCommand = commandBuilder(
       port: 9
     }, function (error) {
       if (error) {
-        logWithTime('Error:'+ error);
-      } else {
-        logWithTime('WOL command executed.');
+        logWithTime('Error:'+ error, 'error',true);
       }
     });
   },
@@ -53,7 +51,7 @@ const addPointsCommand = commandBuilder(
 
     if(amount<0){
       await interaction.reply(`Could not add ${amount} points for ${targetUser.username} as negative values are not accepted.`);
-      logWithTime(`Error: Could not add \'${amount}\' points for \'${targetUser.username}\' as negative values are not accepted.`);
+      logWithTime(`Error: Could not add \'${amount}\' points for \'${targetUser.username}\' as negative values are not accepted.`,'error',true);
     }
 
     const row = await getUserPoints(targetUser.id);
@@ -86,7 +84,7 @@ const leaderboardCommand = commandBuilder(
     const users = await getAllUserData();
 
     if(!users || users.length===0){
-      return await interaction.reply("No user data available for the leaderboard.");
+      return await interaction.reply('No user data available for the leaderboard.');
     }
 
     const leaderboard = 
@@ -96,7 +94,7 @@ const leaderboardCommand = commandBuilder(
         const username = user ? user.username : 'Unknown User';
         return `${index + 1}. ${username}: ${row.msg_count} messages, ${row.char_count} characters`;
       } catch (error) {
-        console.error("Error fetching user:", error);
+        logWithTime('Error fetching user:'+error,'error');
         return `${index + 1}. Unknown User: ${row.msg_count} messages, ${row.char_count} characters`;
       }
     }));
@@ -110,7 +108,6 @@ const leaderboardCommand = commandBuilder(
       .setDescription(leaderboardString)
       .setTimestamp();
     await interaction.reply({ embeds: [leaderboardEmbed] });
-    logWithTime('Leaderboard command executed.');
   },
   false,
   'user'
@@ -133,7 +130,6 @@ const helpCommand = commandBuilder(
       .setTimestamp();
 
     await interaction.reply({ embeds: [helpEmbed] });
-    logWithTime('Help command executed.');
   },
   false,
   'user'
@@ -144,7 +140,6 @@ const pingCommand = commandBuilder(
   'Responds with "pong" to check if the bot is online.',
   async (interaction, client) => {
     await interaction.reply('pong');
-    logWithTime('Ping command executed');
   },
   false,
   'user'
@@ -163,10 +158,8 @@ const messagesCommand = commandBuilder(
     const user = await getUserData(targetUser.id);
     if(user){
       await interaction.reply(`User ${targetUser.username} has sent ${user.char_count} charachters in ${user.msg_count} message(s).`);
-      logWithTime(`User ${targetUser.username}'s stats: char_count = ${user.char_count}, msg_count = ${user.msg_count}`);
     }else{
       await interaction.reply(`User ${targetUser.username} has not sent any messages yet.`);
-      logWithTime(`User ${targetUser.username} has no message data.`);
     }
   },
   false,
@@ -184,7 +177,7 @@ const pointBoardCommand = commandBuilder(
     const users = await getAllUserDataTodayIs();
 
     if(!users || users.length===0){
-      return await interaction.reply("No user data available for the leaderboard.");
+      return await interaction.reply('No user data available for the leaderboard.');
     }
 
     const pointboard = await Promise.all(users.map(async (row,index) => {
@@ -193,7 +186,7 @@ const pointBoardCommand = commandBuilder(
         const username = user ? user.username : 'Unknown User';
         return `${index + 1}. ${username}: ${row.points} points`;
       } catch (error) {
-        console.error("Error fetching user:", error);
+        console.error('Error fetching user:', error);
         return `${index + 1}. Unknown User: ${row.points} points`;
       }
     }));
@@ -206,7 +199,6 @@ const pointBoardCommand = commandBuilder(
       .setDescription(pointboardString)
       .setTimestamp();
     await interaction.reply({ embeds: [pointboardEmbed] });
-    logWithTime('Pointboard command executed.');
   },
   false,
   'user'
@@ -224,16 +216,14 @@ const catCommand = commandBuilder(
 
       const catEmbed = new EmbedBuilder()
         .setColor('#3F48CC')
-        .setTitle("Here's a cat for you!")
+        .setTitle('Here\'s a cat for you!')
         .setImage(imageUrl)
         .setTimestamp();
 
       await interaction.reply({ embeds: [catEmbed] });
-
-      logWithTime('Cat command executed.');
     } catch (err) {
-      console.error('Error fetching cat image:', err);
-      await interaction.reply('Sorry, I couldn\'t fetch a cat image at the moment.');
+      logWithTime('Error fetching cat image:'+err,'warn',true);
+      await interaction.reply('Sorry, I couldn\'t fetch a cat image.');
     }
   },
   false,
@@ -258,6 +248,7 @@ const setPointGiverCommand = commandBuilder(
 
     await setPointGiverOfGuild(interaction.guildId as string,targetUser.id);
     await interaction.reply(guild.todayIsChannelId ? `set <@${targetUser.id}> as the server's point giver` : `set <@${targetUser.id}> as the server's point giver. Dont forget to also set a todayIs channel!`);
+    logWithTime(`Set ${targetUser.id} as pointgiver for ${guild.guildId}`,'info');
   },
   true,
   'admin',
@@ -285,6 +276,7 @@ const setTodayIsChannelCommand = commandBuilder(
 
     await setTodayIsChannel(guild.guildId,targetChannel.id);
     await interaction.reply(guild.pointGiverId ? `set <#${targetChannel}> as the server's today is channel` : `set <#${targetChannel}> as the server's point giver. Dont forget to also set a point giver!`);
+    logWithTime(`Set <#${targetChannel}> as today is channel for ${guild.guildId}`);
   },
   true,
   'admin',
@@ -312,6 +304,7 @@ const setBirthdayChannelCommand = commandBuilder(
 
     await setBirthdayChannel(guild.guildId,targetChannel.id)
     await interaction.reply(`set <#${targetChannel}> as the server's birthday channel`);
+    logWithTime(`Set <#${targetChannel}> as birthday channel for ${guild.guildId}`);
   },
   true,
   'admin',
@@ -344,6 +337,7 @@ const setBirthdayCommand = commandBuilder(
     if(!newBirthday){
       return await interaction.reply('Something went wrong while setting your birthday...');
     } else {
+      logWithTime(`Set birthday for <@${newBirthday.userId}> on ${formatDate(newBirthday.birthday)}`);
       return await interaction.reply(`Set birthday for <@${newBirthday.userId}> on ${formatDate(newBirthday.birthday)}`);
     }
   },
@@ -373,6 +367,7 @@ const setCountChannelCommand = commandBuilder(
 
     await setCountChannel(guild.guildId,targetChannel.id)
     await interaction.reply(`set <#${targetChannel}> as the server's count channel`);
+    logWithTime(`Set <#${targetChannel}> as count channel for ${guild.guildId}`);
   },
   true,
   'admin',
@@ -406,11 +401,61 @@ export const reactionRolesCommand = commandBuilder(
         'Please send the emoji + role pairs in this format: `🟥 @RedTeam`\nSend `done` when finished.',
       ephemeral: true
     });
+    logWithTime('Reaction message proces started','info');
   },
   true,
   'admin',
   builder => {
     builder.addChannelOption(channelOption('taget','The channel where reaction message will be in.'));
+    return builder;
+  }
+);
+
+const setReminderCommand = commandBuilder(
+  'setreminder',
+  'Sets a reminder',
+  async interaction => {
+    const when = interaction.options.getString('when', true);
+    const message = interaction.options.getString('message', true);
+
+    const targetTime = parseDurationOrDate(when);
+    if (!targetTime) {
+      return await interaction.reply({ content: 'Invalid date/time format.', ephemeral: true });
+    }
+
+    const maxTime = Date.now() + 1000 * 60 * 60 * 24 * 365;
+    if (targetTime.getTime() > maxTime) {
+      return await interaction.reply({ content: 'Reminders can only be up to 1 year in the future.', ephemeral: true });
+    }
+
+    const userReminders = await getUserReminders(interaction.user.id);
+    if(userReminders.length > 10){
+      return await interaction.reply({ content: 'You cannot have more than 10 reminders!', ephemeral: true });
+    }
+
+    const reminder = await createReminder(interaction.user.id,message,targetTime);
+
+    const maxCacheDate = new Date();
+    maxCacheDate.setDate(new Date().getDate() + 7);
+    if(targetTime < maxCacheDate){
+      const dateKey = getDateKey(reminder.remindAt);
+      if (!reminderDaysCache.has(dateKey)) {
+        reminderDaysCache.set(dateKey, []);
+      }
+      reminderDaysCache.get(dateKey)!.push(reminder);
+    }
+
+    await interaction.reply({
+      content: `Reminder set for <t:${Math.floor(targetTime.getTime() / 1000)}:F>, make sure you have direct messages turned on for this server!`,
+      ephemeral: true,
+    });
+    logWithTime(`Created reminder for ${interaction.user.id} on ${targetTime}`,'info');
+  },
+  false,
+  'user',
+  builder => {
+    builder.addStringOption(stringOption('when','When you need to be reminded',true));
+    builder.addStringOption(stringOption('message','What you needed to be reminded of',true));
     return builder;
   }
 );
@@ -450,7 +495,8 @@ export const commands: Command[] = [
   setTodayIsChannelCommand,
   setBirthdayChannelCommand,
   setBirthdayCommand,
-  setCountChannelCommand
+  setCountChannelCommand,
+  setReminderCommand
 ]
 
 export const commandsToRegister: RESTPostAPIChatInputApplicationCommandsJSONBody[] = commands.map(command => command.data.toJSON());

@@ -54,3 +54,11 @@ model ReactionRoles {
 
   @@unique([guildId, messageId, emoji])
 }
+
+model Reminders {
+  id           String @id @default(cuid())
+  userId       String
+  message      String
+  remindAt     DateTime
+  createdAt    DateTime
+}
