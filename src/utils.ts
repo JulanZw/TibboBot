@@ -491,6 +491,10 @@ export interface ReminderCacheEntry {
   id: string;
 }
 
+//#endregion
+
+//#region Cache and Mem Storage
+
 /**
  * Cache for reminders by date string (YYYY-MM-DD)
  */
@@ -500,6 +504,11 @@ export const reminderDaysCache = new Map<string, ReminderCacheEntry[]>()
  * In memory storage for the active pages
  */
 export const activePages = new Map<string, number>();
+
+/**
+ * In memory storage for tracking who requested the source files today
+ */
+export const sourceRequestTracker = new Set<string>();
 
 /**
  * Utility function to get the key for the reminder cache

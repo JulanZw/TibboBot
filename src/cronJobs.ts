@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import { Client, PartialGroupDMChannel, TextChannel } from 'discord.js';
-import { formatDate, getDateKey, logWithTime, reminderDaysCache } from './utils';
+import { formatDate, getDateKey, logWithTime, reminderDaysCache, sourceRequestTracker } from './utils';
 import {
   deleteReminder,
   getAllBirthdaysInGuildForGivenDate,
@@ -75,6 +75,9 @@ export function setupCronJobs(client: Client): void {
 
         reminderDaysCache.get(dateKey)!.push(reminder);
       }
+
+      // Reset sourceRequestTracker
+      sourceRequestTracker.clear();
     } catch (error) {
       logWithTime("Error in daily cron job:"+error,'error',true);
     }

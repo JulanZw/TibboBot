@@ -1,8 +1,11 @@
-import { EmbedBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder } from 'discord.js';
-import { activePages, commandBuilder,createReminderButtons,createReminderEmbed,formatDate,getDateKey,logWithTime, parseDurationOrDateString, pendingReactionRoleSetups, PermissionLevel, reminderDaysCache, safeReply } from './utils';
+import { ChatInputCommandInteraction, Client, EmbedBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder } from 'discord.js';
+import { activePages, commandBuilder,createReminderButtons,createReminderEmbed,formatDate,getDateKey,logWithTime, parseDurationOrDateString, pendingReactionRoleSetups, PermissionLevel, reminderDaysCache, safeReply, sourceRequestTracker } from './utils';
 import wol from 'wol';
 import { createReminder, getAllUserData, getAllUserDataTodayIs, getGuild, getPointGiverIdOfGuild, getUserData, getUserPoints, getUserReminders, insertUserData, setBirthday, setBirthdayChannel, setCountChannel, setPointGiverOfGuild, setTodayIsChannel, updateUserPoints } from './database';
 import { channelOption, integerOption, stringOption, userOption } from './options';
+import archiver from 'archiver';
+import fs from 'fs';
+import path from 'path';
 
 //#region Utility
 
@@ -520,6 +523,71 @@ const remindersCommand = commandBuilder(
 
 //#endregion
 
+//#region Srouce
+
+const sourceCommand = commandBuilder(
+  'source',
+  'Get a zipped archive of the source code',
+  async (interaction, client) => {
+    const userId = interaction.user.id;
+
+    if (sourceRequestTracker.has(userId)) {
+      await safeReply(
+        interaction,
+        "You've already requested the source code today. Please try again tomorrow.",
+        true,
+      );
+      return;
+    }
+
+    sourceRequestTracker.add(userId);
+
+    await interaction.deferReply({ ephemeral: true });
+
+    const srcFolderPath = path.resolve(__dirname, '../src');
+    const zipPath = path.resolve(__dirname, '../tmp/source.zip');
+
+    fs.mkdirSync(path.dirname(zipPath), { recursive: true });
+
+    const output = fs.createWriteStream(zipPath);
+    const archive = archiver('zip', { zlib: { level: 9 } });
+
+    output.on('close', async () => {
+      try {
+        const user = await client.users.fetch(userId);
+        await user.send({
+          content: 'Here is the zipped source code!',
+          files: [zipPath],
+        });
+
+        await interaction.editReply({ content: 'Source code sent to your DMs!' });
+      } catch (error) {
+        logWithTime('Failed to send source ZIP:'+ error,'error');
+        await interaction.editReply({
+          content: 'Failed to send the source code via DM. Please check your privacy settings.',
+        });
+      } finally {
+        fs.unlink(zipPath, err => {
+          if (err) console.error('Failed to delete temp zip:', err);
+        });
+      }
+    });
+
+    archive.on('error', err => {
+      logWithTime('Archive error:'+err,'error');
+      interaction.editReply('An error occurred while creating the ZIP.');
+    });
+
+    archive.pipe(output);
+    archive.directory(srcFolderPath, false);
+    await archive.finalize();
+  },
+  false,
+  'user'
+);
+
+//#endregion
+
 //#region General
 
 /**
@@ -558,7 +626,9 @@ export const commands: Command[] = [
   setBirthdayChannelCommand,
   setBirthdayCommand,
   setCountChannelCommand,
-  setReminderCommand
+  setReminderCommand,
+  remindersCommand,
+  sourceCommand
 ]
 
 export const commandsToRegister: RESTPostAPIChatInputApplicationCommandsJSONBody[] = commands.map(command => command.data.toJSON());
