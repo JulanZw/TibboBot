@@ -3,7 +3,7 @@ import { Client, EmbedBuilder, GatewayIntentBits, Interaction, Message, Partials
 import { setupCronJobs } from './cronJobs';
 import { ensureGuildExistance, logWithTime, pendingReactionRoleSetups } from './utils';
 import { commands, commandsToRegister } from './commands';
-import { addReactionRole, checkAndUpdateCount, getLastCountUser, getRoleForReaction, updateCounts } from './database';
+import { addReactionRole, checkAndUpdateCount, getLastCountUser, getRoleForReaction, updateCountsForUser } from './database';
 import { evaluate } from 'mathjs';
 
 const token = process.env.DISCORD_TOKEN;
@@ -42,7 +42,7 @@ client.once('ready', async () =>{
 
 client.on('messageCreate', async (message: Message) => {
 	if (message.author.bot) return;
-	await updateCounts(message);
+	await updateCountsForUser(message.author,message.content);
 	if (message.guildId) {
 		const guild = await ensureGuildExistance(message.guildId);
 

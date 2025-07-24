@@ -1,9 +1,10 @@
 import { PrismaClient } from '@prisma/client';
 import { logWithTime } from './utils';
-import { Message } from 'discord.js';
-
+import { User } from 'discord.js';
 
 export const prisma = new PrismaClient();
+
+//#region User
 
 export async function updateUserCharMsgCount(discordId: string, charCount: bigint, msgCount: number) {
   return await prisma.user.update({
@@ -74,6 +75,46 @@ export async function getUserPoints(discordId: string) {
   });
 }
 
+export async function setPointGiverOfGuild(guildId: string, pointGiverId: string) {
+  let giver = await prisma.user.findUnique({
+    where: { discordId: pointGiverId },
+  });
+
+  if (!giver) {
+    giver = await insertUserData(pointGiverId, BigInt(0), 0);
+  }
+
+  await prisma.guild.update({
+    where: { guildId },
+    data: {
+      pointGiver: {
+        connect: { discordId: giver.discordId }
+      }
+    }
+  });
+}
+
+export async function updateCountsForUser(author: User, content: string){
+  const userId = author.id;
+	const messageLength = content.length;
+
+  const user = await getUserData(userId);
+
+  if (user) {
+    const newCharCount = user.char_count + BigInt(messageLength);
+    const newMsgCount = user.msg_count + 1;
+    await updateUserCharMsgCount(userId, newCharCount, newMsgCount);
+    logWithTime(`Updated user messages and characters for ${author.id} [${author.username}]`);
+  } else {
+    await insertUserData(userId, BigInt(messageLength), 1);
+    logWithTime(`Added new user for counting messages and characters for ${author.id} [${author.username}]`);
+  }
+}
+
+//#endregion
+
+//#region Guild
+
 export async function setCountChannel(guildId: string, channelId: string) {
   return await prisma.guild.upsert({
     where: { guildId },
@@ -135,25 +176,6 @@ export async function getPointGiverIdOfGuild(guildId: string){
   return pointGiver?.pointGiverId
 }
 
-export async function setPointGiverOfGuild(guildId: string, pointGiverId: string) {
-  let giver = await prisma.user.findUnique({
-    where: { discordId: pointGiverId },
-  });
-
-  if (!giver) {
-    giver = await insertUserData(pointGiverId, BigInt(0), 0);
-  }
-
-  await prisma.guild.update({
-    where: { guildId },
-    data: {
-      pointGiver: {
-        connect: { discordId: giver.discordId }
-      }
-    }
-  });
-}
-
 export async function addGuild( guildId: string ) {
   return await prisma.guild.create({
     data: { guildId }
@@ -165,6 +187,29 @@ export async function getGuild( guildId: string ) {
     where: { guildId }
   });
 }
+
+export async function getCountChannelOfGuild(guildId: string){
+  return prisma.guild.findUnique({
+    where: { guildId },
+    select: { countChannelId: true }
+  })
+}
+
+export async function getLastCountUser(guildId: string){
+  const lastCountUser = await prisma.guild.findUnique({
+    where: { guildId },
+    select: { lastCountUser: true }
+  })
+  return lastCountUser?.lastCountUser;
+}
+
+export async function getAllGuilds(){
+  return prisma.guild.findMany();
+}
+
+//#endregion
+
+//#region Birthday
 
 export async function setBirthday(guildId: string, userId: string, birthday: Date) {
   return prisma.birthday.upsert({
@@ -205,13 +250,6 @@ export async function deleteBirthday(guildId: string, userId: string) {
   });
 }
 
-export async function getCountChannelOfGuild(guildId: string){
-  return prisma.guild.findUnique({
-    where: { guildId },
-    select: { countChannelId: true }
-  })
-}
-
 export async function getAllBirthdaysInGuildForGivenDate(guildId: string, date: Date) {
   const targetMonth = date.getUTCMonth();
   const targetDate = date.getUTCDate();
@@ -230,9 +268,9 @@ export async function getAllBirthdaysInGuildForGivenDate(guildId: string, date: 
   });
 }
 
-export async function getAllGuilds(){
-  return prisma.guild.findMany();
-}
+//#endregion
+
+//#region Reaction Roles
 
 export async function addReactionRole(
   guildId: string,
@@ -292,30 +330,9 @@ export async function deleteReactionRole(
   });
 }
 
-export async function getLastCountUser(guildId: string){
-  const lastCountUser = await prisma.guild.findUnique({
-    where: { guildId },
-    select: { lastCountUser: true }
-  })
-  return lastCountUser?.lastCountUser;
-}
+//#endregion
 
-export async function updateCounts(message: Message){
-  const userId = message.author.id;
-	const messageLength = message.content.length;
-
-  const user = await getUserData(userId);
-
-  if (user) {
-    const newCharCount = user.char_count + BigInt(messageLength);
-    const newMsgCount = user.msg_count + 1;
-    await updateUserCharMsgCount(userId, newCharCount, newMsgCount);
-    logWithTime(`Updated user messages and characters for ${message.author.id} [${message.author.username}]`);
-  } else {
-    await insertUserData(userId, BigInt(messageLength), 1);
-    logWithTime(`Added new user for counting messages and characters for ${message.author.id} [${message.author.username}]`);
-  }
-}
+//#region Reminder
 
 export async function createReminder(userId: string, message: string, remindAt: Date) {
   return await prisma.reminders.create({

@@ -4,6 +4,8 @@ import wol from 'wol';
 import { createReminder, getAllUserData, getAllUserDataTodayIs, getGuild, getPointGiverIdOfGuild, getUserData, getUserPoints, getUserReminders, insertUserData, setBirthday, setBirthdayChannel, setCountChannel, setPointGiverOfGuild, setTodayIsChannel, updateUserPoints } from './database';
 import { channelOption, integerOption, stringOption, userOption } from './options';
 
+//#region Utility
+
 const wolCommand = commandBuilder(
   'magic',
   'does some magic (bot owner only)',
@@ -28,53 +30,65 @@ const wolCommand = commandBuilder(
   'owner'
 );
 
-const addPointsCommand = commandBuilder(
-  'addpoints',
-  'adds points to the user (can only be used by the servers point giver)',
+const helpCommand = commandBuilder(
+  'help',
+  'Displays all commands.',
   async (interaction, client) => {
-    const pointGiverId = await getPointGiverIdOfGuild(interaction.guildId as string);
+    const helpEmbed = new EmbedBuilder()
+      .setColor('#3F48CC')
+      .setTitle('List of Available Commands')
+      .setDescription('Here are the commands you can use:')
+      .addFields(
+        commands.map(cmd => ({
+          name: `/${cmd.name}`,
+          value: cmd.description
+        }))
+      )
+      .setTimestamp();
 
-    if(!pointGiverId){
-      return await interaction.reply('This server doesnt have a point giver')
-    }
+    await interaction.reply({ embeds: [helpEmbed] });
+  },
+  false,
+  'user'
+);
 
-    if (interaction.user.id !== pointGiverId) {
-      return await interaction.reply(`Only <@${pointGiverId}> can give points`);
-    }
+const pingCommand = commandBuilder(
+  'ping',
+  'Responds with "pong" to check if the bot is online.',
+  async (interaction, client) => {
+    await interaction.reply('pong');
+  },
+  false,
+  'user'
+);
 
+//#endregion
+
+//#region Chars And Messages
+
+const messagesCommand = commandBuilder(
+  'messages',
+  'Displays the message count for a specified user.',
+  async (interaction, client) => {
     const targetUser = interaction.options.getUser('target');
-    const amount = interaction.options.getInteger('amount');
-
-    if(!amount || !targetUser){
-      return await interaction.reply(`You did not provide a target user or points!`);
+    
+    if(!targetUser){
+      return await interaction.reply('No target user was provided.')
     }
 
-    if(amount<0){
-      await interaction.reply(`Could not add ${amount} points for ${targetUser.username} as negative values are not accepted.`);
-      logWithTime(`Error: Could not add \'${amount}\' points for \'${targetUser.username}\' as negative values are not accepted.`,'error',true);
-    }
-
-    const row = await getUserPoints(targetUser.id);
-    if(!row){
-      await insertUserData(targetUser.id,BigInt(0),0,BigInt(amount));
+    const user = await getUserData(targetUser.id);
+    if(user){
+      await interaction.reply(`User ${targetUser.username} has sent ${user.char_count} charachters in ${user.msg_count} message(s).`);
     }else{
-      await updateUserPoints(targetUser.id,BigInt(amount)+row.points,interaction);
-    }
-    if(targetUser.id === (process.env.BOT_ID ?? '0')){
-      await interaction.reply(`Thank you <@${interaction.user.id}> for the ${amount} points`);
-      logWithTime(`${amount} points were given to the bot`);
-    }else{
-      await interaction.reply(`Added ${amount} points for ${targetUser.username}.`);
-      logWithTime(`${amount} points were given to \'${targetUser.username}\'`);
+      await interaction.reply(`User ${targetUser.username} has not sent any messages yet.`);
     }
   },
   false,
-  'admin',
+  'user',
   builder => {
-    builder.addUserOption(userOption('taget','The user to give points to'));
-    builder.addIntegerOption(integerOption('amount','The amount of points to give'));
+    builder.addUserOption(userOption('target','The user to check'));
     return builder;
-  },
+  }    
 );
 
 const leaderboardCommand = commandBuilder(
@@ -113,96 +127,9 @@ const leaderboardCommand = commandBuilder(
   'user'
 );
 
-const helpCommand = commandBuilder(
-  'help',
-  'Displays all commands.',
-  async (interaction, client) => {
-    const helpEmbed = new EmbedBuilder()
-      .setColor('#3F48CC')
-      .setTitle('List of Available Commands')
-      .setDescription('Here are the commands you can use:')
-      .addFields(
-        commands.map(cmd => ({
-          name: `/${cmd.name}`,
-          value: cmd.description
-        }))
-      )
-      .setTimestamp();
+//#endregion
 
-    await interaction.reply({ embeds: [helpEmbed] });
-  },
-  false,
-  'user'
-);
-
-const pingCommand = commandBuilder(
-  'ping',
-  'Responds with "pong" to check if the bot is online.',
-  async (interaction, client) => {
-    await interaction.reply('pong');
-  },
-  false,
-  'user'
-);
-
-const messagesCommand = commandBuilder(
-  'messages',
-  'Displays the message count for a specified user.',
-  async (interaction, client) => {
-    const targetUser = interaction.options.getUser('target');
-    
-    if(!targetUser){
-      return await interaction.reply('No target user was provided.')
-    }
-
-    const user = await getUserData(targetUser.id);
-    if(user){
-      await interaction.reply(`User ${targetUser.username} has sent ${user.char_count} charachters in ${user.msg_count} message(s).`);
-    }else{
-      await interaction.reply(`User ${targetUser.username} has not sent any messages yet.`);
-    }
-  },
-  false,
-  'user',
-  builder => {
-    builder.addUserOption(userOption('target','The user to check'));
-    return builder;
-  }    
-);
-
-const pointBoardCommand = commandBuilder(
-  'pointboard',
-  'Shows the top users on the pointboard.',
-  async (interaction, client) => {
-    const users = await getAllUserDataTodayIs();
-
-    if(!users || users.length===0){
-      return await interaction.reply('No user data available for the leaderboard.');
-    }
-
-    const pointboard = await Promise.all(users.map(async (row,index) => {
-      try {
-        const user = await client.users.fetch(row.discordId);
-        const username = user ? user.username : 'Unknown User';
-        return `${index + 1}. ${username}: ${row.points} points`;
-      } catch (error) {
-        console.error('Error fetching user:', error);
-        return `${index + 1}. Unknown User: ${row.points} points`;
-      }
-    }));
-
-    const pointboardString = pointboard.join('\n');
-
-    const pointboardEmbed = new EmbedBuilder()
-      .setColor('#3F48CC')
-      .setTitle('Pointboard')
-      .setDescription(pointboardString)
-      .setTimestamp();
-    await interaction.reply({ embeds: [pointboardEmbed] });
-  },
-  false,
-  'user'
-);
+//#region Cat
 
 const catCommand = commandBuilder(
   'cat',
@@ -229,6 +156,10 @@ const catCommand = commandBuilder(
   false,
   'user'
 );
+
+//#endregion
+
+//#region Today Is
 
 const setPointGiverCommand = commandBuilder(
   'set_point_giver',
@@ -285,6 +216,93 @@ const setTodayIsChannelCommand = commandBuilder(
     return builder;
   }
 );
+
+const addPointsCommand = commandBuilder(
+  'addpoints',
+  'adds points to the user (can only be used by the servers point giver)',
+  async (interaction, client) => {
+    const pointGiverId = await getPointGiverIdOfGuild(interaction.guildId as string);
+
+    if(!pointGiverId){
+      return await interaction.reply('This server doesnt have a point giver')
+    }
+
+    if (interaction.user.id !== pointGiverId) {
+      return await interaction.reply(`Only <@${pointGiverId}> can give points`);
+    }
+
+    const targetUser = interaction.options.getUser('target');
+    const amount = interaction.options.getInteger('amount');
+
+    if(!amount || !targetUser){
+      return await interaction.reply(`You did not provide a target user or points!`);
+    }
+
+    if(amount<0){
+      await interaction.reply(`Could not add ${amount} points for ${targetUser.username} as negative values are not accepted.`);
+      logWithTime(`Error: Could not add \'${amount}\' points for \'${targetUser.username}\' as negative values are not accepted.`,'error',true);
+    }
+
+    const row = await getUserPoints(targetUser.id);
+    if(!row){
+      await insertUserData(targetUser.id,BigInt(0),0,BigInt(amount));
+    }else{
+      await updateUserPoints(targetUser.id,BigInt(amount)+row.points,interaction);
+    }
+    if(targetUser.id === (process.env.BOT_ID ?? '0')){
+      await interaction.reply(`Thank you <@${interaction.user.id}> for the ${amount} points`);
+      logWithTime(`${amount} points were given to the bot`);
+    }else{
+      await interaction.reply(`Added ${amount} points for ${targetUser.username}.`);
+      logWithTime(`${amount} points were given to \'${targetUser.username}\'`);
+    }
+  },
+  false,
+  'admin',
+  builder => {
+    builder.addUserOption(userOption('taget','The user to give points to'));
+    builder.addIntegerOption(integerOption('amount','The amount of points to give'));
+    return builder;
+  },
+);
+
+const todayIsBoardCommand = commandBuilder(
+  'todayisboard',
+  'Shows the top users on the today is leaderboard.',
+  async (interaction, client) => {
+    const users = await getAllUserDataTodayIs();
+
+    if(!users || users.length===0){
+      return await interaction.reply('No user data available for the leaderboard.');
+    }
+
+    const pointboard = await Promise.all(users.map(async (row,index) => {
+      try {
+        const user = await client.users.fetch(row.discordId);
+        const username = user ? user.username : 'Unknown User';
+        return `${index + 1}. ${username}: ${row.points} points`;
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        return `${index + 1}. Unknown User: ${row.points} points`;
+      }
+    }));
+
+    const pointboardString = pointboard.join('\n');
+
+    const pointboardEmbed = new EmbedBuilder()
+      .setColor('#3F48CC')
+      .setTitle('Pointboard')
+      .setDescription(pointboardString)
+      .setTimestamp();
+    await interaction.reply({ embeds: [pointboardEmbed] });
+  },
+  false,
+  'user'
+);
+
+//#endregion
+
+//#region Birthday
 
 const setBirthdayChannelCommand = commandBuilder(
   'setbirthdaychannel',
@@ -349,6 +367,10 @@ const setBirthdayCommand = commandBuilder(
   },
 );
 
+//#endregion
+
+//#region Count
+
 const setCountChannelCommand = commandBuilder(
   'setcountchannel',
   'Sets the count channel of the guild. (admin only)',
@@ -376,6 +398,10 @@ const setCountChannelCommand = commandBuilder(
     return builder;
   }
 );
+
+//#endregion
+
+//#region Reaction Roles
 
 export const reactionRolesCommand = commandBuilder(
   'reactionroles',
@@ -410,6 +436,10 @@ export const reactionRolesCommand = commandBuilder(
     return builder;
   }
 );
+
+//#endregion
+
+//#region Reminders
 
 const setReminderCommand = commandBuilder(
   'setreminder',
@@ -460,6 +490,10 @@ const setReminderCommand = commandBuilder(
   }
 );
 
+//#endregion
+
+//#region General
+
 /**
  * Represents a Discord slash command definition.
  *
@@ -489,7 +523,7 @@ export const commands: Command[] = [
   helpCommand,
   pingCommand,
   messagesCommand,
-  pointBoardCommand,
+  todayIsBoardCommand,
   catCommand,
   setPointGiverCommand,
   setTodayIsChannelCommand,
@@ -501,3 +535,4 @@ export const commands: Command[] = [
 
 export const commandsToRegister: RESTPostAPIChatInputApplicationCommandsJSONBody[] = commands.map(command => command.data.toJSON());
 
+//#endregion
