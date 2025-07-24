@@ -582,7 +582,6 @@ const sourceCommand = commandBuilder(
 
     archive.directory(srcFolderPath, 'src');
 
-    // Add individual files from root
     ['README.md', 'LICENSE'].forEach(file =>
       archive.file(path.join(rootPath, file), { name: file })
     );

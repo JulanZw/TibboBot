@@ -67,4 +67,3 @@ Can be found in [this file](./src/commands.ts) (Yes I am lazy)
 MIT License © 2025 Julan Zwiggelaar
 
 See [LICENSE](./LICENSE) for full text.
-
