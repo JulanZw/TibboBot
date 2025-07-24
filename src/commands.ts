@@ -1,5 +1,5 @@
 import { EmbedBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder } from 'discord.js';
-import { commandBuilder,formatDate,getDateKey,logWithTime, parseDurationOrDate, pendingReactionRoleSetups, PermissionLevel, reminderDaysCache } from './utils';
+import { activePages, commandBuilder,createReminderButtons,createReminderEmbed,formatDate,getDateKey,logWithTime, parseDurationOrDateString, pendingReactionRoleSetups, PermissionLevel, reminderDaysCache, safeReply } from './utils';
 import wol from 'wol';
 import { createReminder, getAllUserData, getAllUserDataTodayIs, getGuild, getPointGiverIdOfGuild, getUserData, getUserPoints, getUserReminders, insertUserData, setBirthday, setBirthdayChannel, setCountChannel, setPointGiverOfGuild, setTodayIsChannel, updateUserPoints } from './database';
 import { channelOption, integerOption, stringOption, userOption } from './options';
@@ -13,10 +13,10 @@ const wolCommand = commandBuilder(
     if(!process.env.WOL_MAC || process.env.WOL_IP){
       console.error('Current MAC: ',process.env.WOL_MAC);
       console.error('Current IP: ',process.env.WOL_IP);
-      return await interaction.reply('No set IP or MAC');
+      return await safeReply(interaction, 'No set IP or MAC');
     }
 
-    await interaction.reply('magic...');
+    await safeReply(interaction, 'magic...');
     wol.wake(process.env.WOL_MAC, {
       address: process.env.WOL_IP,
       port: 9
@@ -46,7 +46,7 @@ const helpCommand = commandBuilder(
       )
       .setTimestamp();
 
-    await interaction.reply({ embeds: [helpEmbed] });
+    await safeReply(interaction, '', false, [helpEmbed] );
   },
   false,
   'user'
@@ -56,7 +56,7 @@ const pingCommand = commandBuilder(
   'ping',
   'Responds with "pong" to check if the bot is online.',
   async (interaction, client) => {
-    await interaction.reply('pong');
+    await safeReply(interaction,'pong');
   },
   false,
   'user'
@@ -73,14 +73,14 @@ const messagesCommand = commandBuilder(
     const targetUser = interaction.options.getUser('target');
     
     if(!targetUser){
-      return await interaction.reply('No target user was provided.')
+      return await safeReply(interaction, 'No target user was provided.')
     }
 
     const user = await getUserData(targetUser.id);
     if(user){
-      await interaction.reply(`User ${targetUser.username} has sent ${user.char_count} charachters in ${user.msg_count} message(s).`);
+      await safeReply(interaction,`User ${targetUser.username} has sent ${user.char_count} charachters in ${user.msg_count} message(s).`);
     }else{
-      await interaction.reply(`User ${targetUser.username} has not sent any messages yet.`);
+      await safeReply(interaction, `User ${targetUser.username} has not sent any messages yet.`);
     }
   },
   false,
@@ -98,7 +98,7 @@ const leaderboardCommand = commandBuilder(
     const users = await getAllUserData();
 
     if(!users || users.length===0){
-      return await interaction.reply('No user data available for the leaderboard.');
+      return await safeReply(interaction,'No user data available for the leaderboard.');
     }
 
     const leaderboard = 
@@ -121,7 +121,7 @@ const leaderboardCommand = commandBuilder(
       .setTitle('Leaderboard')
       .setDescription(leaderboardString)
       .setTimestamp();
-    await interaction.reply({ embeds: [leaderboardEmbed] });
+    await safeReply(interaction,'',false, [leaderboardEmbed] );
   },
   false,
   'user'
@@ -147,10 +147,10 @@ const catCommand = commandBuilder(
         .setImage(imageUrl)
         .setTimestamp();
 
-      await interaction.reply({ embeds: [catEmbed] });
+      await safeReply(interaction,'',false, [catEmbed] );
     } catch (err) {
       logWithTime('Error fetching cat image:'+err,'warn',true);
-      await interaction.reply('Sorry, I couldn\'t fetch a cat image.');
+      await safeReply(interaction,'Sorry, I couldn\'t fetch a cat image.');
     }
   },
   false,
@@ -168,17 +168,17 @@ const setPointGiverCommand = commandBuilder(
     const guild = await getGuild(interaction.guildId as string);
 
     if(!guild){
-      return await interaction.reply(`Guild is not in the database. You should never see this message, contact the bot owner please.`);
+      return await safeReply(interaction,`Guild is not in the database. You should never see this message, contact the bot owner please.`);
     }
 
     const targetUser = interaction.options.getUser('target');
 
     if(!targetUser){
-      return await interaction.reply('No target user was provided.');
+      return await safeReply(interaction,'No target user was provided.');
     }
 
     await setPointGiverOfGuild(interaction.guildId as string,targetUser.id);
-    await interaction.reply(guild.todayIsChannelId ? `set <@${targetUser.id}> as the server's point giver` : `set <@${targetUser.id}> as the server's point giver. Dont forget to also set a todayIs channel!`);
+    await safeReply(interaction,guild.todayIsChannelId ? `set <@${targetUser.id}> as the server's point giver` : `set <@${targetUser.id}> as the server's point giver. Dont forget to also set a todayIs channel!`);
     logWithTime(`Set ${targetUser.id} as pointgiver for ${guild.guildId}`,'info');
   },
   true,
@@ -196,17 +196,17 @@ const setTodayIsChannelCommand = commandBuilder(
     const guild = await getGuild(interaction.guildId as string); // ? this gets checked in the main loop before it reaches this
 
     if(!guild){
-      return await interaction.reply(`Guild is not in the database. You should never see this message, contact the bot owner please.`);
+      return await safeReply(interaction,`Guild is not in the database. You should never see this message, contact the bot owner please.`);
     }
 
     const targetChannel = interaction.options.getChannel('target');
 
     if(!targetChannel){
-      return await interaction.reply('No target channel was provided.');
+      return await safeReply(interaction,'No target channel was provided.');
     }
 
     await setTodayIsChannel(guild.guildId,targetChannel.id);
-    await interaction.reply(guild.pointGiverId ? `set <#${targetChannel}> as the server's today is channel` : `set <#${targetChannel}> as the server's point giver. Dont forget to also set a point giver!`);
+    await safeReply(interaction,guild.pointGiverId ? `set <#${targetChannel}> as the server's today is channel` : `set <#${targetChannel}> as the server's point giver. Dont forget to also set a point giver!`);
     logWithTime(`Set <#${targetChannel}> as today is channel for ${guild.guildId}`);
   },
   true,
@@ -224,22 +224,22 @@ const addPointsCommand = commandBuilder(
     const pointGiverId = await getPointGiverIdOfGuild(interaction.guildId as string);
 
     if(!pointGiverId){
-      return await interaction.reply('This server doesnt have a point giver')
+      return await safeReply(interaction,'This server doesnt have a point giver')
     }
 
     if (interaction.user.id !== pointGiverId) {
-      return await interaction.reply(`Only <@${pointGiverId}> can give points`);
+      return await safeReply(interaction,`Only <@${pointGiverId}> can give points`);
     }
 
     const targetUser = interaction.options.getUser('target');
     const amount = interaction.options.getInteger('amount');
 
     if(!amount || !targetUser){
-      return await interaction.reply(`You did not provide a target user or points!`);
+      return await safeReply(interaction,`You did not provide a target user or points!`);
     }
 
     if(amount<0){
-      await interaction.reply(`Could not add ${amount} points for ${targetUser.username} as negative values are not accepted.`);
+      await safeReply(interaction,`Could not add ${amount} points for ${targetUser.username} as negative values are not accepted.`);
       logWithTime(`Error: Could not add \'${amount}\' points for \'${targetUser.username}\' as negative values are not accepted.`,'error',true);
     }
 
@@ -250,10 +250,10 @@ const addPointsCommand = commandBuilder(
       await updateUserPoints(targetUser.id,BigInt(amount)+row.points,interaction);
     }
     if(targetUser.id === (process.env.BOT_ID ?? '0')){
-      await interaction.reply(`Thank you <@${interaction.user.id}> for the ${amount} points`);
+      await safeReply(interaction,`Thank you <@${interaction.user.id}> for the ${amount} points`);
       logWithTime(`${amount} points were given to the bot`);
     }else{
-      await interaction.reply(`Added ${amount} points for ${targetUser.username}.`);
+      await safeReply(interaction,`Added ${amount} points for ${targetUser.username}.`);
       logWithTime(`${amount} points were given to \'${targetUser.username}\'`);
     }
   },
@@ -273,7 +273,7 @@ const todayIsBoardCommand = commandBuilder(
     const users = await getAllUserDataTodayIs();
 
     if(!users || users.length===0){
-      return await interaction.reply('No user data available for the leaderboard.');
+      return await safeReply(interaction,'No user data available for the leaderboard.');
     }
 
     const pointboard = await Promise.all(users.map(async (row,index) => {
@@ -294,7 +294,7 @@ const todayIsBoardCommand = commandBuilder(
       .setTitle('Pointboard')
       .setDescription(pointboardString)
       .setTimestamp();
-    await interaction.reply({ embeds: [pointboardEmbed] });
+    await safeReply(interaction,'',false, [pointboardEmbed] );
   },
   false,
   'user'
@@ -311,17 +311,17 @@ const setBirthdayChannelCommand = commandBuilder(
     const guild = await getGuild(interaction.guildId as string); // ? this gets checked in the main loop before it reaches this
 
     if(!guild){
-      return await interaction.reply(`Guild is not in the database. You should never see this message, contact the bot owner please.`);
+      return await safeReply(interaction,`Guild is not in the database. You should never see this message, contact the bot owner please.`);
     }
 
     const targetChannel = interaction.options.getChannel('target');
 
     if(!targetChannel){
-      return await interaction.reply('No target channel was provided.');
+      return await safeReply(interaction,'No target channel was provided.');
     }
 
     await setBirthdayChannel(guild.guildId,targetChannel.id)
-    await interaction.reply(`set <#${targetChannel}> as the server's birthday channel`);
+    await safeReply(interaction,`set <#${targetChannel}> as the server's birthday channel`);
     logWithTime(`Set <#${targetChannel}> as birthday channel for ${guild.guildId}`);
   },
   true,
@@ -339,13 +339,13 @@ const setBirthdayCommand = commandBuilder(
     const guild = await getGuild(interaction.guildId as string); // ? this gets checked in the main loop before it reaches this
 
     if(!guild){
-      return await interaction.reply(`Guild is not in the database. You should never see this message, contact the bot owner please.`);
+      return await safeReply(interaction,`Guild is not in the database. You should never see this message, contact the bot owner please.`);
     }
 
     const date = interaction.options.getString('date');
 
     if(!date){
-      return await interaction.reply('No birthday was provided');
+      return await safeReply(interaction,'No birthday was provided');
     }
 
     const birthday = new Date(date);
@@ -353,10 +353,10 @@ const setBirthdayCommand = commandBuilder(
     const newBirthday = await setBirthday(guild.guildId,interaction.user.id,birthday);
     
     if(!newBirthday){
-      return await interaction.reply('Something went wrong while setting your birthday...');
+      return await safeReply(interaction,'Something went wrong while setting your birthday...');
     } else {
       logWithTime(`Set birthday for <@${newBirthday.userId}> on ${formatDate(newBirthday.birthday)}`);
-      return await interaction.reply(`Set birthday for <@${newBirthday.userId}> on ${formatDate(newBirthday.birthday)}`);
+      return await safeReply(interaction,`Set birthday for <@${newBirthday.userId}> on ${formatDate(newBirthday.birthday)}`);
     }
   },
   false,
@@ -378,17 +378,17 @@ const setCountChannelCommand = commandBuilder(
     const guild = await getGuild(interaction.guildId as string); // ? this gets checked in the main loop before it reaches this
 
     if(!guild){
-      return await interaction.reply(`Guild is not in the database. You should never see this message, contact the bot owner please.`);
+      return await safeReply(interaction,`Guild is not in the database. You should never see this message, contact the bot owner please.`);
     }
 
     const targetChannel = interaction.options.getChannel('target');
 
     if(!targetChannel){
-      return await interaction.reply('No target channel was provided.');
+      return await safeReply(interaction,'No target channel was provided.');
     }
 
     await setCountChannel(guild.guildId,targetChannel.id)
-    await interaction.reply(`set <#${targetChannel}> as the server's count channel`);
+    await safeReply(interaction,`set <#${targetChannel}> as the server's count channel`);
     logWithTime(`Set <#${targetChannel}> as count channel for ${guild.guildId}`);
   },
   true,
@@ -412,7 +412,7 @@ export const reactionRolesCommand = commandBuilder(
     const targetChannel = interaction.options.getChannel('target');
 
     if(!targetChannel){
-      return await interaction.reply('No target channel was provided.');
+      return await safeReply(interaction,'No target channel was provided.');
     }
 
     pendingReactionRoleSetups.set(userId, {
@@ -422,11 +422,11 @@ export const reactionRolesCommand = commandBuilder(
       targetChannelId: targetChannel.id
     });
 
-    await interaction.reply({
-      content:
-        'Please send the emoji + role pairs in this format: `🟥 @RedTeam`\nSend `done` when finished.',
-      ephemeral: true
-    });
+    await safeReply(
+      interaction,
+      'Please send the emoji + role pairs in this format: `🟥 @RedTeam`\nSend `done` when finished.',
+      true
+    );
     logWithTime('Reaction message proces started','info');
   },
   true,
@@ -448,19 +448,19 @@ const setReminderCommand = commandBuilder(
     const when = interaction.options.getString('when', true);
     const message = interaction.options.getString('message', true);
 
-    const targetTime = parseDurationOrDate(when);
+    const targetTime = parseDurationOrDateString(when);
     if (!targetTime) {
-      return await interaction.reply({ content: 'Invalid date/time format.', ephemeral: true });
+      return await safeReply(interaction, 'Invalid date/time format.', true );
     }
 
     const maxTime = Date.now() + 1000 * 60 * 60 * 24 * 365;
     if (targetTime.getTime() > maxTime) {
-      return await interaction.reply({ content: 'Reminders can only be up to 1 year in the future.', ephemeral: true });
+      return await safeReply(interaction, 'Reminders can only be up to 1 year in the future.', true );
     }
 
     const userReminders = await getUserReminders(interaction.user.id);
     if(userReminders.length > 10){
-      return await interaction.reply({ content: 'You cannot have more than 10 reminders!', ephemeral: true });
+      return await safeReply(interaction, 'You cannot have more than 10 reminders!', true );
     }
 
     const reminder = await createReminder(interaction.user.id,message,targetTime);
@@ -475,10 +475,11 @@ const setReminderCommand = commandBuilder(
       reminderDaysCache.get(dateKey)!.push(reminder);
     }
 
-    await interaction.reply({
-      content: `Reminder set for <t:${Math.floor(targetTime.getTime() / 1000)}:F>, make sure you have direct messages turned on for this server!`,
-      ephemeral: true,
-    });
+    await safeReply(
+      interaction,
+      `Reminder set for <t:${Math.floor(targetTime.getTime() / 1000)}:F>, make sure you have direct messages turned on for this server!`,
+      true,
+    );
     logWithTime(`Created reminder for ${interaction.user.id} on ${targetTime}`,'info');
   },
   false,
@@ -489,6 +490,33 @@ const setReminderCommand = commandBuilder(
     return builder;
   }
 );
+
+const remindersCommand = commandBuilder(
+  'myreminders',
+  'Shows all your reminders and allows you to edit them',
+  async interaction => {
+    const reminders = await getUserReminders(interaction.user.id);
+    if (!reminders.length) {
+      return await safeReply(interaction, 'You have no reminders.', true );
+    }
+
+    const index = 0;
+    activePages.set(interaction.user.id, index);
+
+    const embed = createReminderEmbed(reminders[index], index, reminders.length);
+    const components = [createReminderButtons(index, reminders.length)];
+
+    await safeReply(
+      interaction,
+      '',
+      true,
+      [embed],
+      components,
+    );
+  },
+  false,
+  'user'
+)
 
 //#endregion
 

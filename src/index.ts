@@ -1,9 +1,9 @@
 
-import { Client, EmbedBuilder, GatewayIntentBits, Interaction, Message, Partials, REST, Routes, TextChannel } from 'discord.js';
+import { ActionRowBuilder, Client, EmbedBuilder, Events, GatewayIntentBits, Interaction, Message, ModalBuilder, Partials, REST, Routes, TextChannel, TextInputBuilder, TextInputStyle } from 'discord.js';
 import { setupCronJobs } from './cronJobs';
-import { ensureGuildExistance, logWithTime, pendingReactionRoleSetups } from './utils';
+import { activePages, createReminderButtons, createReminderEmbed, ensureGuildExistance, logWithTime, parseDurationOrDateString, pendingReactionRoleSetups, safeReply } from './utils';
 import { commands, commandsToRegister } from './commands';
-import { addReactionRole, checkAndUpdateCount, getLastCountUser, getRoleForReaction, updateCountsForUser } from './database';
+import { addReactionRole, checkAndUpdateCount, deleteReminder, getLastCountUser, getReminderById, getRoleForReaction, getUserReminders, updateCountsForUser, updateReminder } from './database';
 import { evaluate } from 'mathjs';
 
 const token = process.env.DISCORD_TOKEN;
@@ -40,7 +40,7 @@ client.once('ready', async () =>{
 	}
 });
 
-client.on('messageCreate', async (message: Message) => {
+client.on(Events.MessageCreate, async (message: Message) => {
 	if (message.author.bot) return;
 	await updateCountsForUser(message.author,message.content);
 	if (message.guildId) {
@@ -134,36 +134,141 @@ client.on('messageCreate', async (message: Message) => {
 	}
 });
 
-client.on('interactionCreate', async (interaction: Interaction) => {
-	if(interaction.guildId){
-		await ensureGuildExistance(interaction.guildId);
-	}
-
-	if (!interaction.isCommand()) return;
-
-	const command = commands.find(command => command.name === interaction.commandName);
-
-	if (!command) {
-		return interaction.reply({ content: `Unknown command: ${interaction.commandName}`, ephemeral: true });
-	}
-
-	if(command.guildOnly && !interaction.guildId){
-    return await interaction.reply('This command can only be used in a server.');
-	}
-
-	if(command.permissionLevel === 'owner' && interaction.user.id !== ownerId){
-    return await interaction.reply('You didn’t say the magic word...');
+client.on(Events.InteractionCreate, async (interaction: Interaction) => {
+  if (interaction.guildId) {
+    await ensureGuildExistance(interaction.guildId);
   }
 
-	try {
-		await command.execute(interaction, client);
-	} catch (error) {
-		console.error(`Error executing command ${interaction.commandName}:`, error);
-		await interaction.reply({ content: 'There was an error executing that command.', ephemeral: true });
+  if (interaction.isChatInputCommand()) {
+    const command = commands.find(c => c.name === interaction.commandName);
+
+    if (!command) {
+      return safeReply(
+				interaction,
+        `Unknown command: ${interaction.commandName}`,
+        true,
+      );
+    }
+
+    if (command.guildOnly && !interaction.guildId) {
+      return await safeReply(interaction, 'This command can only be used in a server.');
+    }
+
+    if (command.permissionLevel === 'owner' && interaction.user.id !== ownerId) {
+      return await safeReply(interaction, 'You didn’t say the magic word...');
+    }
+
+    try {
+      await command.execute(interaction, client);
+    } catch (error) {
+      logWithTime(`Error executing command ${interaction.commandName}: `+ error,'error');
+      if (!interaction.replied && !interaction.deferred) {
+				await safeReply(interaction, 'There was an error executing that command.', true);
+			}
+    }
+  }
+
+  else if (interaction.isButton()) {
+    if (['prev', 'next', 'edit', 'delete'].includes(interaction.customId)) {
+      try {
+        const userId = interaction.user.id;
+				const reminders = await getUserReminders(userId);
+				let index = activePages.get(userId) ?? 0;
+
+				if (!reminders.length) {
+					return interaction.update({ content: 'No more reminders.', embeds: [], components: [] });
+				}
+
+				switch (interaction.customId) {
+					case 'prev':
+						index = Math.max(0, index - 1);
+						break;
+					case 'next':
+						index = Math.min(reminders.length - 1, index + 1);
+						break;
+					case 'delete': {
+						await deleteReminder(reminders[index].id);
+						const newReminders = await getUserReminders(userId);
+						if (!newReminders.length) {
+							return interaction.update({ content: 'All reminders deleted.', embeds: [], components: [] });
+						}
+						index = Math.min(index, newReminders.length - 1);
+						const embed = createReminderEmbed(newReminders[index], index, newReminders.length);
+						const buttons = [createReminderButtons(index, newReminders.length)];
+						activePages.set(userId, index);
+						return interaction.update({ embeds: [embed], components: buttons });
+					}
+					case 'edit': {
+						const reminder = reminders[index];
+
+						if (!reminder || reminder.userId !== interaction.user.id) {
+							return await safeReply(interaction, 'Reminder not found or unauthorized.', true );
+						}
+
+						const modal = new ModalBuilder()
+							.setCustomId(`editReminderModal:${reminder.id}`)
+							.setTitle('Edit Reminder')
+							.addComponents(
+								new ActionRowBuilder<TextInputBuilder>().addComponents(
+									new TextInputBuilder()
+										.setCustomId('editMessage')
+										.setLabel('Reminder Message')
+										.setStyle(TextInputStyle.Paragraph)
+										.setRequired(true)
+										.setValue(reminder.message)
+								),
+								new ActionRowBuilder<TextInputBuilder>().addComponents(
+									new TextInputBuilder()
+										.setCustomId('editTime')
+										.setLabel('Remind at (e.g. in 2 hours or in 3 days)')
+										.setStyle(TextInputStyle.Short)
+										.setRequired(true)
+								)
+							);
+
+						return await interaction.showModal(modal);
+					}
+				}
+
+				activePages.set(userId, index);
+				const embed = createReminderEmbed(reminders[index], index, reminders.length);
+				const buttons = [createReminderButtons(index, reminders.length)];
+
+				await interaction.update({ embeds: [embed], components: buttons });
+      } catch (error) {
+        console.error(`Error handling reminder button:`, error);
+        if (!interaction.replied) {
+          await safeReply( interaction, 'Something went wrong with this button.', true );
+        }
+      }
+    }
+  } else if (interaction.isModalSubmit() && interaction.customId.startsWith('editReminderModal:')) {
+		const reminderId = interaction.customId.split(':')[1];
+		const newMessage = interaction.fields.getTextInputValue('editMessage');
+		const newTimeString = interaction.fields.getTextInputValue('editTime');
+
+		const reminder = await getReminderById(reminderId);
+		if (!reminder || reminder.userId !== interaction.user.id) {
+			return await safeReply(interaction, 'Reminder not found or unauthorized.', true );
+		}
+
+		const newRemindAt = parseDurationOrDateString(newTimeString);
+
+		if (!newRemindAt || newRemindAt < new Date()) {
+			return await safeReply(interaction, 'Invalid or past date.', true );
+		}
+
+		await updateReminder(reminderId, newMessage, newRemindAt);
+
+		return await safeReply(
+			interaction,
+			`Reminder updated!\n**New Message:** ${newMessage}\n**New Time:** <t:${Math.floor(newRemindAt.getTime() / 1000)}:F>`,
+			true
+		);
 	}
 });
 
-client.on('messageReactionAdd', async (reaction, user) => {
+client.on(Events.MessageReactionAdd, async (reaction, user) => {
   if (user.bot) return;
 
   try {
@@ -190,7 +295,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
   }
 });
 
-client.on('messageReactionRemove', async (reaction, user) => {
+client.on(Events.MessageReactionRemove, async (reaction, user) => {
   if (user.bot) return;
 
   try {

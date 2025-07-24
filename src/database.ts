@@ -352,6 +352,12 @@ export async function getUserReminders(userId: string) {
   });
 }
 
+export async function getReminderById(id: string) {
+  return await prisma.reminders.findUnique({
+    where: { id },
+  });
+}
+
 export async function getDueReminders(until: Date) {
   return await prisma.reminders.findMany({
     where: {
@@ -373,11 +379,15 @@ export async function getRemindersBetween(start: Date, end: Date) {
   });
 }
 
+export async function updateReminder(id: string, message: string, remindAt: Date){
+  return await prisma.reminders.update({
+    where: { id },
+    data: { message, remindAt }
+  });
+}
+
 export async function deleteReminder(id: string) {
   await prisma.reminders.delete({
     where: { id },
   });
 }
-
-
-

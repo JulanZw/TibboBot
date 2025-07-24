@@ -1,8 +1,55 @@
-import { ChatInputCommandInteraction, Client, PermissionFlagsBits, PermissionsBitField, SlashCommandBuilder } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, ChatInputCommandInteraction, Client, EmbedBuilder, ModalSubmitInteraction, PermissionFlagsBits, PermissionsBitField, SlashCommandBuilder } from 'discord.js';
 import { addGuild, getGuild } from './database';
 import { Command } from './commands';
 import path from 'path';
 import fs from "fs";
+import { Reminders } from '@prisma/client';
+
+//#region General
+
+/**
+ * Utility function so replies dont fail
+ * 
+ * @param interaction - The interaction that should be replied to
+ * @param content - The content of the reply
+ * @param ephemeral - If its ephemeral or not
+ * @param embeds - Embeds that should be replied with
+ * @param components - Components that should be replied with
+ */
+export async function safeReply(
+  interaction: ChatInputCommandInteraction | ButtonInteraction | ModalSubmitInteraction,
+  content: string,
+  ephemeral: boolean = false,
+  embeds?: EmbedBuilder[],
+  components?: ActionRowBuilder<any>[]
+) {
+  const payload: any = {
+    ...(content ? { content } : {}),
+    ephemeral,
+    ...(embeds ? { embeds } : {}),
+    ...(components ? { components } : {}),
+  };
+
+  if (!interaction.replied && !interaction.deferred) {
+    return await interaction.reply(payload);
+  } else {
+    return await interaction.followUp(payload);
+  }
+}
+
+/**
+ * Util function to ensure a guild exists in the database. It checks if its in the database and if not it creates it.
+ * 
+ * @param messageOrInteraction - the interaction or message that will provide the ID
+ * @returns the found or created guild
+ */
+export async function ensureGuildExistance(guildId: string ) {
+  const guild = await getGuild(guildId);
+  return guild ? guild : await addGuild(guildId);
+}
+
+
+//#endregion
 
 //#region Logging
 
@@ -156,24 +203,9 @@ async function safeExecute(
     if (interaction.replied || interaction.deferred) {
       await interaction.followUp("An unexpected error occurred.");
     } else {
-      await interaction.reply("An unexpected error occurred.");
+      await safeReply(interaction, "An unexpected error occurred.");
     }
   }
-}
-
-//#endregion
-
-//#region Checks
-
-/**
- * Util function to ensure a guild exists in the database. It checks if its in the database and if not it creates it.
- * 
- * @param messageOrInteraction - the interaction or message that will provide the ID
- * @returns the found or created guild
- */
-export async function ensureGuildExistance(guildId: string ) {
-  const guild = await getGuild(guildId);
-  return guild ? guild : await addGuild(guildId);
 }
 
 //#endregion
@@ -257,7 +289,7 @@ export const pendingReactionRoleSetups = new Map <string, {
  * @param {string} input - The input string to parse
  * @returns {Date | null} The parsed `Date` object if valid, or `null` if input is invalid or not recognized
  */
-export function parseDurationOrDate(input: string): Date | null {
+export function parseDurationOrDateString(input: string): Date | null {
   input = input.trim().toLowerCase();
 
   // Absolute: YYYY-MM-DD
@@ -419,6 +451,39 @@ function addMonths(months: number): Date {
   return result;
 }
 
+export function createReminderEmbed(reminder: Reminders, index: number, total: number) {
+  return new EmbedBuilder()
+    .setTitle(`Reminder ${index + 1} of ${total}`)
+    .addFields(
+      { name: 'Message', value: reminder.message },
+      { name: 'Remind At', value: `<t:${Math.floor(reminder.remindAt.getTime() / 1000)}:F>` },
+    )
+    .setFooter({ text: `Created: ${reminder.createdAt.toISOString()}` });
+}
+
+export function createReminderButtons(index: number, total: number) {
+  return new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId('prev')
+      .setLabel('Previous')
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(index === 0),
+    new ButtonBuilder()
+      .setCustomId('next')
+      .setLabel('Next')
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(index === total - 1),
+    new ButtonBuilder()
+      .setCustomId(`edit`)
+      .setLabel('Edit')
+      .setStyle(ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId('delete')
+      .setLabel('Delete')
+      .setStyle(ButtonStyle.Danger),
+  );
+}
+
 export interface ReminderCacheEntry {
   userId: string;
   message: string;
@@ -429,7 +494,12 @@ export interface ReminderCacheEntry {
 /**
  * Cache for reminders by date string (YYYY-MM-DD)
  */
-export const reminderDaysCache = new Map<string, ReminderCacheEntry[]>
+export const reminderDaysCache = new Map<string, ReminderCacheEntry[]>()
+
+/**
+ * In memory storage for the active pages
+ */
+export const activePages = new Map<string, number>();
 
 /**
  * Utility function to get the key for the reminder cache
