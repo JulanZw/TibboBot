@@ -9,9 +9,17 @@ import { evaluate } from 'mathjs';
 const token = process.env.DISCORD_TOKEN;
 const ownerId = process.env.OWNER_DISCORD_ID
 
-if(!token || !ownerId){
-	console.error('Token or owner id not set.');
+if(!token || !process.env.DATABASE_URL){
+	console.error('Token or database url not set.');
 	process.exit(1);
+}
+
+if(!ownerId || !process.env.WOL_IP || !process.env.WOL_MAC){
+	logWithTime('Owner id, WOL IP or WOL MAC not set','warn');
+}
+
+if(!process.env.BOT_ID){
+	logWithTime('Bot ID not set','info');
 }
 
 const client = new Client({
@@ -154,7 +162,7 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
       return await safeReply(interaction, 'This command can only be used in a server.');
     }
 
-    if (command.permissionLevel === 'owner' && interaction.user.id !== ownerId) {
+    if (command.permissionLevel === 'owner' && (!process.env.OWNER_DISCORD_ID || interaction.user.id !== ownerId)) {
       return await safeReply(interaction, 'You didn’t say the magic word...');
     }
 

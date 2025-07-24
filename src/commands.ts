@@ -14,9 +14,8 @@ const wolCommand = commandBuilder(
   'does some magic (bot owner only)',
   async (interaction, client) => {
     if(!process.env.WOL_MAC || process.env.WOL_IP){
-      console.error('Current MAC: ',process.env.WOL_MAC);
-      console.error('Current IP: ',process.env.WOL_IP);
-      return await safeReply(interaction, 'No set IP or MAC');
+      logWithTime('Cannot execute WOL because MAC or IP is not set','error')
+      return await safeReply(interaction, 'IP or MAC has not been set');
     }
 
     await safeReply(interaction, 'magic...');
@@ -544,8 +543,9 @@ const sourceCommand = commandBuilder(
 
     await interaction.deferReply({ ephemeral: true });
 
-    const srcFolderPath = path.resolve(__dirname, '../src');
-    const zipPath = path.resolve(__dirname, '../tmp/source.zip');
+    const rootPath = path.resolve(__dirname, '../');
+    const srcFolderPath = path.join(rootPath, 'src');
+    const zipPath = path.join(rootPath, 'tmp/source.zip');
 
     fs.mkdirSync(path.dirname(zipPath), { recursive: true });
 
@@ -562,7 +562,7 @@ const sourceCommand = commandBuilder(
 
         await interaction.editReply({ content: 'Source code sent to your DMs!' });
       } catch (error) {
-        logWithTime('Failed to send source ZIP:'+ error,'error');
+        logWithTime('Failed to send source ZIP:' + error, 'error');
         await interaction.editReply({
           content: 'Failed to send the source code via DM. Please check your privacy settings.',
         });
@@ -574,17 +574,25 @@ const sourceCommand = commandBuilder(
     });
 
     archive.on('error', err => {
-      logWithTime('Archive error:'+err,'error');
+      logWithTime('Archive error:' + err, 'error');
       interaction.editReply('An error occurred while creating the ZIP.');
     });
 
     archive.pipe(output);
-    archive.directory(srcFolderPath, false);
+
+    archive.directory(srcFolderPath, 'src');
+
+    // Add individual files from root
+    ['README.md', 'LICENSE'].forEach(file =>
+      archive.file(path.join(rootPath, file), { name: file })
+    );
+
     await archive.finalize();
   },
   false,
   'user'
 );
+
 
 //#endregion
 
