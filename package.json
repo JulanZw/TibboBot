@@ -4,7 +4,7 @@
   "description": "a small bot for funny",
   "main": "/src/index.js",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "author": "Julan Zwiggelaar",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
