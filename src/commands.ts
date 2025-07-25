@@ -6,6 +6,7 @@ import { channelOption, integerOption, stringOption, userOption } from './option
 import archiver from 'archiver';
 import fs from 'fs';
 import path from 'path';
+import { info } from 'console';
 
 //#region Utility
 
@@ -14,7 +15,7 @@ const wolCommand = commandBuilder(
   'does some magic (bot owner only)',
   async (interaction, client) => {
     if(!process.env.WOL_MAC || process.env.WOL_IP){
-      logWithTime('Cannot execute WOL because MAC or IP is not set','error')
+      logWithTime('Cannot execute WOL because MAC or IP is not set','error',true)
       return await safeReply(interaction, 'IP or MAC has not been set');
     }
 
@@ -22,10 +23,6 @@ const wolCommand = commandBuilder(
     wol.wake(process.env.WOL_MAC, {
       address: process.env.WOL_IP,
       port: 9
-    }, function (error) {
-      if (error) {
-        logWithTime('Error:'+ error, 'error',true);
-      }
     });
   },
   false,
@@ -110,7 +107,7 @@ const leaderboardCommand = commandBuilder(
         const username = user ? user.username : 'Unknown User';
         return `${index + 1}. ${username}: ${row.msg_count} messages, ${row.char_count} characters`;
       } catch (error) {
-        logWithTime('Error fetching user:'+error,'error');
+        logWithTime('Error fetching user:'+error,'error',true);
         return `${index + 1}. Unknown User: ${row.msg_count} messages, ${row.char_count} characters`;
       }
     }));
@@ -209,7 +206,7 @@ const setTodayIsChannelCommand = commandBuilder(
 
     await setTodayIsChannel(guild.guildId,targetChannel.id);
     await safeReply(interaction,guild.pointGiverId ? `set <#${targetChannel}> as the server's today is channel` : `set <#${targetChannel}> as the server's point giver. Dont forget to also set a point giver!`);
-    logWithTime(`Set <#${targetChannel}> as today is channel for ${guild.guildId}`);
+    logWithTime(`Set <#${targetChannel}> as today is channel for ${guild.guildId}`,'info');
   },
   true,
   'admin',
@@ -253,10 +250,10 @@ const addPointsCommand = commandBuilder(
     }
     if(targetUser.id === (process.env.BOT_ID ?? '0')){
       await safeReply(interaction,`Thank you <@${interaction.user.id}> for the ${amount} points`);
-      logWithTime(`${amount} points were given to the bot`);
+      logWithTime(`${amount} points were given to the bot`,'info');
     }else{
       await safeReply(interaction,`Added ${amount} points for ${targetUser.username}.`);
-      logWithTime(`${amount} points were given to \'${targetUser.username}\'`);
+      logWithTime(`${amount} points were given to \'${targetUser.username}\'`,'info');
     }
   },
   false,
@@ -324,7 +321,7 @@ const setBirthdayChannelCommand = commandBuilder(
 
     await setBirthdayChannel(guild.guildId,targetChannel.id)
     await safeReply(interaction,`set <#${targetChannel}> as the server's birthday channel`);
-    logWithTime(`Set <#${targetChannel}> as birthday channel for ${guild.guildId}`);
+    logWithTime(`Set <#${targetChannel}> as birthday channel for ${guild.guildId}`,'info');
   },
   true,
   'admin',
@@ -357,7 +354,7 @@ const setBirthdayCommand = commandBuilder(
     if(!newBirthday){
       return await safeReply(interaction,'Something went wrong while setting your birthday...');
     } else {
-      logWithTime(`Set birthday for <@${newBirthday.userId}> on ${formatDate(newBirthday.birthday)}`);
+      logWithTime(`Set birthday for <@${newBirthday.userId}> on ${formatDate(newBirthday.birthday)}`,'info');
       return await safeReply(interaction,`Set birthday for <@${newBirthday.userId}> on ${formatDate(newBirthday.birthday)}`);
     }
   },
@@ -391,7 +388,7 @@ const setCountChannelCommand = commandBuilder(
 
     await setCountChannel(guild.guildId,targetChannel.id)
     await safeReply(interaction,`set <#${targetChannel}> as the server's count channel`);
-    logWithTime(`Set <#${targetChannel}> as count channel for ${guild.guildId}`);
+    logWithTime(`Set <#${targetChannel}> as count channel for ${guild.guildId}`,'info');
   },
   true,
   'admin',
@@ -515,6 +512,7 @@ const remindersCommand = commandBuilder(
       [embed],
       components,
     );
+    logWithTime(`User ${interaction.user.id} requested their reminders`,'info');
   },
   false,
   'user'
@@ -545,6 +543,7 @@ const sourceCommand = commandBuilder(
 
     const rootPath = path.resolve(__dirname, '../');
     const srcFolderPath = path.join(rootPath, 'src');
+    const prismaPath = path.join(rootPath, 'prisma');
     const zipPath = path.join(rootPath, 'tmp/source.zip');
 
     fs.mkdirSync(path.dirname(zipPath), { recursive: true });
@@ -562,7 +561,7 @@ const sourceCommand = commandBuilder(
 
         await interaction.editReply({ content: 'Source code sent to your DMs!' });
       } catch (error) {
-        logWithTime('Failed to send source ZIP:' + error, 'error');
+        logWithTime('Failed to send source ZIP:' + error, 'error',true);
         await interaction.editReply({
           content: 'Failed to send the source code via DM. Please check your privacy settings.',
         });
@@ -574,15 +573,16 @@ const sourceCommand = commandBuilder(
     });
 
     archive.on('error', err => {
-      logWithTime('Archive error:' + err, 'error');
+      logWithTime('Archive error:' + err, 'error',true);
       interaction.editReply('An error occurred while creating the ZIP.');
     });
 
     archive.pipe(output);
 
     archive.directory(srcFolderPath, 'src');
+    archive.directory(prismaPath, 'prisma');
 
-    ['README.md', 'LICENSE'].forEach(file =>
+    ['README.md', 'LICENSE', 'package.json', 'tsconfig.json'].forEach(file =>
       archive.file(path.join(rootPath, file), { name: file })
     );
 
@@ -592,10 +592,9 @@ const sourceCommand = commandBuilder(
   'user'
 );
 
-
 //#endregion
 
-//#region General
+//#region Exports
 
 /**
  * Represents a Discord slash command definition.

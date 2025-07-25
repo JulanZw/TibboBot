@@ -22,7 +22,6 @@ export async function insertUserData(discordId: string, charCount: bigint, msgCo
       points: points,
     }
   });
-  logWithTime(`Inserted new data for user ${discordId}: char_count = ${charCount}, msg_count = ${msgCount}`);
   return newUser;
 }
 
@@ -55,7 +54,6 @@ export async function getAllUserDataTodayIs(): Promise<{ discordId: string; poin
     select: { discordId: true, points: true }
     
   });
-  logWithTime('Pointboard requested');
   return rows;
 }
 
@@ -64,7 +62,6 @@ export async function updateUserPoints(discordId: string, points: bigint, intera
     where: { discordId },
     data: { points }
   });
-  logWithTime(`Added points for user ${discordId} (${interaction.options.getUser('target').username}): points added = ${points}`);
   return user;
 }
 
@@ -104,10 +101,10 @@ export async function updateCountsForUser(author: User, content: string){
     const newCharCount = user.char_count + BigInt(messageLength);
     const newMsgCount = user.msg_count + 1;
     await updateUserCharMsgCount(userId, newCharCount, newMsgCount);
-    logWithTime(`Updated user messages and characters for ${author.id} [${author.username}]`);
+    logWithTime(`Updated user messages and characters for ${author.id} [${author.username}]`,'info');
   } else {
     await insertUserData(userId, BigInt(messageLength), 1);
-    logWithTime(`Added new user for counting messages and characters for ${author.id} [${author.username}]`);
+    logWithTime(`Added new user for counting messages and characters for ${author.id} [${author.username}]`,'info');
   }
 }
 

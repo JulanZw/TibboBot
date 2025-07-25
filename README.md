@@ -5,23 +5,12 @@ Includes features like counting channels, reminders, point tracking, and more.
 
 ---
 
-## Features
-
-- Slash commands with ephemeral responses
-- Daily counting game (auto-reset)
-- Reminder system (supports natural time input)
-- Reaction roles
-- Leaderboard & statistics
-- Source code command (zips & sends the `/src` directory)
-
----
-
 ## Setup
 
-1. **Clone the repository**
+1. **Clone the repository** (soon)
 
    ```bash
-   git clone https://your.git.repo/discord_bot.git
+   git clone https://soon.git.repo/discord_bot.git
    cd discord_bot
    ```
 

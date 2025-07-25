@@ -15,7 +15,7 @@ if(!token || !process.env.DATABASE_URL){
 }
 
 if(!ownerId || !process.env.WOL_IP || !process.env.WOL_MAC){
-	logWithTime('Owner id, WOL IP or WOL MAC not set','warn');
+	logWithTime('Owner id, WOL IP or WOL MAC not set','warn',true);
 }
 
 if(!process.env.BOT_ID){
@@ -42,7 +42,7 @@ client.once('ready', async () =>{
 			Routes.applicationCommands(client.user!.id),
 			{ body: commandsToRegister }
 		);
-		logWithTime('Slash commands registered.');
+		logWithTime('Slash commands registered.','info');
 	} catch (error) {
 		console.error('Error registering slash commands:', error);
 	}
@@ -76,7 +76,7 @@ client.on(Events.MessageCreate, async (message: Message) => {
 					}
 				}
 			} catch (err) {
-				logWithTime(`Invalid math expression: "${content}" — ${err}`);
+				logWithTime(`Invalid math expression: "${content}" — ${err}`,'error',true);
 			}
 		}
 
@@ -110,7 +110,7 @@ client.on(Events.MessageCreate, async (message: Message) => {
 					if(newReactionRole){
 						await sentMessage.react(newReactionRole.emoji);
 					} else {
-						logWithTime(`Something went wrong while creating a reaction message`);
+						logWithTime(`Something went wrong while creating a reaction message`,'error',true);
 
 						return await interaction.followUp({
 							content: 'Something went wrong while creating the message.',
@@ -169,7 +169,7 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
     try {
       await command.execute(interaction, client);
     } catch (error) {
-      logWithTime(`Error executing command ${interaction.commandName}: `+ error,'error');
+      logWithTime(`Error executing command ${interaction.commandName}: `+ error,'error',true);
       if (!interaction.replied && !interaction.deferred) {
 				await safeReply(interaction, 'There was an error executing that command.', true);
 			}

@@ -25,15 +25,15 @@ export function setupCronJobs(client: Client): void {
         try {
           const channel = await client.channels.fetch(guild.todayIsChannelId);
           if (!channel || !(channel instanceof TextChannel)) {
-            logWithTime(`Channel for guild ${guild.guildId} not found or not text-based.`);
+            logWithTime(`Channel for guild ${guild.guildId} not found or not text-based.`,'error');
             return;
           }
 
 
           await channel.send(`Today is ${formattedDate}, waited for ${randomDelay} ms`);
-          logWithTime(`Message sent in ${guild.guildId}: "Today is ${formattedDate}"`);
+          logWithTime(`Message sent in ${guild.guildId}: "Today is ${formattedDate}"`,'info');
         } catch (err) {
-          logWithTime(`Failed to send 'today is' message in guild ${guild.guildId}: ${err}`);
+          logWithTime(`Failed to send 'today is' message in guild ${guild.guildId}: ${err}`,'error');
         }
       }));
 
@@ -44,17 +44,18 @@ export function setupCronJobs(client: Client): void {
         try {
           const channel = await client.channels.fetch(guild.birthdayChannelId);
           if (!channel || !(channel instanceof TextChannel)) {
-            logWithTime(`Birthday channel in guild ${guild.guildId} not found or not text-based.`);
+            logWithTime(`Birthday channel in guild ${guild.guildId} not found or not text-based.`,'error',true);
             return;
           }
 
           const birthdays = await getAllBirthdaysInGuildForGivenDate(guild.guildId, new Date());
 
-          await Promise.allSettled(birthdays.map(birthday =>
-            channel.send(`🎉 Happy Birthday <@${birthday.userId}>!`)
-          ));
+          await Promise.allSettled(birthdays.map(birthday => {
+            channel.send(`🎉 Happy Birthday <@${birthday.userId}>!`);
+            logWithTime(`Message send in ${birthday.guildId}: "Happy Birthday <@${birthday.userId}>!"`,'info');
+          }));
         } catch (err) {
-          logWithTime(`Failed to send birthday messages in guild ${guild.guildId}: ${err}`);
+          logWithTime(`Failed to send birthday messages in guild ${guild.guildId}: ${err}`,'error',true);
         }
       }));
 
@@ -85,12 +86,23 @@ export function setupCronJobs(client: Client): void {
 
   cron.schedule('0 0 1 1 *', async () => {
     try {
-      const channel = await client.channels.fetch('1065200345636155482');
-      if (channel?.isTextBased() && !(channel instanceof PartialGroupDMChannel)) {
-        await channel.send(`🎆 Happy New Year!`);
-      } else {
-        logWithTime("Error: Channel not found or not text-based.");
-      }
+      const guilds = await getAllGuilds();
+      await Promise.allSettled(guilds.map(async guild => {
+        if (!guild.todayIsChannelId) return;
+
+        try {
+          const channel = await client.channels.fetch(guild.todayIsChannelId);
+          if (!channel || !(channel instanceof TextChannel)) {
+            logWithTime(`Channel for guild ${guild.guildId} not found or not text-based.`,'error',true);
+            return;
+          }
+
+          await channel.send(`🎆 Happy New Year!`);
+          logWithTime(`Message sent in ${guild.guildId}: "🎆 Happy New Year!"`,'info');
+        } catch (err) {
+          logWithTime(`Failed to send 'Happy new Year' message in guild ${guild.guildId}: ${err}`,'error',true);
+        }
+      }));
     } catch (error) {
       logWithTime("Error in yearly cron job:"+error,'error',true);
     }

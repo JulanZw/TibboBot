@@ -23,7 +23,7 @@ export async function safeReply(
   embeds?: EmbedBuilder[],
   components?: ActionRowBuilder<any>[]
 ) {
-  const payload: any = {
+  const payload = {
     ...(content ? { content } : {}),
     ephemeral,
     ...(embeds ? { embeds } : {}),
@@ -91,7 +91,7 @@ export function logWithTime(message: string, level: LogLevel = 'info', logToCons
 // export async function logToChannel(message: string, client: Client): Promise<void> {
 //   const now = new Date();
 //   const timestamp = now.toISOString().replace('T', ' ').slice(0, 19);
-  
+//
 //   try {
 //     const channel = await client.channels.fetch('1323669455426818139');
 //     if (channel?.isTextBased() && !(channel instanceof PartialGroupDMChannel)) {
@@ -197,9 +197,9 @@ async function safeExecute(
 ) {
   try {
     await fn();
-    logWithTime(`${commandName} command executed`);
+    logWithTime(`${commandName} command executed`,'info');
   } catch (err) {
-    logWithTime('An Error occured'+err,'error');
+    logWithTime('An Error occured'+err,'error',true);
     if (interaction.replied || interaction.deferred) {
       await interaction.followUp("An unexpected error occurred.");
     } else {
@@ -232,20 +232,6 @@ function getDaySuffix(day: number) {
     default: return 'th';
   }
 }
-
-//#endregion
-
-//#region Reaction Messages
-
-/**
- * *In-memory storage for the role react message building proces*
- */
-export const pendingReactionRoleSetups = new Map <string, {
-  interaction: ChatInputCommandInteraction,
-  emojiRoleMap: Record<string, string>,
-  channelId: string,
-  targetChannelId: string
-} >();
 
 //#endregion
 
@@ -315,7 +301,7 @@ export function parseDurationOrDateString(input: string): Date | null {
     return parseWeekDay(weekdayMatch);
   }
 
-  // Relative duration time (in/over x unit[s])
+  // Relative duration time
   const durationMatch = input.match(/\b(?:in|over)\s+((?:\d+\s*(?:min(?:uut)?(?:en)?|u(?:ren)?|hours?|dagen?|days?|weken?|weeks?|maanden?|months?)\s*(?:en|and)?\s*)+)/i);
   if (durationMatch) {
     return parseRelativeTime(durationMatch);
@@ -509,6 +495,16 @@ export const activePages = new Map<string, number>();
  * In memory storage for tracking who requested the source files today
  */
 export const sourceRequestTracker = new Set<string>();
+
+/**
+ * In-memory storage for the role react message building proces
+ */
+export const pendingReactionRoleSetups = new Map <string, {
+  interaction: ChatInputCommandInteraction,
+  emojiRoleMap: Record<string, string>,
+  channelId: string,
+  targetChannelId: string
+} >();
 
 /**
  * Utility function to get the key for the reminder cache
