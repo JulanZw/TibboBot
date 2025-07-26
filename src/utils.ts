@@ -53,11 +53,13 @@ export async function ensureGuildExistance(guildId: string ) {
 
 //#region Logging
 
-const logFilePath = path.join("logs", "latest.log");
+const logDir = path.resolve(__dirname, '../logs');
 
-if (!fs.existsSync("logs")) {
-  fs.mkdirSync("logs");
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir, { recursive: true });
 }
+
+const logFilePath = path.join(logDir, 'latest.log');
 
 type LogLevel = "info" | "warn" | "error";
 
@@ -200,11 +202,7 @@ async function safeExecute(
     logWithTime(`${commandName} command executed`,'info');
   } catch (err) {
     logWithTime('An Error occured'+err,'error',true);
-    if (interaction.replied || interaction.deferred) {
-      await interaction.followUp("An unexpected error occurred.");
-    } else {
-      await safeReply(interaction, "An unexpected error occurred.");
-    }
+    return await safeReply(interaction, "An unexpected error occurred.");
   }
 }
 

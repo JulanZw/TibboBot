@@ -1,8 +1,7 @@
 {
   "name": "jzzwutils",
-  "version": "1.0.0",
+  "version": "2.20.0",
   "description": "a small bot for funny",
-  "main": "/src/index.js",
   "private": true,
   "license": "MIT",
   "author": "Julan Zwiggelaar",
@@ -10,7 +9,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node index.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "migrate": "ts-node migrateData.ts"
+    "migrate": "ts-node migrateData.ts",
+    "export": "node src/commandsExport.ts"
   },
   "dependencies": {
     "@discordjs/builders": "^1.9.0",
@@ -36,6 +36,8 @@
     "wol": "^1.0.7"
   },
   "devDependencies": {
-    "@types/archiver": "^6.0.3"
+    "@types/archiver": "^6.0.3",
+    "@types/node-cron": "^3.0.11",
+    "@types/wol": "^1.0.4"
   }
 }

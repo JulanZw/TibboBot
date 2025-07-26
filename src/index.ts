@@ -7,7 +7,8 @@ import { addReactionRole, checkAndUpdateCount, deleteReminder, getLastCountUser,
 import { evaluate } from 'mathjs';
 
 const token = process.env.DISCORD_TOKEN;
-const ownerId = process.env.OWNER_DISCORD_ID
+const ownerId = process.env.OWNER_DISCORD_ID;
+export let botId: string;
 
 if(!token || !process.env.DATABASE_URL){
 	console.error('Token or database url not set.');
@@ -16,10 +17,6 @@ if(!token || !process.env.DATABASE_URL){
 
 if(!ownerId || !process.env.WOL_IP || !process.env.WOL_MAC){
 	logWithTime('Owner id, WOL IP or WOL MAC not set','warn',true);
-}
-
-if(!process.env.BOT_ID){
-	logWithTime('Bot ID not set','info');
 }
 
 const client = new Client({
@@ -36,6 +33,8 @@ const client = new Client({
 client.once('ready', async () =>{
 	setupCronJobs(client);
 
+	botId = client.user!.id;
+
 	const rest = new REST({ version: '10' }).setToken(token);
 	try {
 		await rest.put(
@@ -44,7 +43,7 @@ client.once('ready', async () =>{
 		);
 		logWithTime('Slash commands registered.','info');
 	} catch (error) {
-		console.error('Error registering slash commands:', error);
+		logWithTime('Error registering slash commands: '+error,'error',true);
 	}
 });
 

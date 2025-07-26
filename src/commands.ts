@@ -6,7 +6,7 @@ import { channelOption, integerOption, stringOption, userOption } from './option
 import archiver from 'archiver';
 import fs from 'fs';
 import path from 'path';
-import { info } from 'console';
+import { botId } from './index';
 
 //#region Utility
 
@@ -19,11 +19,11 @@ const wolCommand = commandBuilder(
       return await safeReply(interaction, 'IP or MAC has not been set');
     }
 
-    await safeReply(interaction, 'magic...');
-    wol.wake(process.env.WOL_MAC, {
+    const succes = await wol.wake(process.env.WOL_MAC, {
       address: process.env.WOL_IP,
       port: 9
     });
+    return await safeReply(interaction, (succes ? 'magic...' : 'magic failed... :('));
   },
   false,
   'owner'
@@ -189,7 +189,7 @@ const setPointGiverCommand = commandBuilder(
 );
 
 const setTodayIsChannelCommand = commandBuilder(
-  'setTodayIsChannel',
+  'set_today_is_channel',
   'Sets the channel the bot will send the "today is x" message to. (admin only)',
   async (interaction, client) => {
     const guild = await getGuild(interaction.guildId as string); // ? this gets checked in the main loop before it reaches this
@@ -217,7 +217,7 @@ const setTodayIsChannelCommand = commandBuilder(
 );
 
 const addPointsCommand = commandBuilder(
-  'addpoints',
+  'add_points',
   'adds points to the user (can only be used by the servers point giver)',
   async (interaction, client) => {
     const pointGiverId = await getPointGiverIdOfGuild(interaction.guildId as string);
@@ -248,7 +248,7 @@ const addPointsCommand = commandBuilder(
     }else{
       await updateUserPoints(targetUser.id,BigInt(amount)+row.points,interaction);
     }
-    if(targetUser.id === (process.env.BOT_ID ?? '0')){
+    if(targetUser.id === botId){
       await safeReply(interaction,`Thank you <@${interaction.user.id}> for the ${amount} points`);
       logWithTime(`${amount} points were given to the bot`,'info');
     }else{
@@ -266,7 +266,7 @@ const addPointsCommand = commandBuilder(
 );
 
 const todayIsBoardCommand = commandBuilder(
-  'todayisboard',
+  'today_is_board',
   'Shows the top users on the today is leaderboard.',
   async (interaction, client) => {
     const users = await getAllUserDataTodayIs();
@@ -304,7 +304,7 @@ const todayIsBoardCommand = commandBuilder(
 //#region Birthday
 
 const setBirthdayChannelCommand = commandBuilder(
-  'setbirthdaychannel',
+  'set_birthday_channel',
   'Sets the birthday channel of the guild. (admin only)',
   async (interaction, client) => {
     const guild = await getGuild(interaction.guildId as string); // ? this gets checked in the main loop before it reaches this
@@ -332,7 +332,7 @@ const setBirthdayChannelCommand = commandBuilder(
 );
 
 const setBirthdayCommand = commandBuilder(
-  'setBirthday',
+  'set_birthday',
   'Set your birthday for this server',
   async (interaction, client) => {
     const guild = await getGuild(interaction.guildId as string); // ? this gets checked in the main loop before it reaches this
@@ -371,7 +371,7 @@ const setBirthdayCommand = commandBuilder(
 //#region Count
 
 const setCountChannelCommand = commandBuilder(
-  'setcountchannel',
+  'set_count_channel',
   'Sets the count channel of the guild. (admin only)',
   async (interaction, client) => {
     const guild = await getGuild(interaction.guildId as string); // ? this gets checked in the main loop before it reaches this
@@ -403,7 +403,7 @@ const setCountChannelCommand = commandBuilder(
 //#region Reaction Roles
 
 export const reactionRolesCommand = commandBuilder(
-  'reactionroles',
+  'reaction_roles',
   'Set up a reaction role message dynamically. (admin only)',
   async (interaction, client) => {
     const userId = interaction.user.id;
@@ -441,7 +441,7 @@ export const reactionRolesCommand = commandBuilder(
 //#region Reminders
 
 const setReminderCommand = commandBuilder(
-  'setreminder',
+  'set_reminder',
   'Sets a reminder',
   async interaction => {
     const when = interaction.options.getString('when', true);
@@ -491,7 +491,7 @@ const setReminderCommand = commandBuilder(
 );
 
 const remindersCommand = commandBuilder(
-  'myreminders',
+  'my_reminders',
   'Shows all your reminders and allows you to edit them',
   async interaction => {
     const reminders = await getUserReminders(interaction.user.id);

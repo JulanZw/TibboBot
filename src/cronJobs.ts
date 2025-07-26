@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { Client, PartialGroupDMChannel, TextChannel } from 'discord.js';
+import { Client, TextChannel } from 'discord.js';
 import { formatDate, getDateKey, logWithTime, reminderDaysCache, sourceRequestTracker } from './utils';
 import {
   deleteReminder,
