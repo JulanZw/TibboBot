@@ -5,4 +5,5 @@ todayis_bot.iml
 .idea/
 node_modules/
 /old/
-/generated/
+/logs/
+/scripts/output/
