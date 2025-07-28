@@ -1,4 +1,4 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, ChatInputCommandInteraction, Client, EmbedBuilder, ModalSubmitInteraction, PermissionFlagsBits, PermissionsBitField, SlashCommandBuilder } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, ChatInputCommandInteraction, Client, EmbedBuilder, MessageFlags, ModalSubmitInteraction, PermissionFlagsBits, PermissionsBitField, SlashCommandBuilder } from 'discord.js';
 import { addGuild, getGuild } from './database';
 import { Command } from './commands';
 import path from 'path';
@@ -8,11 +8,11 @@ import { Reminders } from '@prisma/client';
 //#region General
 
 /**
- * Utility function so replies dont fail
+ * Utility function so replies don't fail
  * 
  * @param interaction - The interaction that should be replied to
  * @param content - The content of the reply
- * @param ephemeral - If its ephemeral or not
+ * @param ephemeral - If it's ephemeral or not
  * @param embeds - Embeds that should be replied with
  * @param components - Components that should be replied with
  */
@@ -23,9 +23,9 @@ export async function safeReply(
   embeds?: EmbedBuilder[],
   components?: ActionRowBuilder<any>[]
 ) {
-  const payload = {
+  const payload: any = {
     ...(content ? { content } : {}),
-    ephemeral,
+    ...(ephemeral ? { flags: MessageFlags.Ephemeral } : {}),
     ...(embeds ? { embeds } : {}),
     ...(components ? { components } : {}),
   };
@@ -275,20 +275,16 @@ function getDaySuffix(day: number) {
  */
 export function parseDurationOrDateString(input: string): Date | null {
   input = input.trim().toLowerCase();
+  let returnDate: Date | null = null;
+
+  const isoMatch = input.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const altMatch = input.match(/^(\d{2})-(\d{2})-(\d{4})$/);
 
   // Absolute: YYYY-MM-DD
-  const isoMatch = input.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (isoMatch) {
-    const [_, y, m, d] = isoMatch;
-    return new Date(`${y}-${m}-${d}T00:00:00`);
-  }
+  if(isoMatch) returnDate = parseAbsoluteIsoDate(isoMatch);
 
   // Absolute: DD-MM-YYYY
-  const altMatch = input.match(/^(\d{2})-(\d{2})-(\d{4})$/);
-  if (altMatch) {
-    const [_, d, m, y] = altMatch;
-    return new Date(`${y}-${m}-${d}T00:00:00`);
-  }
+  if(altMatch) returnDate = parseAbsoluteAltDate(altMatch);
 
   // Natural keywords - (EN + NL)
   if (keywordMap[input]) return keywordMap[input]();
@@ -296,17 +292,33 @@ export function parseDurationOrDateString(input: string): Date | null {
   // Weekdays - (EN + NL)
   const weekdayMatch = input.match(/^(next|volgende(?:\s+week)?)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)$/i);
   if (weekdayMatch) {
-    return parseWeekDay(weekdayMatch);
+    returnDate = parseWeekDay(weekdayMatch);
   }
 
   // Relative duration time
   const durationMatch = input.match(/\b(?:in|over)\s+((?:\d+\s*(?:min(?:uut)?(?:en)?|u(?:ren)?|hours?|dagen?|days?|weken?|weeks?|maanden?|months?)\s*(?:en|and)?\s*)+)/i);
   if (durationMatch) {
-    return parseRelativeTime(durationMatch);
+    returnDate = parseRelativeTime(durationMatch);
   }
 
-  return null;
+  if(returnDate){
+    returnDate.setSeconds(0);
+    returnDate.setMilliseconds(0);
+  }
+
+  return returnDate;
 }
+
+function parseAbsoluteIsoDate(match: RegExpMatchArray): Date | null {
+  const [_, y, m, d] = match;
+  return new Date(`${y}-${m}-${d}T00:00:00`);
+}
+
+function parseAbsoluteAltDate(match: RegExpMatchArray): Date | null {
+  const [_, d, m, y] = match;
+  return new Date(`${y}-${m}-${d}T00:00:00`);
+}
+
 
 function parseWeekDay(match: RegExpMatchArray): Date | null {
   const targetDayStr = match[2];
@@ -442,7 +454,7 @@ export function createReminderEmbed(reminder: Reminders, index: number, total: n
       { name: 'Message', value: reminder.message },
       { name: 'Remind At', value: `<t:${Math.floor(reminder.remindAt.getTime() / 1000)}:F>` },
     )
-    .setFooter({ text: `Created: ${reminder.createdAt.toISOString()}` });
+    .setFooter({ text: `Created: <t:${Math.floor(reminder.createdAt.getTime() / 1000)}:F>` });
 }
 
 export function createReminderButtons(index: number, total: number) {
@@ -473,6 +485,30 @@ export interface ReminderCacheEntry {
   message: string;
   remindAt: Date;
   id: string;
+}
+
+//#endregion
+
+//#region Birthday
+
+export function parseBirthdayDate(input: string): Date | null {
+  let returnDate: Date | null = null;
+
+  const isoMatch = input.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const altMatch = input.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+
+  // Absolute: YYYY-MM-DD
+  if(isoMatch) returnDate = parseAbsoluteIsoDate(isoMatch);
+
+  // Absolute: DD-MM-YYYY
+  if(altMatch) returnDate = parseAbsoluteAltDate(altMatch);
+
+  if(returnDate){
+    returnDate.setSeconds(0);
+    returnDate.setMilliseconds(0);
+  }
+
+  return returnDate;
 }
 
 //#endregion

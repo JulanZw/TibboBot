@@ -3,8 +3,10 @@ import { ActionRowBuilder, Client, EmbedBuilder, Events, GatewayIntentBits, Inte
 import { setupCronJobs } from './cronJobs';
 import { activePages, createReminderButtons, createReminderEmbed, ensureGuildExistance, logWithTime, parseDurationOrDateString, pendingReactionRoleSetups, safeReply } from './utils';
 import { commands, commandsToRegister } from './commands';
-import { addReactionRole, checkAndUpdateCount, deleteReminder, getLastCountUser, getReminderById, getRoleForReaction, getUserReminders, updateCountsForUser, updateReminder } from './database';
+import { addReactionRole, checkAndUpdateCount, deleteReminder, getLastCountUser, getReminderById, getRoleForReaction, getUserReminders, setLastCountUser, updateCountsForUser, updateReminder } from './database';
 import { evaluate } from 'mathjs';
+
+//#region Setup
 
 const token = process.env.DISCORD_TOKEN;
 const ownerId = process.env.OWNER_DISCORD_ID;
@@ -47,6 +49,10 @@ client.once('ready', async () =>{
 	}
 });
 
+//#endregion
+
+//#region Message creation
+
 client.on(Events.MessageCreate, async (message: Message) => {
 	if (message.author.bot) return;
 	await updateCountsForUser(message.author,message.content);
@@ -55,6 +61,11 @@ client.on(Events.MessageCreate, async (message: Message) => {
 
 		if(guild.countChannelId && guild.countChannelId === message.channelId){
 			const content = message.content.trim();
+
+			const checkArray = content.split(' ');
+			if(checkArray.length > 1){
+				return;
+			}
 
 			try {
 				const result = evaluate(content);
@@ -67,12 +78,15 @@ client.on(Events.MessageCreate, async (message: Message) => {
 					if (!success) {
 						await message.react('❌');
 						await message.reply(`<@${message.author.id}> entered a wrong number! Next number is 1...`);
+						await setLastCountUser(guild.guildId, '0');
 					} else if(lastCountUser && lastCountUser === message.author.id){
 						await message.react('❌');
 						await message.reply(`Only count on yourself, not with yourself... Next number is 1...`);
+						await setLastCountUser(guild.guildId, '0');
 					}else {
 						await message.react('✅');
 					}
+					await setLastCountUser(guild.guildId, message.author.id);
 				}
 			} catch (err) {
 				logWithTime(`Invalid math expression: "${content}" — ${err}`,'error',true);
@@ -140,6 +154,10 @@ client.on(Events.MessageCreate, async (message: Message) => {
 		}
 	}
 });
+
+//#endregion
+
+//#region Interaction handling
 
 client.on(Events.InteractionCreate, async (interaction: Interaction) => {
   if (interaction.guildId) {
@@ -275,8 +293,14 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 	}
 });
 
+//#endregion
+
+//#region Reaction add handling
+
 client.on(Events.MessageReactionAdd, async (reaction, user) => {
   if (user.bot) return;
+
+	console.log('Reaction added:', reaction.emoji.name, 'by', user.id);
 
   try {
     if (reaction.partial) await reaction.fetch();
@@ -285,32 +309,34 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
     const { message } = reaction;
     if (message.partial) await message.fetch();
 
-    const emoji = reaction.emoji.name!;
+    const emoji = reaction.emoji;
     const guildId = message.guild?.id;
     const messageId = message.id;
 
     if (!guildId) return;
 
-    const record = await getRoleForReaction(guildId,messageId,emoji);
+    const record = await getRoleForReaction(guildId,messageId,`${emoji}`);
 
     if (!record) return;
 
     const member = await message.guild!.members.fetch(user.id);
     await member.roles.add(record.role);
   } catch (err) {
-    console.error('Failed to add role:', err);
+    logWithTime('Failed to add role: '+err,'error',true);
   }
 });
+
+//#endregion
+
+//#region Reaction remove handling
 
 client.on(Events.MessageReactionRemove, async (reaction, user) => {
   if (user.bot) return;
 
-  try {
-    if (reaction.partial) await reaction.fetch();
-    if (user.partial) await user.fetch();
+	console.log('Reaction removed:', reaction.emoji.name, 'by', user.id);
 
+  try {
     const { message } = reaction;
-    if (message.partial) await message.fetch();
 
     const emoji = reaction.emoji.name!;
     const guildId = message.guild?.id;
@@ -318,16 +344,18 @@ client.on(Events.MessageReactionRemove, async (reaction, user) => {
 
     if (!guildId) return;
 
-    const record = await getRoleForReaction(guildId,messageId,emoji);
+    const record = await getRoleForReaction(guildId,messageId,`${emoji}`);
 
     if (!record) return;
 
     const member = await message.guild!.members.fetch(user.id);
     await member.roles.remove(record.role);
   } catch (err) {
-    console.error('Failed to remove role:', err);
+    logWithTime('Failed to add role: '+err,'error',true);
   }
 });
+
+//#endregion
 
 client.login(process.env.DISCORD_TOKEN)
 .then(() => logWithTime(

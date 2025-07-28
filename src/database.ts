@@ -200,6 +200,13 @@ export async function getLastCountUser(guildId: string){
   return lastCountUser?.lastCountUser;
 }
 
+export async function setLastCountUser(guildId: string, userId: string) {
+  return await prisma.guild.update({
+    where: { guildId },
+    data: { lastCountUser: userId }
+  });
+}
+
 export async function getAllGuilds(){
   return prisma.guild.findMany();
 }

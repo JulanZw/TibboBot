@@ -1,5 +1,5 @@
 import { EmbedBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder } from 'discord.js';
-import { activePages, commandBuilder,createReminderButtons,createReminderEmbed,formatDate,getDateKey,logWithTime, parseDurationOrDateString, pendingReactionRoleSetups, PermissionLevel, reminderDaysCache, safeReply, sourceRequestTracker } from './utils';
+import { activePages, commandBuilder,createReminderButtons,createReminderEmbed,formatDate,getDateKey,logWithTime, parseBirthdayDate, parseDurationOrDateString, pendingReactionRoleSetups, PermissionLevel, reminderDaysCache, safeReply, sourceRequestTracker } from './utils';
 import wol from 'wol';
 import { createReminder, getAllUserData, getAllUserDataTodayIs, getGuild, getPointGiverIdOfGuild, getUserData, getUserPoints, getUserReminders, insertUserData, setBirthday, setBirthdayChannel, setCountChannel, setPointGiverOfGuild, setTodayIsChannel, updateUserPoints } from './database';
 import { channelOption, integerOption, stringOption, userOption } from './options';
@@ -77,7 +77,7 @@ const messagesCommand = commandBuilder(
 
     const user = await getUserData(targetUser.id);
     if(user){
-      await safeReply(interaction,`User ${targetUser.username} has sent ${user.char_count} charachters in ${user.msg_count} message(s).`);
+      await safeReply(interaction,`User ${targetUser.username} has sent ${user.char_count} charachter(s) in ${user.msg_count} message(s).`);
     }else{
       await safeReply(interaction, `User ${targetUser.username} has not sent any messages yet.`);
     }
@@ -205,13 +205,13 @@ const setTodayIsChannelCommand = commandBuilder(
     }
 
     await setTodayIsChannel(guild.guildId,targetChannel.id);
-    await safeReply(interaction,guild.pointGiverId ? `set <#${targetChannel}> as the server's today is channel` : `set <#${targetChannel}> as the server's point giver. Dont forget to also set a point giver!`);
-    logWithTime(`Set <#${targetChannel}> as today is channel for ${guild.guildId}`,'info');
+    await safeReply(interaction,guild.pointGiverId ? `set ${targetChannel} as the server's today is channel` : `set ${targetChannel} as the server's today is channel. Dont forget to also assign a point giver!`);
+    logWithTime(`Set ${targetChannel} as today is channel for ${guild.guildId}`,'info');
   },
   true,
   'admin',
   builder => {
-    builder.addChannelOption(channelOption('taget','The channel the bot will send the birthday messages to.'));
+    builder.addChannelOption(channelOption('target','The channel the bot will send the birthday messages to.'));
     return builder;
   }
 );
@@ -259,7 +259,7 @@ const addPointsCommand = commandBuilder(
   false,
   'admin',
   builder => {
-    builder.addUserOption(userOption('taget','The user to give points to'));
+    builder.addUserOption(userOption('target','The user to give points to'));
     builder.addIntegerOption(integerOption('amount','The amount of points to give'));
     return builder;
   },
@@ -320,13 +320,13 @@ const setBirthdayChannelCommand = commandBuilder(
     }
 
     await setBirthdayChannel(guild.guildId,targetChannel.id)
-    await safeReply(interaction,`set <#${targetChannel}> as the server's birthday channel`);
-    logWithTime(`Set <#${targetChannel}> as birthday channel for ${guild.guildId}`,'info');
+    await safeReply(interaction,`set ${targetChannel} as the server's birthday channel`);
+    logWithTime(`Set ${targetChannel} as birthday channel for ${guild.guildId}`,'info');
   },
   true,
   'admin',
   builder => {
-    builder.addChannelOption(channelOption('taget','The channel the bot will send the birthday messages to.'));
+    builder.addChannelOption(channelOption('target','The channel the bot will send the birthday messages to.'));
     return builder;
   }
 );
@@ -347,21 +347,25 @@ const setBirthdayCommand = commandBuilder(
       return await safeReply(interaction,'No birthday was provided');
     }
 
-    const birthday = new Date(date);
+    const birthday = parseBirthdayDate(date);
+
+    if(!birthday){
+      return await safeReply(interaction,'Invalid date format. Please use DD-MM-YYYY or YYYY-MM-DD.');
+    }
 
     const newBirthday = await setBirthday(guild.guildId,interaction.user.id,birthday);
     
     if(!newBirthday){
       return await safeReply(interaction,'Something went wrong while setting your birthday...');
     } else {
-      logWithTime(`Set birthday for <@${newBirthday.userId}> on ${formatDate(newBirthday.birthday)}`,'info');
+      logWithTime(`Set birthday for ${newBirthday.userId} on ${formatDate(newBirthday.birthday)}`,'info');
       return await safeReply(interaction,`Set birthday for <@${newBirthday.userId}> on ${formatDate(newBirthday.birthday)}`);
     }
   },
   false,
   'admin',
   builder => {
-    builder.addStringOption(stringOption('date','Enter a date (YYYY-MM-DD)'));
+    builder.addStringOption(stringOption('date','Enter a date (DD-MM-YYYY or YYYY-MM-DD)'));
     return builder;
   },
 );
@@ -387,13 +391,13 @@ const setCountChannelCommand = commandBuilder(
     }
 
     await setCountChannel(guild.guildId,targetChannel.id)
-    await safeReply(interaction,`set <#${targetChannel}> as the server's count channel`);
-    logWithTime(`Set <#${targetChannel}> as count channel for ${guild.guildId}`,'info');
+    await safeReply(interaction,`set ${targetChannel} as the server's count channel`);
+    logWithTime(`Set ${targetChannel} as count channel for ${guild.guildId}`,'info');
   },
   true,
   'admin',
   builder => {
-    builder.addChannelOption(channelOption('taget','Sets the channel where members can count to infinity.'));
+    builder.addChannelOption(channelOption('target','Sets the channel where members can count to infinity.'));
     return builder;
   }
 );
@@ -402,7 +406,7 @@ const setCountChannelCommand = commandBuilder(
 
 //#region Reaction Roles
 
-export const reactionRolesCommand = commandBuilder(
+const reactionRolesCommand = commandBuilder(
   'reaction_roles',
   'Set up a reaction role message dynamically. (admin only)',
   async (interaction, client) => {
@@ -431,7 +435,7 @@ export const reactionRolesCommand = commandBuilder(
   true,
   'admin',
   builder => {
-    builder.addChannelOption(channelOption('taget','The channel where reaction message will be in.'));
+    builder.addChannelOption(channelOption('target','The channel where reaction message will be in.'));
     return builder;
   }
 );
@@ -465,7 +469,7 @@ const setReminderCommand = commandBuilder(
     const reminder = await createReminder(interaction.user.id,message,targetTime);
 
     const maxCacheDate = new Date();
-    maxCacheDate.setDate(new Date().getDate() + 7);
+    maxCacheDate.setDate(new Date().getDate() + 7); // ! Reduce this to 1 day
     if(targetTime < maxCacheDate){
       const dateKey = getDateKey(reminder.remindAt);
       if (!reminderDaysCache.has(dateKey)) {
@@ -520,7 +524,7 @@ const remindersCommand = commandBuilder(
 
 //#endregion
 
-//#region Srouce
+//#region Source
 
 const sourceCommand = commandBuilder(
   'source',
@@ -582,7 +586,7 @@ const sourceCommand = commandBuilder(
     archive.directory(srcFolderPath, 'src');
     archive.directory(prismaPath, 'prisma');
 
-    ['README.md', 'LICENSE', 'package.json', 'tsconfig.json'].forEach(file =>
+    ['README.md', 'LICENSE', 'package.json', 'tsconfig.json', '.example.env'].forEach(file =>
       archive.file(path.join(rootPath, file), { name: file })
     );
 
@@ -634,7 +638,8 @@ export const commands: Command[] = [
   setCountChannelCommand,
   setReminderCommand,
   remindersCommand,
-  sourceCommand
+  sourceCommand,
+  reactionRolesCommand
 ]
 
 export const commandsToRegister: RESTPostAPIChatInputApplicationCommandsJSONBody[] = commands.map(command => command.data.toJSON());

@@ -59,6 +59,7 @@ export function setupCronJobs(client: Client): void {
         }
       }));
 
+      // ! Lower cache size to 1 day
       // Rebuild reminder cache
       const start = new Date();
       const end = new Date();
@@ -120,7 +121,7 @@ export function setupCronJobs(client: Client): void {
       await Promise.allSettled(due.map(async reminder => {
         try {
           const user = await client.users.fetch(reminder.userId);
-          await user.send(`Reminder: ${reminder.message}`);
+          await user.send(`**Reminder:** ${reminder.message}`);
         } catch (err) {
           logWithTime("Failed to send reminder: " + err, 'error', true);
         }
