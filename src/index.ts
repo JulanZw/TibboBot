@@ -5,8 +5,11 @@ import { activePages, createReminderButtons, createReminderEmbed, ensureGuildExi
 import { commands, commandsToRegister } from './commands';
 import { addReactionRole, checkAndUpdateCount, deleteReminder, getLastCountUser, getReminderById, getRoleForReaction, getUserReminders, setLastCountUser, updateCountsForUser, updateReminder } from './database';
 import { evaluate } from 'mathjs';
+import dotenv from 'dotenv';
 
 //#region Setup
+
+dotenv.config();
 
 const token = process.env.DISCORD_TOKEN;
 const ownerId = process.env.OWNER_DISCORD_ID;
