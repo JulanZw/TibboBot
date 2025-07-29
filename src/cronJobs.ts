@@ -59,11 +59,10 @@ export function setupCronJobs(client: Client): void {
         }
       }));
 
-      // ! Lower cache size to 1 day
       // Rebuild reminder cache
       const start = new Date();
       const end = new Date();
-      end.setDate(end.getDate() + 7);
+      end.setDate(end.getDate() + 1);
 
       const upcomingReminders = await getRemindersBetween(start,end);
 
@@ -133,5 +132,7 @@ export function setupCronJobs(client: Client): void {
     }catch (err){
       logWithTime("Something went wrong while sending reminders"+err,'error',true);
     }
-  })
+  });
+
+  logWithTime('Cron jobs have been set up successfully.','info');
 }
