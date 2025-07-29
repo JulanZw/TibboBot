@@ -11,6 +11,7 @@ model Guild {
   guildId           String   @id
   countChannelId    String?
   countNumber       Int      @default(0)
+  highestNumber     Int      @default(0)
   lastCountUser     String?
   todayIsChannelId  String?
   birthdayChannelId String?

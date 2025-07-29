@@ -192,12 +192,12 @@ export async function getCountChannelOfGuild(guildId: string){
   })
 }
 
-export async function getLastCountUser(guildId: string){
+export async function getLastCountUserAndHighestNumber(guildId: string){
   const lastCountUser = await prisma.guild.findUnique({
     where: { guildId },
-    select: { lastCountUser: true }
+    select: { lastCountUser: true, highestNumber: true }
   })
-  return lastCountUser?.lastCountUser;
+  return lastCountUser;
 }
 
 export async function setLastCountUser(guildId: string, userId: string) {

@@ -211,7 +211,7 @@ const setTodayIsChannelCommand = commandBuilder(
   true,
   'admin',
   builder => {
-    builder.addChannelOption(channelOption('target','The channel the bot will send the birthday messages to.'));
+    builder.addChannelOption(channelOption('target','The channel the bot will send the birthday messages to.',true));
     return builder;
   }
 );
@@ -326,7 +326,7 @@ const setBirthdayChannelCommand = commandBuilder(
   true,
   'admin',
   builder => {
-    builder.addChannelOption(channelOption('target','The channel the bot will send the birthday messages to.'));
+    builder.addChannelOption(channelOption('target','The channel the bot will send the birthday messages to.',true));
     return builder;
   }
 );
@@ -397,7 +397,7 @@ const setCountChannelCommand = commandBuilder(
   true,
   'admin',
   builder => {
-    builder.addChannelOption(channelOption('target','Sets the channel where members can count to infinity.'));
+    builder.addChannelOption(channelOption('target','Sets the channel where members can count to infinity.',true));
     return builder;
   }
 );
@@ -413,6 +413,7 @@ const reactionRolesCommand = commandBuilder(
     const userId = interaction.user.id;
 
     const targetChannel = interaction.options.getChannel('target');
+    const title = interaction.options.getString('title');
 
     if(!targetChannel){
       return await safeReply(interaction,'No target channel was provided.');
@@ -422,7 +423,8 @@ const reactionRolesCommand = commandBuilder(
       interaction,
       emojiRoleMap: {},
       channelId: interaction.channelId,
-      targetChannelId: targetChannel.id
+      targetChannelId: targetChannel.id,
+      title: title || 'Choose your role',
     });
 
     await safeReply(
@@ -435,7 +437,8 @@ const reactionRolesCommand = commandBuilder(
   true,
   'admin',
   builder => {
-    builder.addChannelOption(channelOption('target','The channel where reaction message will be in.'));
+    builder.addChannelOption(channelOption('target','The channel where reaction message will be in.',true));
+    builder.addStringOption(stringOption('title','The title of the reaction role message (defaults to "Choose your role")',false));
     return builder;
   }
 );

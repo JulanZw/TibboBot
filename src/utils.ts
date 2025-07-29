@@ -537,7 +537,8 @@ export const pendingReactionRoleSetups = new Map <string, {
   interaction: ChatInputCommandInteraction,
   emojiRoleMap: Record<string, string>,
   channelId: string,
-  targetChannelId: string
+  targetChannelId: string,
+  title: string,
 } >();
 
 /**

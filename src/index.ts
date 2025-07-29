@@ -3,7 +3,7 @@ import { ActionRowBuilder, Client, EmbedBuilder, Events, GatewayIntentBits, Inte
 import { setupCronJobs } from './cronJobs';
 import { activePages, createReminderButtons, createReminderEmbed, ensureGuildExistance, logWithTime, parseDurationOrDateString, pendingReactionRoleSetups, safeReply } from './utils';
 import { commands, commandsToRegister } from './commands';
-import { addReactionRole, checkAndUpdateCount, deleteReminder, getLastCountUser, getReminderById, getRoleForReaction, getUserReminders, setLastCountUser, updateCountsForUser, updateReminder } from './database';
+import { addReactionRole, checkAndUpdateCount, deleteReminder, getLastCountUserAndHighestNumber, getReminderById, getRoleForReaction, getUserReminders, setLastCountUser, updateCountsForUser, updateReminder } from './database';
 import { evaluate } from 'mathjs';
 import dotenv from 'dotenv';
 
@@ -76,17 +76,19 @@ client.on(Events.MessageCreate, async (message: Message) => {
 				if (typeof result === 'number' && isFinite(result)) {
 					const number: number = Math.round(result);
 					const success = await checkAndUpdateCount(guild.guildId, number);
-					const lastCountUser = await getLastCountUser(guild.guildId);
+					const lastCountUser = await getLastCountUserAndHighestNumber(guild.guildId); // ? maybe make a cache for this
 
 					if (!success) {
 						await message.react('❌');
 						await message.reply(`<@${message.author.id}> entered a wrong number! Next number is 1...`);
 						await setLastCountUser(guild.guildId, '0');
-					} else if(lastCountUser && lastCountUser === message.author.id){
+					} else if(lastCountUser?.lastCountUser && lastCountUser.lastCountUser === message.author.id){
 						await message.react('❌');
 						await message.reply(`Only count on yourself, not with yourself... Next number is 1...`);
 						await setLastCountUser(guild.guildId, '0');
-					}else {
+					} else if(lastCountUser?.highestNumber && result > lastCountUser?.highestNumber){
+						await message.react('☑️');
+					} else {
 						await message.react('✅');
 					}
 					await setLastCountUser(guild.guildId, message.author.id);
@@ -115,7 +117,7 @@ client.on(Events.MessageCreate, async (message: Message) => {
 					.join('\n');
 
 				const embed = new EmbedBuilder()
-					.setTitle('Choose your role!')
+					.setTitle(session.title)
 					.setDescription(description)
 					.setColor('Blue');
 
