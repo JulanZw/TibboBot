@@ -119,7 +119,7 @@ client.on(Events.MessageCreate, async (message: Message) => {
 				const sentMessage = await (channel as TextChannel).send({ embeds: [embed] });
 
 				for (const emoji of Object.keys(emojiRoleMap)) {
-					const newReactionRole = await addReactionRole(guild.guildId,message.id,session.targetChannelId,emoji,emojiRoleMap[emoji]);
+					const newReactionRole = await addReactionRole(guild.guildId,sentMessage.id,session.targetChannelId,emoji,emojiRoleMap[emoji]);
 					if(newReactionRole){
 						await sentMessage.react(newReactionRole.emoji);
 					} else {
@@ -295,12 +295,10 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 
 //#endregion
 
-//#region Reaction add handling
+//#region Reaction add
 
 client.on(Events.MessageReactionAdd, async (reaction, user) => {
   if (user.bot) return;
-
-	console.log('Reaction added:', reaction.emoji.name, 'by', user.id);
 
   try {
     if (reaction.partial) await reaction.fetch();
@@ -309,18 +307,19 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
     const { message } = reaction;
     if (message.partial) await message.fetch();
 
-    const emoji = reaction.emoji;
-    const guildId = message.guild?.id;
+    const emoji = reaction.emoji.name!;
+    const guildId = message.guildId;
     const messageId = message.id;
 
     if (!guildId) return;
 
-    const record = await getRoleForReaction(guildId,messageId,`${emoji}`);
+    const record = await getRoleForReaction(guildId,messageId,emoji);
 
     if (!record) return;
 
     const member = await message.guild!.members.fetch(user.id);
     await member.roles.add(record.role);
+		logWithTime(`Added role ${record.role} for user ${user.globalName} (${user.id}) in guild ${guildId}`,'info');
   } catch (err) {
     logWithTime('Failed to add role: '+err,'error',true);
   }
@@ -328,12 +327,10 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
 
 //#endregion
 
-//#region Reaction remove handling
+//#region Reaction remove
 
 client.on(Events.MessageReactionRemove, async (reaction, user) => {
   if (user.bot) return;
-
-	console.log('Reaction removed:', reaction.emoji.name, 'by', user.id);
 
   try {
     const { message } = reaction;
@@ -344,12 +341,13 @@ client.on(Events.MessageReactionRemove, async (reaction, user) => {
 
     if (!guildId) return;
 
-    const record = await getRoleForReaction(guildId,messageId,`${emoji}`);
+    const record = await getRoleForReaction(guildId,messageId,emoji);
 
     if (!record) return;
 
     const member = await message.guild!.members.fetch(user.id);
     await member.roles.remove(record.role);
+		logWithTime(`Removed role ${record.role} for user ${user.globalName} (${user.id}) in guild ${guildId}`,'info');
   } catch (err) {
     logWithTime('Failed to add role: '+err,'error',true);
   }
