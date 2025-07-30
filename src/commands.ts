@@ -522,7 +522,7 @@ const remindersCommand = commandBuilder(
   },
   false,
   'user'
-)
+);
 
 //#endregion
 

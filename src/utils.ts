@@ -221,10 +221,16 @@ export function formatDate(date: Date) {
   return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) + daySuffix;
 }
 
-function getDaySuffix(day: number) {
-  if (day > 3 && day < 21) return 'th';
-  switch (day % 10) {
-    case 1: return 'st';
+/**
+ * Util function to get the suffix of a number, e.g. 1st, 2nd, 3rd, 4th, etc.
+ * 
+ * @param number - the number you want the suffix of
+ * @returns the suffix of the number
+ */
+export function getDaySuffix(number: number) {
+  if (number > 3 && number < 21) return 'th';
+  switch (number % 10) {
+    case 1: return '$st';
     case 2: return 'nd';
     case 3: return 'rd';
     default: return 'th';

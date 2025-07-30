@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import { Client, TextChannel } from 'discord.js';
-import { formatDate, getDateKey, logWithTime, reminderDaysCache, sourceRequestTracker } from './utils';
+import { formatDate, getDateKey, getDaySuffix as getSuffix, logWithTime, reminderDaysCache, sourceRequestTracker } from './utils';
 import {
   deleteReminder,
   getAllBirthdaysInGuildForGivenDate,
@@ -51,7 +51,8 @@ export function setupCronJobs(client: Client): void {
           const birthdays = await getAllBirthdaysInGuildForGivenDate(guild.guildId, new Date());
 
           await Promise.allSettled(birthdays.map(birthday => {
-            channel.send(`🎉 Happy Birthday <@${birthday.userId}>!`);
+            const birthdayYear = new Date().getFullYear() - birthday.birthday.getFullYear();
+            channel.send(`Congratulations with your ${birthdayYear + getSuffix(birthdayYear)} birthday <@${birthday.userId}> 🎉!`);
             logWithTime(`Message send in ${birthday.guildId}: "Happy Birthday <@${birthday.userId}>!"`,'info');
           }));
         } catch (err) {
