@@ -257,7 +257,7 @@ const addPointsCommand = commandBuilder(
     }
   },
   false,
-  'admin',
+  'user',
   builder => {
     builder.addUserOption(userOption('target','The user to give points to'));
     builder.addIntegerOption(integerOption('amount','The amount of points to give'));
