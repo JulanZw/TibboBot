@@ -1,13 +1,14 @@
-import { ActionRowBuilder, ComponentType, ModalBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
+import { ActionRowBuilder, ComponentType, ModalBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder, TextChannel, TextInputBuilder, TextInputStyle } from 'discord.js';
 import { commandBuilder,COMMANDS_PER_PAGE,createButtonsRow,embedBuilder,formatDate,formatDateToDDMMYYYY,getDateKey,logWithTime, parseBirthdayDate, parseDurationOrDateString, pendingReactionRoleSetups, PermissionLevel, reminderDaysCache, safeReply, sourceRequestTracker } from './utils';
 import wol from 'wol';
-import { createReminder, deleteReminder, getAllUserData, getAllUserDataTodayIs, getGuild, getPointGiverIdOfGuild, getUserData, getUserPoints, getUserReminders, insertUserData, setBirthday, setBirthdayChannel, setCountChannel, setPointGiverOfGuild, setTodayIsChannel, updateUserPoints } from './database';
+import { addReactionRole, createReminder, deleteReminder, getAllUserData, getAllUserDataTodayIs, getGuild, getPointGiverIdOfGuild, getReactionRolesByMessage, getUserData, getUserPoints, getUserReminders, insertUserData, setBirthday, setBirthdayChannel, setCountChannel, setPointGiverOfGuild, setTodayIsChannel, updateUserPoints } from './database';
 import { channelOption, integerOption, stringOption, userOption } from './options';
 import archiver from 'archiver';
 import fs from 'fs';
 import path from 'path';
 import { botId } from './index';
 import dotenv from 'dotenv';
+import { e } from 'mathjs';
 
 dotenv.config();
 
@@ -507,6 +508,84 @@ const reactionRolesCommand = commandBuilder(
   }
 );
 
+const addReactionRoleToMessageCommand = commandBuilder(
+  'add_reaction_role',
+  'Adds a reaction role to a message after creating a reaction role message.',
+  async (interaction, client) => {
+    const guild = await getGuild(interaction.guildId as string);
+
+    if(!guild){
+      return await safeReply(interaction,`Guild is not in the database. You should never see this message, contact the bot owner please.`);
+    }
+
+    const targetMessageId = interaction.options.getString('message_id');
+    const emoji = interaction.options.getString('emoji');
+    const role = interaction.options.getRole('role');
+
+    if(!targetMessageId){
+      return await safeReply(interaction,'No target message ID was provided.');
+    } else if(!emoji){
+      return await safeReply(interaction,'No emoji was provided.');
+    } else if(!role){
+      return await safeReply(interaction,'No role was provided.');
+    }
+
+    const reactionRoles = await getReactionRolesByMessage(targetMessageId);
+
+    if(!reactionRoles || reactionRoles.length < 1){
+      return await safeReply(interaction,'Message does not have any reaction roles.');
+    }
+
+    const channel = await client.channels.fetch(reactionRoles[0].channelId);
+
+    if (!channel || !channel.isTextBased()) return await safeReply(interaction,'Invalid channel.');
+    
+    const message = await channel.messages.fetch(targetMessageId);
+
+    if (message && message.editable) {
+      if(reactionRoles.some(rr => rr.emoji === emoji)){
+        return await safeReply(interaction,'This emoji is already used for a reaction role on this message.');
+      }
+
+      const newReactionRole = await addReactionRole(guild.guildId, targetMessageId, reactionRoles[0].channelId, emoji, role.id);
+
+      if(!newReactionRole){
+        logWithTime('Something went wrong while creating a reaction role','error',true);
+        return await safeReply(interaction,'Something went wrong while creating the reaction role.');
+      }
+
+      const description = Object.entries([newReactionRole, ...reactionRoles])
+        .map(([, reactionRole]) => `${reactionRole.emoji} = <@&${reactionRole.role}>`)
+        .join('\n');
+
+      const oldEmbed = message.embeds[0];
+
+      const embed = embedBuilder(
+        {
+          title: oldEmbed.title ?? '',
+          description,
+          footer: oldEmbed.footer?.text ?? `Click the emojis to get the roles!`,
+        }
+      )
+
+      await message.edit({ embeds: [embed] });
+      await message.react(newReactionRole.emoji);
+
+      return await safeReply(interaction,`Added reaction role ${emoji} for <@&${role.id}> to the message.`,true);
+    } else {
+      return await safeReply(interaction,'Message not found or not editable.');
+    }
+  },
+  true,
+  'admin',
+  builder => {
+    builder.addStringOption(stringOption('message_id','The ID of the message to add the reaction role to',true));
+    builder.addStringOption(stringOption('emoji','The emoji to use for the reaction role',true));
+    builder.addRoleOption(role => role.setName('role').setDescription('The role to assign when the emoji is reacted to').setRequired(true));
+    return builder;
+  }
+);
+
 //#endregion
 
 //#region Reminders
@@ -804,7 +883,8 @@ export const commands: Command[] = [
   setReminderCommand,
   remindersCommand,
   sourceCommand,
-  reactionRolesCommand
+  reactionRolesCommand,
+  addReactionRoleToMessageCommand
 ]
 
 export const commandsToRegister: RESTPostAPIChatInputApplicationCommandsJSONBody[] = commands.map(command => command.data.toJSON());

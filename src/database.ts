@@ -310,6 +310,18 @@ export async function getRoleForReaction(
   });
 }
 
+export async function getReactionRolesByMessage(messageId: string) {
+  return await prisma.reactionRoles.findMany({
+    where: { messageId },
+  });
+}
+
+export async function removeReactionRolesByMessageId(messageId: string) {
+  return await prisma.reactionRoles.deleteMany({
+    where: { messageId },
+  });
+}
+
 export async function deleteReactionRolesByMessage(messageId: string) {
   return await prisma.reactionRoles.deleteMany({
     where: {

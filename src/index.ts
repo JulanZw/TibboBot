@@ -3,7 +3,7 @@ import {  Client, Events, GatewayIntentBits, Interaction, Message, Partials, RES
 import { setupCronJobs } from './cronJobs';
 import { embedBuilder, ensureGuildExistance, logWithTime, parseDurationOrDateString, pendingReactionRoleSetups, safeReply } from './utils';
 import { commands, commandsToRegister } from './commands';
-import { addReactionRole, checkAndUpdateCount, getLastCountUserAndHighestNumber, getReminderById, getRoleForReaction, setLastCountUser, updateCountsForUser, updateReminder } from './database';
+import { addReactionRole, checkAndUpdateCount, getLastCountUserAndHighestNumber, getReactionRolesByMessage, getReminderById, getRoleForReaction, removeReactionRolesByMessageId, setLastCountUser, updateCountsForUser, updateReminder } from './database';
 import { evaluate } from 'mathjs';
 
 //#region Setup
@@ -283,6 +283,17 @@ client.on(Events.MessageReactionRemove, async (reaction, user) => {
 });
 
 //#endregion
+
+client.on('messageDelete', async (message) => {
+  if (!message.guild || !message.id) return;
+
+  const reactionRoles = await getReactionRolesByMessage(message.id);
+
+  if (reactionRoles && reactionRoles.length > 0) {
+    logWithTime(`Message ${message.id} deleted. Removing ${reactionRoles.length} reaction role(s).`,'info');
+    await removeReactionRolesByMessageId(message.id);
+  }
+});
 
 client.login(process.env.DISCORD_TOKEN)
 .then(() => logWithTime(
