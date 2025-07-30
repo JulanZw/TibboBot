@@ -17,7 +17,7 @@ const wolCommand = commandBuilder(
   'magic',
   'does some magic (bot owner only)',
   async (interaction, client) => {
-    if(!process.env.WOL_MAC || process.env.WOL_IP){
+    if(!process.env.WOL_MAC || !process.env.WOL_IP){
       logWithTime('Cannot execute WOL because MAC or IP is not set','error',true)
       return await safeReply(interaction, 'IP or MAC has not been set');
     }
