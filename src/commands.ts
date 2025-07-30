@@ -363,7 +363,7 @@ const setBirthdayCommand = commandBuilder(
     }
   },
   false,
-  'admin',
+  'user',
   builder => {
     builder.addStringOption(stringOption('date','Enter a date (DD-MM-YYYY or YYYY-MM-DD)'));
     return builder;
