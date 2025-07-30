@@ -1,11 +1,12 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, ChatInputCommandInteraction, Client, EmbedBuilder, MessageFlags, ModalSubmitInteraction, PermissionFlagsBits, PermissionsBitField, SlashCommandBuilder } from 'discord.js';
+import { ActionRowBuilder, APIEmbedField, ButtonBuilder, ButtonInteraction, ButtonStyle, ChatInputCommandInteraction, Client, ColorResolvable, EmbedBuilder, MessageFlags, ModalSubmitInteraction, PermissionFlagsBits, PermissionsBitField, SlashCommandBuilder } from 'discord.js';
 import { addGuild, getGuild } from './database';
 import { Command } from './commands';
 import path from 'path';
 import fs from "fs";
-import { Reminders } from '@prisma/client';
 
 //#region General
+
+const STANDARD_COLOR = '#3F48CC';
 
 /**
  * Utility function so replies don't fail
@@ -88,23 +89,6 @@ export function logWithTime(message: string, level: LogLevel = 'info', logToCons
     console.log(`${colorMap[level]}${logMessage.trim()}${reset}`);
   }
 }
-
-// ? Check if this can be fixed in the future
-// export async function logToChannel(message: string, client: Client): Promise<void> {
-//   const now = new Date();
-//   const timestamp = now.toISOString().replace('T', ' ').slice(0, 19);
-//
-//   try {
-//     const channel = await client.channels.fetch('1323669455426818139');
-//     if (channel?.isTextBased() && !(channel instanceof PartialGroupDMChannel)) {
-//       await channel.send(`[${timestamp}] ${message}`);
-//     } else {
-//       logWithTime("Channel not found or is not text-based");
-//     }
-//   } catch (error) {
-//     logWithTime(`Error fetching or sending message to channel: ${(error as Error).message}`);
-//   }
-// }
 
 //#endregion
 
@@ -235,6 +219,14 @@ export function getDaySuffix(number: number) {
     case 3: return 'rd';
     default: return 'th';
   }
+}
+
+export function formatDateToDDMMYYYY(date: Date) {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+
+  return `${day}-${month}-${year}`;
 }
 
 //#endregion
@@ -453,37 +445,117 @@ function addMonths(months: number): Date {
   return result;
 }
 
-export function createReminderEmbed(reminder: Reminders, index: number, total: number) {
-  return new EmbedBuilder()
-    .setTitle(`Reminder ${index + 1} of ${total}`)
-    .addFields(
-      { name: 'Message', value: reminder.message },
-      { name: 'Remind At', value: `<t:${Math.floor(reminder.remindAt.getTime() / 1000)}:F>` },
-    )
-    .setFooter({ text: `Created: <t:${Math.floor(reminder.createdAt.getTime() / 1000)}:F>` });
+//#endregion
+
+//#region Embeds and Buttons
+
+/**
+ * Util function for building an embed
+ * 
+ * @param title - The title of the embed
+ * @param fields - The fields of the embed
+ * @param description - The description of the embed, optional
+ * @param footer - The footer of the embed, optional
+ * @param timestamp - If the embed should have a timestamp, defaults to false
+ * @param color - The color of the embed, defaults to STANDARD_COLOR
+ * @param customize - A function to customize the embed further, defaults to no customization
+ * 
+ * @returns An EmbedBuilder instance with the specified properties 
+ */
+export function embedBuilder({
+  title,
+  fields,
+  description,
+  footer,
+  timestamp = false,
+  color = STANDARD_COLOR,
+  customize = (e) => e,
+}: {
+  title: string;
+  fields: APIEmbedField[];
+  description?: string;
+  footer?: string;
+  timestamp?: boolean;
+  color?: ColorResolvable;
+  customize?: (embed: EmbedBuilder) => EmbedBuilder;
+}): EmbedBuilder {
+  let embed = new EmbedBuilder().setTitle(title).setColor(color).setFields(fields);
+
+  if (description) embed = embed.setDescription(description);
+  if (footer) embed = embed.setFooter({ text: footer });
+  if (timestamp) embed = embed.setTimestamp();
+
+  return customize(embed);
 }
 
-export function createReminderButtons(index: number, total: number) {
-  return new ActionRowBuilder<ButtonBuilder>().addComponents(
-    new ButtonBuilder()
-      .setCustomId('prev')
-      .setLabel('Previous')
-      .setStyle(ButtonStyle.Secondary)
-      .setDisabled(index === 0),
-    new ButtonBuilder()
-      .setCustomId('next')
-      .setLabel('Next')
-      .setStyle(ButtonStyle.Secondary)
-      .setDisabled(index === total - 1),
-    new ButtonBuilder()
-      .setCustomId(`edit`)
-      .setLabel('Edit')
-      .setStyle(ButtonStyle.Primary),
-    new ButtonBuilder()
-      .setCustomId('delete')
-      .setLabel('Delete')
-      .setStyle(ButtonStyle.Danger),
+type ButtonType = 'prev' | 'next' | 'edit' | 'delete';
+
+/**
+ * Creates a single button based on its type and config.
+ * 
+ * @param type - The `ButtonType` of the button (prev, next, edit, delete)
+ * @param actionId - The base action ID for the button
+ * @param disabled - Whether the button should be disabled, defaults to false
+ * @param label - Optional label for the button, defaults to type-based label
+ * 
+ * @return A ButtonBuilder instance configured with the specified properties
+ */
+function createButton({
+  type,
+  actionId,
+  disabled = false,
+  label,
+}: {
+  type: ButtonType;
+  actionId: string;
+  disabled?: boolean;
+  label?: string;
+}): ButtonBuilder {
+  const button = new ButtonBuilder()
+    .setCustomId(`${actionId}_${type}`)
+    .setDisabled(disabled);
+
+  switch (type) {
+    case 'prev':
+      return button.setLabel(label ?? 'Previous').setStyle(ButtonStyle.Secondary);
+    case 'next':
+      return button.setLabel(label ?? 'Next').setStyle(ButtonStyle.Secondary);
+    case 'edit':
+      return button.setLabel(label ?? 'Edit').setStyle(ButtonStyle.Primary);
+    case 'delete':
+      return button.setLabel(label ?? 'Delete').setStyle(ButtonStyle.Danger);
+    default:
+      throw new Error(`Unsupported button type: ${type}`);
+  }
+}
+
+/**
+ * Creates one action row of standard buttons with optional auto-disable logic.
+ * 
+ * @param actionId - The base action ID for the buttons
+ * @param index - The current index of the item being paginated
+ * @param total - The total number of pages
+ * @param types - The types of buttons to include, defaults to all
+ * 
+ * @returns An ActionRowBuilder containing the buttons
+ */
+export function createButtonsRow(
+  actionId: string,
+  index: number,
+  total: number,
+  types: ButtonType[] = ['prev', 'edit', 'delete', 'next']
+): ActionRowBuilder<ButtonBuilder> {
+  const buttons = types.map((type) =>
+    createButton({
+      type,
+      actionId,
+      disabled:
+        (type === 'prev' && index === 0) ||
+        (type === 'next' && index === total - 1),
+    })
   );
+
+  return new ActionRowBuilder<ButtonBuilder>().addComponents(...buttons);
 }
 
 export interface ReminderCacheEntry {

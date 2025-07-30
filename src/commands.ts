@@ -1,5 +1,5 @@
 import { EmbedBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder } from 'discord.js';
-import { activePages, commandBuilder,createReminderButtons,createReminderEmbed,formatDate,getDateKey,logWithTime, parseBirthdayDate, parseDurationOrDateString, pendingReactionRoleSetups, PermissionLevel, reminderDaysCache, safeReply, sourceRequestTracker } from './utils';
+import { activePages, commandBuilder,createButtonsRow,embedBuilder,formatDate,formatDateToDDMMYYYY,getDateKey,logWithTime, parseBirthdayDate, parseDurationOrDateString, pendingReactionRoleSetups, PermissionLevel, reminderDaysCache, safeReply, sourceRequestTracker } from './utils';
 import wol from 'wol';
 import { createReminder, getAllUserData, getAllUserDataTodayIs, getGuild, getPointGiverIdOfGuild, getUserData, getUserPoints, getUserReminders, insertUserData, setBirthday, setBirthdayChannel, setCountChannel, setPointGiverOfGuild, setTodayIsChannel, updateUserPoints } from './database';
 import { channelOption, integerOption, stringOption, userOption } from './options';
@@ -508,8 +508,15 @@ const remindersCommand = commandBuilder(
     const index = 0;
     activePages.set(interaction.user.id, index);
 
-    const embed = createReminderEmbed(reminders[index], index, reminders.length);
-    const components = [createReminderButtons(index, reminders.length)];
+    const embed = embedBuilder({
+      title: `Reminder ${index + 1} of ${reminders.length}`,
+      fields: [
+        { name: 'Message', value: reminders[index].message },
+        { name: 'Remind At', value: `<t:${Math.floor(reminders[index].remindAt.getTime() / 1000)}:F>` },
+      ],
+      footer: `Created: ${formatDateToDDMMYYYY(reminders[index].createdAt)}`
+    })
+    const components = [createButtonsRow('reminder',index,reminders.length)];
 
     await safeReply(
       interaction,
