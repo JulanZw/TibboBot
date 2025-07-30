@@ -1,5 +1,5 @@
-import { ActionRowBuilder, ComponentType, EmbedBuilder, Message, ModalBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
-import { commandBuilder,COMMANDS_PER_PAGE,createButtonsRow,CUSTOM_ID_SPLITTER,embedBuilder,formatDate,formatDateToDDMMYYYY,getDateKey,logWithTime, parseBirthdayDate, parseDurationOrDateString, pendingReactionRoleSetups, PermissionLevel, reminderDaysCache, safeReply, sourceRequestTracker } from './utils';
+import { ActionRowBuilder, ComponentType, ModalBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
+import { commandBuilder,COMMANDS_PER_PAGE,createButtonsRow,embedBuilder,formatDate,formatDateToDDMMYYYY,getDateKey,logWithTime, parseBirthdayDate, parseDurationOrDateString, pendingReactionRoleSetups, PermissionLevel, reminderDaysCache, safeReply, sourceRequestTracker } from './utils';
 import wol from 'wol';
 import { createReminder, deleteReminder, getAllUserData, getAllUserDataTodayIs, getGuild, getPointGiverIdOfGuild, getUserData, getUserPoints, getUserReminders, insertUserData, setBirthday, setBirthdayChannel, setCountChannel, setPointGiverOfGuild, setTodayIsChannel, updateUserPoints } from './database';
 import { channelOption, integerOption, stringOption, userOption } from './options';
@@ -180,12 +180,11 @@ const leaderboardCommand = commandBuilder(
 
     const leaderboardString = leaderboard.join('\n');
 
-    const leaderboardEmbed = 
-    new EmbedBuilder()
-      .setColor('#3F48CC')
-      .setTitle('Leaderboard')
-      .setDescription(leaderboardString)
-      .setTimestamp();
+    const leaderboardEmbed = embedBuilder({
+      title: 'Leaderboard',
+      description: leaderboardString,
+    });
+
     await safeReply(interaction,'',false, [leaderboardEmbed] );
   },
   false,
@@ -206,11 +205,10 @@ const catCommand = commandBuilder(
       const data = await response.json();
       const imageUrl = data[0].url;
 
-      const catEmbed = new EmbedBuilder()
-        .setColor('#3F48CC')
-        .setTitle('Here\'s a cat for you!')
-        .setImage(imageUrl)
-        .setTimestamp();
+      const catEmbed = embedBuilder({
+        title: 'Here\'s a cat for you!',
+        customize: (embed) => embed.setImage(imageUrl),
+      });
 
       await safeReply(interaction,'',false, [catEmbed] );
     } catch (err) {
@@ -354,11 +352,11 @@ const todayIsBoardCommand = commandBuilder(
 
     const pointboardString = pointboard.join('\n');
 
-    const pointboardEmbed = new EmbedBuilder()
-      .setColor('#3F48CC')
-      .setTitle('Pointboard')
-      .setDescription(pointboardString)
-      .setTimestamp();
+    const pointboardEmbed = embedBuilder({
+      title: 'Pointboard',
+      description: pointboardString,
+    });
+
     await safeReply(interaction,'',false, [pointboardEmbed] );
   },
   false,

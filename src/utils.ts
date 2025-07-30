@@ -474,15 +474,16 @@ export function embedBuilder({
   customize = (e) => e,
 }: {
   title: string;
-  fields: APIEmbedField[];
+  fields?: APIEmbedField[];
   description?: string;
   footer?: string;
   timestamp?: boolean;
   color?: ColorResolvable;
   customize?: (embed: EmbedBuilder) => EmbedBuilder;
 }): EmbedBuilder {
-  let embed = new EmbedBuilder().setTitle(title).setColor(color).setFields(fields);
+  let embed = new EmbedBuilder().setTitle(title).setColor(color);
 
+  if (fields && fields.length > 0) embed = embed.setFields(fields);
   if (description) embed = embed.setDescription(description);
   if (footer) embed = embed.setFooter({ text: footer });
   if (timestamp) embed = embed.setTimestamp();

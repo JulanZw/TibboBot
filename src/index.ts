@@ -1,7 +1,7 @@
 
-import {  Client, EmbedBuilder, Events, GatewayIntentBits, Interaction, Message, Partials, REST, Routes, TextChannel } from 'discord.js';
+import {  Client, Events, GatewayIntentBits, Interaction, Message, Partials, REST, Routes, TextChannel } from 'discord.js';
 import { setupCronJobs } from './cronJobs';
-import { ensureGuildExistance, logWithTime, parseDurationOrDateString, pendingReactionRoleSetups, safeReply } from './utils';
+import { embedBuilder, ensureGuildExistance, logWithTime, parseDurationOrDateString, pendingReactionRoleSetups, safeReply } from './utils';
 import { commands, commandsToRegister } from './commands';
 import { addReactionRole, checkAndUpdateCount, getLastCountUserAndHighestNumber, getReminderById, getRoleForReaction, setLastCountUser, updateCountsForUser, updateReminder } from './database';
 import { evaluate } from 'mathjs';
@@ -91,7 +91,7 @@ client.on(Events.MessageCreate, async (message: Message) => {
 					await setLastCountUser(guild.guildId, message.author.id);
 				}
 			} catch (err) {
-				logWithTime(`Invalid math expression: "${content}" — ${err}`,'error',true);
+				logWithTime(`Invalid math expression: "${content}" — ${err}`,'warn');
 			}
 		}
 
@@ -113,10 +113,13 @@ client.on(Events.MessageCreate, async (message: Message) => {
 					.map(([emoji, roleId]) => `${emoji} = <@&${roleId}>`)
 					.join('\n');
 
-				const embed = new EmbedBuilder()
-					.setTitle(session.title)
-					.setDescription(description)
-					.setColor('Blue');
+				const embed = embedBuilder(
+					{
+						title: session.title,
+						description: description,
+						footer: `Click the emojis to get the roles!`,
+					}
+				)
 
 				const sentMessage = await (channel as TextChannel).send({ embeds: [embed] });
 
