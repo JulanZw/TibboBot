@@ -7,6 +7,9 @@ import archiver from 'archiver';
 import fs from 'fs';
 import path from 'path';
 import { botId } from './index';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 //#region Utility
 
