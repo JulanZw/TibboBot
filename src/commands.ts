@@ -538,6 +538,7 @@ const setReminderCommand = commandBuilder(
     const reminder = await createReminder(interaction.user.id,message,targetTime);
 
     const maxCacheDate = new Date();
+    maxCacheDate.setDate(maxCacheDate.getDate() + 1);
     if(targetTime < maxCacheDate){
       const dateKey = getDateKey(reminder.remindAt);
       if (!reminderDaysCache.has(dateKey)) {
