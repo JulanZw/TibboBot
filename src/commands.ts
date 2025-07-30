@@ -1,7 +1,7 @@
-import { EmbedBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder } from 'discord.js';
-import { activePages, commandBuilder,createButtonsRow,embedBuilder,formatDate,formatDateToDDMMYYYY,getDateKey,logWithTime, parseBirthdayDate, parseDurationOrDateString, pendingReactionRoleSetups, PermissionLevel, reminderDaysCache, safeReply, sourceRequestTracker } from './utils';
+import { ActionRowBuilder, ComponentType, EmbedBuilder, Message, ModalBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
+import { commandBuilder,COMMANDS_PER_PAGE,createButtonsRow,CUSTOM_ID_SPLITTER,embedBuilder,formatDate,formatDateToDDMMYYYY,getDateKey,logWithTime, parseBirthdayDate, parseDurationOrDateString, pendingReactionRoleSetups, PermissionLevel, reminderDaysCache, safeReply, sourceRequestTracker } from './utils';
 import wol from 'wol';
-import { createReminder, getAllUserData, getAllUserDataTodayIs, getGuild, getPointGiverIdOfGuild, getUserData, getUserPoints, getUserReminders, insertUserData, setBirthday, setBirthdayChannel, setCountChannel, setPointGiverOfGuild, setTodayIsChannel, updateUserPoints } from './database';
+import { createReminder, deleteReminder, getAllUserData, getAllUserDataTodayIs, getGuild, getPointGiverIdOfGuild, getUserData, getUserPoints, getUserReminders, insertUserData, setBirthday, setBirthdayChannel, setCountChannel, setPointGiverOfGuild, setTodayIsChannel, updateUserPoints } from './database';
 import { channelOption, integerOption, stringOption, userOption } from './options';
 import archiver from 'archiver';
 import fs from 'fs';
@@ -35,20 +35,83 @@ const wolCommand = commandBuilder(
 const helpCommand = commandBuilder(
   'help',
   'Displays all commands.',
-  async (interaction, client) => {
-    const helpEmbed = new EmbedBuilder()
-      .setColor('#3F48CC')
-      .setTitle('List of Available Commands')
-      .setDescription('Here are the commands you can use:')
-      .addFields(
-        commands.map(cmd => ({
-          name: `/${cmd.name}`,
-          value: cmd.description
-        }))
-      )
-      .setTimestamp();
+  async (interaction) => {
+    let index = 0;
+    const totalPages = Math.ceil(commands.length / COMMANDS_PER_PAGE);
 
-    await safeReply(interaction, '', false, [helpEmbed] );
+    let start = index * COMMANDS_PER_PAGE;
+    let end = start + COMMANDS_PER_PAGE;
+    let pageCommands = commands.slice(start, end);
+
+    const embed = embedBuilder({
+      title: 'List of Available Commands',
+      description: 'Here are the commands you can use:',
+      fields: pageCommands.map((cmd) => ({
+        name: `/${cmd.name}`,
+        value: cmd.description,
+      })),
+      footer: `Page ${index + 1} of ${totalPages}`,
+    });
+
+    const components = [createButtonsRow(index, totalPages,['prev', 'next'])];
+
+    await safeReply(interaction, '', false, [embed], components);
+
+    const msg = await interaction.fetchReply();
+
+    const collector = msg.createMessageComponentCollector({
+      componentType: ComponentType.Button,
+      time: 120000, // 2 mins
+    });
+
+    collector.on('collect', async (buttonInteraction) => {
+      if (buttonInteraction.user.id !== interaction.user.id) {
+        return await buttonInteraction.reply({
+          content: 'You cannot use this button.',
+          ephemeral: true,
+        });
+      }
+
+      const action = buttonInteraction.customId;
+
+      switch (action) {
+        case 'prev':
+          index = Math.max(0, index - 1);
+          break;
+        case 'next':
+          index = Math.min(totalPages - 1, index + 1);
+          break;
+        default:
+          return await buttonInteraction.reply({
+            content: 'Invalid action.',
+            ephemeral: true,
+          });
+      }
+
+      start = index * COMMANDS_PER_PAGE;
+      end = start + COMMANDS_PER_PAGE;
+      pageCommands = commands.slice(start, end);
+
+      const newEmbed = embedBuilder({
+        title: 'List of Available Commands',
+        description: 'Here are the commands you can use:',
+        fields: pageCommands.map((cmd) => ({
+          name: `/${cmd.name}`,
+          value: cmd.description,
+        })),
+        footer: `Page ${index + 1} of ${totalPages}`,
+      });
+
+      const newComponents = [createButtonsRow(index, totalPages,['prev', 'next'])];
+
+      await buttonInteraction.update({ embeds: [newEmbed], components: newComponents });
+    });
+
+    collector.on('end', () => {
+      if (msg.editable) {
+        msg.edit({ components: [] });
+      }
+    });
   },
   false,
   'user'
@@ -505,30 +568,121 @@ const remindersCommand = commandBuilder(
   async interaction => {
     const reminders = await getUserReminders(interaction.user.id);
     if (!reminders.length) {
-      return await safeReply(interaction, 'You have no reminders.', true );
+      return await safeReply(interaction, 'You have no reminders.', true);
     }
 
-    const index = 0;
-    activePages.set(interaction.user.id, index);
+    let index = 0;
+    const userId = interaction.user.id;
 
-    const embed = embedBuilder({
+    const buildEmbed = (
+      reminder: {
+        createdAt: Date;
+        id: string;
+        message: string;
+        userId: string;
+        remindAt: Date;
+      }, 
+      index: number
+    ) => embedBuilder({
       title: `Reminder ${index + 1} of ${reminders.length}`,
       fields: [
-        { name: 'Message', value: reminders[index].message },
-        { name: 'Remind At', value: `<t:${Math.floor(reminders[index].remindAt.getTime() / 1000)}:F>` },
+        { name: 'Message', value: reminder.message },
+        { name: 'Remind At', value: `<t:${Math.floor(reminder.remindAt.getTime() / 1000)}:F>` },
       ],
-      footer: `Created: ${formatDateToDDMMYYYY(reminders[index].createdAt)}`
-    })
-    const components = [createButtonsRow('reminder',index,reminders.length)];
+      footer: `Created: ${formatDateToDDMMYYYY(reminder.createdAt)}`
+    });
 
-    await safeReply(
-      interaction,
-      '',
-      true,
-      [embed],
-      components,
-    );
-    logWithTime(`User ${interaction.user.id} requested their reminders`,'info');
+    const buildComponents = () => [createButtonsRow(index, reminders.length)];
+
+    await safeReply(interaction, '', false, [buildEmbed(reminders[index], index)], buildComponents());
+
+    const msg = await interaction.fetchReply();
+
+    const collector = msg.createMessageComponentCollector({
+      componentType: ComponentType.Button,
+      time: 120000, // 2 mins
+    });
+
+    collector.on('collect', async (btnInteraction) => {
+      if (btnInteraction.user.id !== userId) {
+        return await btnInteraction.reply({ 
+          content: 'You cannot use this button.', 
+          ephemeral: true 
+        });
+      }
+
+      const action = btnInteraction.customId;
+
+      switch (action) {
+        case 'prev':
+          index = Math.max(0, index - 1);
+          break;
+
+        case 'next':
+          index = Math.min(reminders.length - 1, index + 1);
+          break;
+
+        case 'delete': {
+          await deleteReminder(reminders[index].id);
+          reminders.splice(index, 1);
+
+          if (!reminders.length) {
+            collector.stop();
+            return await btnInteraction.update({
+              content: 'All reminders deleted.',
+              embeds: [],
+              components: []
+            });
+          }
+
+          index = Math.min(index, reminders.length - 1);
+          break;
+        }
+
+        case 'edit': {
+          const reminder = reminders[index];
+          const modal = new ModalBuilder()
+            .setCustomId(`editReminderModal:${reminder.id}`)
+            .setTitle('Edit Reminder')
+            .addComponents(
+              new ActionRowBuilder<TextInputBuilder>().addComponents(
+                new TextInputBuilder()
+                  .setCustomId('editMessage')
+                  .setLabel('Reminder Message')
+                  .setStyle(TextInputStyle.Paragraph)
+                  .setRequired(true)
+                  .setValue(reminder.message)
+              ),
+              new ActionRowBuilder<TextInputBuilder>().addComponents(
+                new TextInputBuilder()
+                  .setCustomId('editTime')
+                  .setLabel('Remind at (e.g. in 2 hours or in 3 days)')
+                  .setStyle(TextInputStyle.Short)
+                  .setRequired(true)
+              )
+            );
+
+          return await btnInteraction.showModal(modal);
+        }
+
+        default:
+          return await btnInteraction.reply({
+            content: 'Invalid action.',
+            ephemeral: true,
+          });
+      }
+
+      await btnInteraction.update({
+        embeds: [buildEmbed(reminders[index], index)],
+        components: buildComponents(),
+      });
+    });
+
+    collector.on('end', async () => {
+      if (msg.editable) {
+        await msg.edit({ components: [] });
+      }
+    });
   },
   false,
   'user'

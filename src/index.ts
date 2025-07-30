@@ -1,15 +1,12 @@
 
-import { ActionRowBuilder, Client, EmbedBuilder, Events, GatewayIntentBits, Interaction, Message, ModalBuilder, Partials, REST, Routes, TextChannel, TextInputBuilder, TextInputStyle } from 'discord.js';
+import {  Client, EmbedBuilder, Events, GatewayIntentBits, Interaction, Message, Partials, REST, Routes, TextChannel } from 'discord.js';
 import { setupCronJobs } from './cronJobs';
-import { activePages, createButtonsRow, embedBuilder, ensureGuildExistance, formatDateToDDMMYYYY, logWithTime, parseDurationOrDateString, pendingReactionRoleSetups, safeReply } from './utils';
+import { ensureGuildExistance, logWithTime, parseDurationOrDateString, pendingReactionRoleSetups, safeReply } from './utils';
 import { commands, commandsToRegister } from './commands';
-import { addReactionRole, checkAndUpdateCount, deleteReminder, getLastCountUserAndHighestNumber, getReminderById, getRoleForReaction, getUserReminders, setLastCountUser, updateCountsForUser, updateReminder } from './database';
+import { addReactionRole, checkAndUpdateCount, getLastCountUserAndHighestNumber, getReminderById, getRoleForReaction, setLastCountUser, updateCountsForUser, updateReminder } from './database';
 import { evaluate } from 'mathjs';
-import dotenv from 'dotenv';
 
 //#region Setup
-
-dotenv.config();
 
 const token = process.env.DISCORD_TOKEN;
 const ownerId = process.env.OWNER_DISCORD_ID;
@@ -196,108 +193,6 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 				await safeReply(interaction, 'There was an error executing that command.', true);
 			}
     }
-  }
-
-  else if (interaction.isButton()) {
-		const [type, action] = interaction.customId.split('_');
-
-		if (type === 'reminder' && ['prev', 'next', 'edit', 'delete'].includes(action)) {
-			try {
-				const userId = interaction.user.id;
-				const reminders = await getUserReminders(userId);
-				let index = activePages.get(userId) ?? 0;
-
-				if (!reminders.length) {
-					return interaction.update({ content: 'No more reminders.', embeds: [], components: [] });
-				}
-
-				switch (action) {
-					case 'prev':
-						index = Math.max(0, index - 1);
-						break;
-
-					case 'next':
-						index = Math.min(reminders.length - 1, index + 1);
-						break;
-
-					case 'delete': {
-						const reminder = reminders[index];
-						await deleteReminder(reminder.id);
-						const newReminders = await getUserReminders(userId);
-
-						if (!newReminders.length) {
-							return interaction.update({ content: 'All reminders deleted.', embeds: [], components: [] });
-						}
-
-						index = Math.min(index, newReminders.length - 1);
-						const newReminder = newReminders[index];
-
-						const embed = embedBuilder({
-							title: `Reminder ${index + 1} of ${newReminders.length}`,
-							fields: [
-								{ name: 'Message', value: newReminder.message },
-								{ name: 'Remind At', value: `<t:${Math.floor(newReminder.remindAt.getTime() / 1000)}:F>` },
-							],
-							footer: `Created: ${formatDateToDDMMYYYY(newReminder.createdAt)}`,
-						});
-
-						const buttons = [createButtonsRow('reminder', index, newReminders.length)];
-						activePages.set(userId, index);
-						return interaction.update({ embeds: [embed], components: buttons });
-					}
-
-					case 'edit': {
-						const reminder = reminders[index];
-
-						if (!reminder || reminder.userId !== interaction.user.id) {
-							return await safeReply(interaction, 'Reminder not found or unauthorized.', true);
-						}
-
-						const modal = new ModalBuilder()
-							.setCustomId(`editReminderModal:${reminder.id}`)
-							.setTitle('Edit Reminder')
-							.addComponents(
-								new ActionRowBuilder<TextInputBuilder>().addComponents(
-									new TextInputBuilder()
-										.setCustomId('editMessage')
-										.setLabel('Reminder Message')
-										.setStyle(TextInputStyle.Paragraph)
-										.setRequired(true)
-										.setValue(reminder.message)
-								),
-								new ActionRowBuilder<TextInputBuilder>().addComponents(
-									new TextInputBuilder()
-										.setCustomId('editTime')
-										.setLabel('Remind at (e.g. in 2 hours or in 3 days)')
-										.setStyle(TextInputStyle.Short)
-										.setRequired(true)
-								)
-							);
-
-						return await interaction.showModal(modal);
-					}
-				}
-
-				activePages.set(userId, index);
-				const currentReminder = reminders[index];
-				const embed = embedBuilder({
-					title: `Reminder ${index + 1} of ${reminders.length}`,
-					fields: [
-						{ name: 'Message', value: currentReminder.message },
-						{ name: 'Remind At', value: `<t:${Math.floor(currentReminder.remindAt.getTime() / 1000)}:F>` },
-					],
-					footer: `Created: ${formatDateToDDMMYYYY(currentReminder.createdAt)}`,
-				});
-
-				const buttons = [createButtonsRow('reminder', index, reminders.length)];
-				await interaction.update({ embeds: [embed], components: buttons });
-			} catch (error) {
-				console.error(`Error handling reminder button:`, error);
-				if (!interaction.replied) {
-					await safeReply(interaction, 'Something went wrong with this button.', true);
-				}
-			}
-		}
 	} else if (interaction.isModalSubmit() && interaction.customId.startsWith('editReminderModal:')) {
 		const reminderId = interaction.customId.split(':')[1];
 		const newMessage = interaction.fields.getTextInputValue('editMessage');

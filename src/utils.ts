@@ -6,7 +6,9 @@ import fs from "fs";
 
 //#region General
 
-const STANDARD_COLOR = '#3F48CC';
+export const STANDARD_COLOR = '#3F48CC';
+export const COMMANDS_PER_PAGE = 5;
+export const CUSTOM_ID_SPLITTER = '_';
 
 /**
  * Utility function so replies don't fail
@@ -502,17 +504,15 @@ type ButtonType = 'prev' | 'next' | 'edit' | 'delete';
  */
 function createButton({
   type,
-  actionId,
   disabled = false,
   label,
 }: {
   type: ButtonType;
-  actionId: string;
   disabled?: boolean;
   label?: string;
 }): ButtonBuilder {
   const button = new ButtonBuilder()
-    .setCustomId(`${actionId}_${type}`)
+    .setCustomId(`${type}`)
     .setDisabled(disabled);
 
   switch (type) {
@@ -540,7 +540,6 @@ function createButton({
  * @returns An ActionRowBuilder containing the buttons
  */
 export function createButtonsRow(
-  actionId: string,
   index: number,
   total: number,
   types: ButtonType[] = ['prev', 'edit', 'delete', 'next']
@@ -548,7 +547,6 @@ export function createButtonsRow(
   const buttons = types.map((type) =>
     createButton({
       type,
-      actionId,
       disabled:
         (type === 'prev' && index === 0) ||
         (type === 'next' && index === total - 1),
@@ -596,12 +594,7 @@ export function parseBirthdayDate(input: string): Date | null {
 /**
  * Cache for reminders by date string (YYYY-MM-DD)
  */
-export const reminderDaysCache = new Map<string, ReminderCacheEntry[]>()
-
-/**
- * In memory storage for the active pages
- */
-export const activePages = new Map<string, number>();
+export const reminderDaysCache = new Map<string, ReminderCacheEntry[]>();
 
 /**
  * In memory storage for tracking who requested the source files today
