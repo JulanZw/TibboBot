@@ -99,7 +99,8 @@ client.on(Events.MessageCreate, async (message: Message) => {
 
 		if(session && message.channelId === session.channelId){
 			if (message.content.toLowerCase() === 'done') {
-				const { emojiRoleMap, interaction, channelId } = session;
+				session.messageIds.push(message.id);
+				const { emojiRoleMap, interaction, channelId, messageIds } = session;
 				const channel = await client.channels.fetch(channelId);
 				if (!channel?.isTextBased()) return;
 
@@ -137,6 +138,15 @@ client.on(Events.MessageCreate, async (message: Message) => {
 					}
 				}
 
+				for (const id of messageIds || []) {
+					try {
+						const msgToDelete = await channel.messages.fetch(id);
+						if (msgToDelete.deletable) await msgToDelete.delete();
+					} catch (err) {
+						logWithTime(`Failed to delete message ${id}: `+err,'warn');
+					}
+				}
+
 				await interaction.followUp({
 					content: 'Reaction role message created!',
 					flags: MessageFlags.Ephemeral
@@ -144,18 +154,21 @@ client.on(Events.MessageCreate, async (message: Message) => {
 
 				pendingReactionRoleSetups.delete(message.author.id);
 				return;
+			} else {
+				session.messageIds.push(message.id);
+				const match = message.content.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})\s+<@&(\d+)>$/u);
+				if (!match) {
+					await message.reply('Invalid format. Please use `🟥 @RoleMention`.');
+					return;
+				}
+
+				const [, emoji, roleId] = match;
+				session.emojiRoleMap[emoji] = roleId;
+
+				const reply = await message.reply(`Added mapping: ${emoji} -> <@&${roleId}>`);
+
+				session.messageIds.push(reply.id);
 			}
-
-			const match = message.content.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})\s+<@&(\d+)>$/u);
-			if (!match) {
-				await message.reply('Invalid format. Please use `🟥 @RoleMention`.');
-				return;
-			}
-
-			const [, emoji, roleId] = match;
-			session.emojiRoleMap[emoji] = roleId;
-
-			await message.reply(`Added mapping: ${emoji} -> <@&${roleId}>`);
 		}
 	}
 });

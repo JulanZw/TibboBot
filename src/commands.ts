@@ -498,6 +498,7 @@ const reactionRolesCommand = commandBuilder(
       channelId: interaction.channelId,
       targetChannelId: targetChannel.id,
       title: title || 'Choose your role',
+      messageIds: [],
     });
 
     await safeReply(

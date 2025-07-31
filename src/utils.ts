@@ -611,6 +611,7 @@ export const pendingReactionRoleSetups = new Map <string, {
   channelId: string,
   targetChannelId: string,
   title: string,
+  messageIds: string[]
 } >();
 
 /**
