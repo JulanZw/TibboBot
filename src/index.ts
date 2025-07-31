@@ -192,9 +192,7 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
       await command.execute(interaction, client);
     } catch (error) {
       logWithTime(`Error executing command ${interaction.commandName}: `+ error,'error',true);
-      if (!interaction.replied && !interaction.deferred) {
-				await safeReply(interaction, 'There was an error executing that command.', true);
-			}
+			await safeReply(interaction, 'There was an error executing that command.', true);
     }
 	} else if (interaction.isModalSubmit() && interaction.customId.startsWith('editReminderModal:')) {
 		const reminderId = interaction.customId.split(':')[1];
