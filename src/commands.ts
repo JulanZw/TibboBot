@@ -1,14 +1,13 @@
-import { ActionRowBuilder, ComponentType, ModalBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder, TextChannel, TextInputBuilder, TextInputStyle } from 'discord.js';
+import { ActionRowBuilder, ComponentType, ModalBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder, TextInputBuilder, TextInputStyle, MessageFlags } from 'discord.js';
 import { commandBuilder,COMMANDS_PER_PAGE,createButtonsRow,embedBuilder,formatDate,formatDateToDDMMYYYY,getDateKey,logWithTime, parseBirthdayDate, parseDurationOrDateString, pendingReactionRoleSetups, PermissionLevel, reminderDaysCache, safeReply, sourceRequestTracker } from './utils';
 import wol from 'wol';
-import { addReactionRole, createReminder, deleteReminder, getAllUserData, getAllUserDataTodayIs, getGuild, getPointGiverIdOfGuild, getReactionRolesByMessage, getUserData, getUserPoints, getUserReminders, insertUserData, setBirthday, setBirthdayChannel, setCountChannel, setPointGiverOfGuild, setTodayIsChannel, updateUserPoints } from './database';
+import { addReactionRole, createReminder, deleteReminder, getAllUsersCharsAndMessages, getAllUsersDataTodayIs, getGuild, getPointGiverIdOfGuild, getReactionRolesByMessage, getUserCharsAndMessages, getUserPoints, getUserReminders, insertUserData, setBirthday, setBirthdayChannel, setCountChannel, setPointGiverOfGuild, setTodayIsChannel, updateUserPoints } from './database';
 import { channelOption, integerOption, stringOption, userOption } from './options';
 import archiver from 'archiver';
 import fs from 'fs';
 import path from 'path';
 import { botId } from './index';
 import dotenv from 'dotenv';
-import { e } from 'mathjs';
 
 dotenv.config();
 
@@ -67,10 +66,7 @@ const helpCommand = commandBuilder(
 
     collector.on('collect', async (buttonInteraction) => {
       if (buttonInteraction.user.id !== interaction.user.id) {
-        return await buttonInteraction.reply({
-          content: 'You cannot use this button.',
-          ephemeral: true,
-        });
+        return await safeReply(buttonInteraction, 'You cannot use this button.', true);
       }
 
       const action = buttonInteraction.customId;
@@ -83,10 +79,7 @@ const helpCommand = commandBuilder(
           index = Math.min(totalPages - 1, index + 1);
           break;
         default:
-          return await buttonInteraction.reply({
-            content: 'Invalid action.',
-            ephemeral: true,
-          });
+          return await safeReply(buttonInteraction, 'Invalid action.', true);
       }
 
       start = index * COMMANDS_PER_PAGE;
@@ -142,7 +135,7 @@ const messagesCommand = commandBuilder(
       return await safeReply(interaction, 'No target user was provided.')
     }
 
-    const user = await getUserData(targetUser.id);
+    const user = await getUserCharsAndMessages(targetUser.id);
     if(user){
       await safeReply(interaction,`User ${targetUser.username} has sent ${user.char_count} charachter(s) in ${user.msg_count} message(s).`);
     }else{
@@ -160,33 +153,40 @@ const messagesCommand = commandBuilder(
 const leaderboardCommand = commandBuilder(
   'leaderboard',
   'Shows the top users on the message count board.',
-  async (interaction,client) => {
-    const users = await getAllUserData();
+  async (interaction, client) => {
+    const users = await getAllUsersCharsAndMessages();
 
-    if(!users || users.length===0){
-      return await safeReply(interaction,'No user data available for the leaderboard.');
+    if (!users || users.length === 0) {
+      return await safeReply(interaction, 'No user data available for the leaderboard.');
     }
 
-    const leaderboard = 
-    await Promise.all(users.slice(0,10).map(async (row, index) => {
-      try {
-        const user = await client.users.fetch(row.discordId);
-        const username = user ? user.username : 'Unknown User';
-        return `${index + 1}. ${username}: ${row.msg_count} messages, ${row.char_count} characters`;
-      } catch (error) {
-        logWithTime('Error fetching user:'+error,'error',true);
-        return `${index + 1}. Unknown User: ${row.msg_count} messages, ${row.char_count} characters`;
-      }
-    }));
+    const fields = await Promise.all(
+      users.slice(0, 10).map(async (row, index) => {
+        try {
+          const user = await client.users.fetch(row.discordId);
 
-    const leaderboardString = leaderboard.join('\n');
+          return {
+            name: `#${index + 1} - ${user.displayName ?? user.username}`,
+            value: `Messages: ${row.msg_count}, Characters: ${row.char_count}`,
+            inline: false
+          };
+        } catch (error) {
+          logWithTime('Error fetching user:' + error, 'error', true);
+          return {
+            name: `#${index + 1} - Unknown User`,
+            value: `Messages: ${row.msg_count}, Characters: ${row.char_count}`,
+            inline: false
+          };
+        }
+      })
+    );
 
     const leaderboardEmbed = embedBuilder({
       title: 'Leaderboard',
-      description: leaderboardString,
+      fields
     });
 
-    await safeReply(interaction,'',false, [leaderboardEmbed] );
+    await safeReply(interaction, '', false, [leaderboardEmbed]);
   },
   false,
   'user'
@@ -334,31 +334,39 @@ const todayIsBoardCommand = commandBuilder(
   'today_is_board',
   'Shows the top users on the today is leaderboard.',
   async (interaction, client) => {
-    const users = await getAllUserDataTodayIs();
+    const users = await getAllUsersDataTodayIs();
 
-    if(!users || users.length===0){
-      return await safeReply(interaction,'No user data available for the leaderboard.');
+    if (!users || users.length === 0) {
+      return await safeReply(interaction, 'No user data available for the leaderboard.');
     }
 
-    const pointboard = await Promise.all(users.map(async (row,index) => {
-      try {
-        const user = await client.users.fetch(row.discordId);
-        const username = user ? user.username : 'Unknown User';
-        return `${index + 1}. ${username}: ${row.points} points`;
-      } catch (error) {
-        console.error('Error fetching user:', error);
-        return `${index + 1}. Unknown User: ${row.points} points`;
-      }
-    }));
+    const fields = await Promise.all(
+      users.slice(0, 10).map(async (row, index) => {
+        try {
+          const user = await client.users.fetch(row.discordId);
 
-    const pointboardString = pointboard.join('\n');
+          return {
+            name: `#${index + 1}: ${user.displayName ?? user.username}`,
+            value: `${row.points} points`,
+            inline: false,
+          };
+        } catch (error) {
+          console.error('Error fetching user:', error);
+          return {
+            name: `#${index + 1}: Unknown User`,
+            value: `${row.points} points`,
+            inline: false,
+          };
+        }
+      }
+    ));
 
     const pointboardEmbed = embedBuilder({
-      title: 'Pointboard',
-      description: pointboardString,
+      title: 'Today Is Leaderboard',
+      fields,
     });
 
-    await safeReply(interaction,'',false, [pointboardEmbed] );
+    await safeReply(interaction, '', false, [pointboardEmbed]);
   },
   false,
   'user'
@@ -672,7 +680,7 @@ const remindersCommand = commandBuilder(
 
     const buildComponents = () => [createButtonsRow(index, reminders.length)];
 
-    await safeReply(interaction, '', false, [buildEmbed(reminders[index], index)], buildComponents());
+    await safeReply(interaction, '', true, [buildEmbed(reminders[index], index)], buildComponents());
 
     const msg = await interaction.fetchReply();
 
@@ -683,10 +691,7 @@ const remindersCommand = commandBuilder(
 
     collector.on('collect', async (btnInteraction) => {
       if (btnInteraction.user.id !== userId) {
-        return await btnInteraction.reply({ 
-          content: 'You cannot use this button.', 
-          ephemeral: true 
-        });
+        return await safeReply(btnInteraction, 'You cannot use this button.', true);
       }
 
       const action = btnInteraction.customId;
@@ -744,10 +749,7 @@ const remindersCommand = commandBuilder(
         }
 
         default:
-          return await btnInteraction.reply({
-            content: 'Invalid action.',
-            ephemeral: true,
-          });
+          return await safeReply(btnInteraction, 'Invalid action.', true);
       }
 
       await btnInteraction.update({
@@ -787,7 +789,7 @@ const sourceCommand = commandBuilder(
 
     sourceRequestTracker.add(userId);
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const rootPath = path.resolve(__dirname, '../');
     const srcFolderPath = path.join(rootPath, 'src');

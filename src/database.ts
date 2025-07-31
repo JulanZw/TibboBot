@@ -25,8 +25,9 @@ export async function insertUserData(discordId: string, charCount: bigint, msgCo
   return newUser;
 }
 
-export async function getAllUserData() {
+export async function getAllUsersCharsAndMessages() {
   return await prisma.user.findMany({
+    where: { char_count: { gt: BigInt(0) }, msg_count: { gt: 0 } },
     orderBy: { char_count: 'desc' },
     select: {
       discordId: true,
@@ -36,7 +37,7 @@ export async function getAllUserData() {
   });
 }
 
-export async function getUserData(id: string) {
+export async function getUserCharsAndMessages(id: string) {
   return await prisma.user.findUnique({
     where: { discordId: id },
     select: {
@@ -47,8 +48,9 @@ export async function getUserData(id: string) {
   });
 }
 
-export async function getAllUserDataTodayIs(): Promise<{ discordId: string; points: bigint; }[]> {
+export async function getAllUsersDataTodayIs(): Promise<{ discordId: string; points: bigint; }[]> {
   const rows = await prisma.user.findMany({
+    where: { points: { gt: BigInt(0) } },
     orderBy: { points: 'desc' },
     take: 10,
     select: { discordId: true, points: true }
@@ -95,7 +97,7 @@ export async function updateCountsForUser(author: User, content: string){
   const userId = author.id;
 	const messageLength = content.length;
 
-  const user = await getUserData(userId);
+  const user = await getUserCharsAndMessages(userId);
 
   if (user) {
     const newCharCount = user.char_count + BigInt(messageLength);

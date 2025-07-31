@@ -1,5 +1,5 @@
 
-import {  Client, Events, GatewayIntentBits, Interaction, Message, Partials, REST, Routes, TextChannel } from 'discord.js';
+import {  Client, Events, GatewayIntentBits, Interaction, Message, MessageFlags, Partials, REST, Routes, TextChannel } from 'discord.js';
 import { setupCronJobs } from './cronJobs';
 import { embedBuilder, ensureGuildExistance, logWithTime, parseDurationOrDateString, pendingReactionRoleSetups, safeReply } from './utils';
 import { commands, commandsToRegister } from './commands';
@@ -132,14 +132,14 @@ client.on(Events.MessageCreate, async (message: Message) => {
 
 						return await interaction.followUp({
 							content: 'Something went wrong while creating the message.',
-							ephemeral: true
+							flags: MessageFlags.Ephemeral
 						});
 					}
 				}
 
 				await interaction.followUp({
 					content: 'Reaction role message created!',
-					ephemeral: true
+					flags: MessageFlags.Ephemeral
 				});
 
 				pendingReactionRoleSetups.delete(message.author.id);
@@ -284,7 +284,7 @@ client.on(Events.MessageReactionRemove, async (reaction, user) => {
 
 //#endregion
 
-client.on('messageDelete', async (message) => {
+client.on(Events.MessageDelete, async (message) => {
   if (!message.guild || !message.id) return;
 
   const reactionRoles = await getReactionRolesByMessage(message.id);
