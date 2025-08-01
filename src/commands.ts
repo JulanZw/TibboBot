@@ -1,13 +1,14 @@
-import { ActionRowBuilder, ComponentType, ModalBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder, TextInputBuilder, TextInputStyle, MessageFlags } from 'discord.js';
+import { ActionRowBuilder, ComponentType, ModalBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder, TextInputBuilder, TextInputStyle, MessageFlags, SelectMenuBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType } from 'discord.js';
 import { commandBuilder,COMMANDS_PER_PAGE,createButtonsRow,embedBuilder,formatDate,formatDateToDDMMYYYY,getDateKey,logWithTime, parseBirthdayDate, parseDurationOrDateString, pendingReactionRoleSetups, PermissionLevel, reminderDaysCache, safeReply, sourceRequestTracker } from './utils';
 import wol from 'wol';
-import { addReactionRole, createReminder, deleteReminder, getAllUsersCharsAndMessages, getAllUsersDataTodayIs, getGuild, getPointGiverIdOfGuild, getReactionRolesByMessage, getUserCharsAndMessages, getUserPoints, getUserReminders, insertUserData, setBirthday, setBirthdayChannel, setCountChannel, setPointGiverOfGuild, setTodayIsChannel, updateUserPoints } from './database';
+import { addReactionRole, createReminder, deleteReminder, getAllUsersCharsAndMessages, getAllUsersDataTodayIs, getGuild, getPointGiverIdOfGuild, getReactionRolesByMessage, getUserCharsAndMessages, getUserPoints, getUserReminders, insertUserData, setBirthday, setBirthdayChannel, setCountChannel, setPointGiverOfGuild, setTodayIsChannel, updateChannel, updateUserPoints } from './database';
 import { channelOption, integerOption, stringOption, userOption } from './options';
 import archiver from 'archiver';
 import fs from 'fs';
 import path from 'path';
 import { botId } from './index';
 import dotenv from 'dotenv';
+import { log } from 'console';
 
 dotenv.config();
 
@@ -845,6 +846,150 @@ const sourceCommand = commandBuilder(
 
 //#endregion
 
+//#region Manage Channels
+
+const manageChannelsCommand = commandBuilder(
+  'manage_channels',
+  'Manage channels for the guild (admin only)',
+  async (interaction, client) => {
+    const guild = await getGuild(interaction.guildId as string);
+
+    if(!guild){
+      return await safeReply(interaction,`Guild is not in the database. You should never see this message, contact the bot owner please.`);
+    }
+
+    const selectRow = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId('channel_config_menu')
+        .setPlaceholder('Select a channel setting to manage')
+        .addOptions([
+          { label: 'Birthday Channel', value: 'birthday' },
+          { label: 'Counting Channel', value: 'count' },
+          { label: 'Today-is Channel', value: 'todayIs' },
+        ])
+    );
+
+    await safeReply(
+      interaction,
+      'Which channel setting would you like to manage?',
+      true,
+      undefined,
+      [selectRow],
+    );
+
+    const msg = await interaction.fetchReply();
+
+    const menuCollector = msg.createMessageComponentCollector({
+      filter: (i) => i.user.id === interaction.user.id && i.customId === 'channel_config_menu',
+      componentType: ComponentType.StringSelect,
+      time: 60_000,
+      max: 1,
+    });
+
+    menuCollector.on('collect', async (menuInteraction) => {
+      const selected = menuInteraction.values[0];
+
+      const buttonRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+          .setCustomId(`set_${selected}`)
+          .setLabel('Set New Channel')
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+          .setCustomId(`reset_${selected}`)
+          .setLabel('Reset')
+          .setStyle(ButtonStyle.Danger),
+        new ButtonBuilder()
+          .setCustomId(`cancel`)
+          .setLabel('Cancel')
+          .setStyle(ButtonStyle.Secondary)
+      );
+
+      await menuInteraction.update({
+        content: `You selected: **${selected}**. Choose an action:`,
+        components: [buttonRow],
+      });
+
+      const buttonCollector = msg.createMessageComponentCollector({
+        filter: (i) => i.user.id === interaction.user.id && (i.customId.startsWith('set_') || i.customId.startsWith('reset_') || i.customId === 'cancel'),
+        componentType: ComponentType.Button,
+        time: 60_000,
+        max: 1,
+      });
+
+      buttonCollector.on('collect', async (buttonInteraction) => {
+        const [action, selected] = buttonInteraction.customId.split('_');
+
+        if (action === 'cancel') {
+          await buttonInteraction.update({ content: 'Action cancelled.', components: [] });
+          return buttonCollector.stop();
+        } else if (action === 'reset') {
+          await updateChannel(guild.guildId, selected as 'count' | 'todayIs' | 'birthday',null);
+          logWithTime(`Reset ${selected} channel for ${guild.guildId}`,'info');
+          await safeReply(buttonInteraction,`${selected} channel reset.`,true );
+        } else {
+          const channelSelect = new ActionRowBuilder<ChannelSelectMenuBuilder>().addComponents(
+            new ChannelSelectMenuBuilder()
+              .setCustomId(`choose_${selected}`)
+              .setPlaceholder('Select a channel')
+              .addChannelTypes(ChannelType.GuildText)
+          );
+
+          const channelMsg = await interaction.followUp({
+            content: 'Pick a new channel below:',
+            components: [channelSelect],
+            ephemeral: true,
+          });
+
+          const channelCollector = channelMsg.createMessageComponentCollector({
+            filter: (i) => i.user.id === interaction.user.id && i.customId === `choose_${selected}`,
+            componentType: ComponentType.ChannelSelect,
+            time: 60_000,
+            max: 1,
+          });
+
+          channelCollector.on('collect', async (channelInteraction) => {
+            const newChannel = channelInteraction.channels.first();
+            if (!newChannel) return safeReply(channelInteraction, 'Invalid channel selected.', true );
+
+            await updateChannel(guild.guildId, selected as 'count' | 'todayIs' | 'birthday', newChannel.id);
+
+            logWithTime(`Set ${selected} channel to ${newChannel.id} for ${guild.guildId}`,'info');
+
+            await channelInteraction.update({
+              content: `The ${selected} channel has been set to <#${newChannel.id}>.`,
+              components: [],
+            });
+          });
+
+          channelCollector.on('end', (collected) => {
+            if (collected.size === 0) {
+              interaction.followUp({ content: 'Channel selection timed out.', ephemeral: true });
+            }
+          });
+
+          buttonCollector.stop();
+        }
+      });
+
+      buttonCollector.on('end', (collected) => {
+        if (collected.size === 0) {
+          interaction.followUp({ content: 'No action selected in time.', ephemeral: true });
+        }
+      });
+
+      menuCollector.on('end', (collected) => {
+        if (collected.size === 0) {
+          interaction.editReply({ content: 'Menu timed out.', components: [] });
+        }
+      });
+    });
+  },
+  true,
+  'admin'
+);
+
+//#endregion
+
 //#region Exports
 
 /**
@@ -879,15 +1024,13 @@ export const commands: Command[] = [
   todayIsBoardCommand,
   catCommand,
   setPointGiverCommand,
-  setTodayIsChannelCommand,
-  setBirthdayChannelCommand,
   setBirthdayCommand,
-  setCountChannelCommand,
   setReminderCommand,
   remindersCommand,
   sourceCommand,
   reactionRolesCommand,
-  addReactionRoleToMessageCommand
+  addReactionRoleToMessageCommand,
+  manageChannelsCommand
 ]
 
 export const commandsToRegister: RESTPostAPIChatInputApplicationCommandsJSONBody[] = commands.map(command => command.data.toJSON());

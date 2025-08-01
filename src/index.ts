@@ -3,7 +3,7 @@ import {  Client, Events, GatewayIntentBits, Interaction, Message, MessageFlags,
 import { setupCronJobs } from './cronJobs';
 import { embedBuilder, ensureGuildExistance, logWithTime, parseDurationOrDateString, pendingReactionRoleSetups, safeReply } from './utils';
 import { commands, commandsToRegister } from './commands';
-import { addReactionRole, checkAndUpdateCount, getLastCountUserAndHighestNumber, getReactionRolesByMessage, getReminderById, getRoleForReaction, removeReactionRolesByMessageId, setLastCountUser, updateCountsForUser, updateReminder } from './database';
+import { addReactionRole, checkAndUpdateCount, getLastCountUserAndHighestNumber, getReactionRolesByMessage, getReminderById, getRoleForReaction, removeReactionRolesByMessageId, resetCount, setLastCountUser, updateCountsForUser, updateReminder } from './database';
 import { evaluate } from 'mathjs';
 
 //#region Setup
@@ -78,11 +78,13 @@ client.on(Events.MessageCreate, async (message: Message) => {
 					if (!success) {
 						await message.react('❌');
 						await message.reply(`<@${message.author.id}> entered a wrong number! Next number is 1...`);
-						await setLastCountUser(guild.guildId, '0');
+						await resetCount(guild.guildId);
+						return;
 					} else if(lastCountUser?.lastCountUser && lastCountUser.lastCountUser === message.author.id){
 						await message.react('❌');
 						await message.reply(`Only count on yourself, not with yourself... Next number is 1...`);
-						await setLastCountUser(guild.guildId, '0');
+						await resetCount(guild.guildId);
+						return;
 					} else if(lastCountUser?.highestNumber && result > lastCountUser?.highestNumber){
 						await message.react('☑️');
 					} else {

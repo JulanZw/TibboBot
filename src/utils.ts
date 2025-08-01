@@ -1,4 +1,4 @@
-import { ActionRowBuilder, APIEmbedField, ButtonBuilder, ButtonInteraction, ButtonStyle, ChatInputCommandInteraction, Client, ColorResolvable, EmbedBuilder, MessageFlags, ModalSubmitInteraction, PermissionFlagsBits, PermissionsBitField, SlashCommandBuilder } from 'discord.js';
+import { ActionRowBuilder, APIEmbedField, ButtonBuilder, ButtonInteraction, ButtonStyle, ChannelSelectMenuInteraction, ChatInputCommandInteraction, Client, ColorResolvable, EmbedBuilder, MessageFlags, ModalSubmitInteraction, PermissionFlagsBits, PermissionsBitField, SlashCommandBuilder, StringSelectMenuInteraction } from 'discord.js';
 import { addGuild, getGuild } from './database';
 import { Command } from './commands';
 import path from 'path';
@@ -20,7 +20,7 @@ export const CUSTOM_ID_SPLITTER = '_';
  * @param components - Components that should be replied with
  */
 export async function safeReply(
-  interaction: ChatInputCommandInteraction | ButtonInteraction | ModalSubmitInteraction,
+  interaction: ChatInputCommandInteraction | ButtonInteraction | ModalSubmitInteraction | ChannelSelectMenuInteraction | StringSelectMenuInteraction,
   content: string,
   ephemeral: boolean = false,
   embeds?: EmbedBuilder[],

@@ -213,6 +213,43 @@ export async function getAllGuilds(){
   return prisma.guild.findMany();
 }
 
+export function resetCount(guildId: string) {
+  return prisma.guild.update({
+    where: { guildId },
+    data: {
+      countNumber: 0,
+      lastCountUser: null,
+    }
+  });
+}
+
+export async function updateChannel(guildId: string, channelType: 'count' | 'todayIs' | 'birthday',channelId: string | null) {
+  const updateData: { countChannelId?: string | null; todayIsChannelId?: string | null; birthdayChannelId?: string | null } = {};
+  
+  switch (channelType) {
+    case 'count':
+      updateData.countChannelId = channelId;
+      await setLastCountUser(guildId, '0');
+      logWithTime(`Count channel updated to ${channelId} for guild ${guildId}`, 'info');
+      break;
+    case 'todayIs':
+      updateData.todayIsChannelId = channelId;
+      logWithTime(`TodayIs channel updated to ${channelId} for guild ${guildId}`, 'info');
+      break;
+    case 'birthday':
+      updateData.birthdayChannelId = channelId;
+      logWithTime(`Birthday channel updated to ${channelId} for guild ${guildId}`, 'info');
+      break;
+    default:
+      return logWithTime(`Invalid channel type: ${channelType}`, 'error',true);
+  }
+
+  return await prisma.guild.update({
+    where: { guildId },
+    data: updateData
+  });
+}
+
 //#endregion
 
 //#region Birthday
