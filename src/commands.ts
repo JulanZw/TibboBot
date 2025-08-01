@@ -254,6 +254,7 @@ const setPointGiverCommand = commandBuilder(
   } 
 );
 
+// ! Can prob be removed in te future
 const setTodayIsChannelCommand = commandBuilder(
   'set_today_is_channel',
   'Sets the channel the bot will send the "today is x" message to. (admin only)',
@@ -377,6 +378,7 @@ const todayIsBoardCommand = commandBuilder(
 
 //#region Birthday
 
+// ! Can prob be removed in te future
 const setBirthdayChannelCommand = commandBuilder(
   'set_birthday_channel',
   'Sets the birthday channel of the guild. (admin only)',
@@ -448,6 +450,7 @@ const setBirthdayCommand = commandBuilder(
 
 //#region Count
 
+// ! Can prob be removed in te future
 const setCountChannelCommand = commandBuilder(
   'set_count_channel',
   'Sets the count channel of the guild. (admin only)',
