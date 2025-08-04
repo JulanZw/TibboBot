@@ -1,7 +1,7 @@
 
 import {  Client, Events, GatewayIntentBits, Interaction, Message, MessageFlags, Partials, REST, Routes, TextChannel } from 'discord.js';
 import { setupCronJobs } from './cronJobs';
-import { embedBuilder, ensureGuildExistance, logWithTime, parseDurationOrDateString, pendingReactionRoleSetups, safeReply } from './utils';
+import { embedBuilder, ensureGuildExistance, logWithTime, parseDurationOrDateString, pendingReactionRoleSetups, preprocessNumerics, safeReply } from './utils';
 import { commands, commandsToRegister } from './commands';
 import { addReactionRole, checkAndUpdateCount, getLastCountUserAndHighestNumber, getReactionRolesByMessage, getReminderById, getRoleForReaction, removeReactionRolesByMessageId, resetCount, setLastCountUser, updateCountsForUser, updateReminder } from './database';
 import { evaluate } from 'mathjs';
@@ -62,13 +62,8 @@ client.on(Events.MessageCreate, async (message: Message) => {
 		if(guild.countChannelId && guild.countChannelId === message.channelId){
 			const content = message.content.trim();
 
-			const checkArray = content.split(' ');
-			if(checkArray.length > 1){
-				return;
-			}
-
 			try {
-				const result = evaluate(content);
+				const result = evaluate(preprocessNumerics(content));
 
 				if (typeof result === 'number' && isFinite(result)) {
 					const number: number = Math.round(result);

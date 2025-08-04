@@ -590,6 +590,29 @@ export function parseBirthdayDate(input: string): Date | null {
 
 //#endregion
 
+//#region preprocessors
+/**
+ * Util function to preprocess numeric expressions in a string.
+ * 
+ * @param expr - The number that should be preprocessed
+ * @returns the preprocessed number as a string
+ */
+export function preprocessNumerics(expr: string): string {
+  return expr.replace(/\b0([box])[0-9a-fA-F]+\b/g, match => {
+    const prefix = match.slice(0, 2);
+    let base: number;
+    switch (prefix) {
+      case '0b': base = 2; break;
+      case '0o': base = 8; break;
+      case '0x': base = 16; break;
+      default: return match;
+    }
+    return parseInt(match.slice(2), base).toString();
+  });
+}
+
+//#endregion
+
 //#region Cache and Mem Storage
 
 /**

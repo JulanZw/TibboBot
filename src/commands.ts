@@ -8,7 +8,6 @@ import fs from 'fs';
 import path from 'path';
 import { botId } from './index';
 import dotenv from 'dotenv';
-import { log } from 'console';
 
 dotenv.config();
 
