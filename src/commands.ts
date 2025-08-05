@@ -18,7 +18,6 @@ import {
 } from 'discord.js';
 import wol from 'wol';
 import archiver from 'archiver';
-import dotenv from 'dotenv';
 
 import {
   commandBuilder,
@@ -65,7 +64,6 @@ import {
 
 import { botId } from './index';
 
-dotenv.config();
 
 //#region Utility
 
