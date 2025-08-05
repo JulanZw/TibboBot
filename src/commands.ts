@@ -1,13 +1,70 @@
-import { ActionRowBuilder, ComponentType, ModalBuilder, RESTPostAPIChatInputApplicationCommandsJSONBody, SlashCommandBuilder, TextInputBuilder, TextInputStyle, MessageFlags, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType } from 'discord.js';
-import { commandBuilder,COMMANDS_PER_PAGE,createButtonsRow,embedBuilder,formatDate,formatDateToDDMMYYYY,getDateKey,logWithTime, parseBirthdayDate, parseDurationOrDateString, pendingReactionRoleSetups, PermissionLevel, reminderDaysCache, safeReply, sourceRequestTracker } from './utils';
-import wol from 'wol';
-import { addReactionRole, createReminder, deleteReminder, getAllUsersCharsAndMessages, getAllUsersDataTodayIs, getGuild, getPointGiverIdOfGuild, getReactionRolesByMessage, getUserCharsAndMessages, getUserPoints, getUserReminders, insertUserData, setBirthday, setPointGiverOfGuild, updateChannel, updateUserPoints } from './database';
-import { channelOption, integerOption, roleOption, stringOption, userOption } from './options';
-import archiver from 'archiver';
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import fs from 'fs';
 import path from 'path';
-import { botId } from './index';
+
+import {
+  ActionRowBuilder,
+  ComponentType,
+  ModalBuilder,
+  RESTPostAPIChatInputApplicationCommandsJSONBody,
+  SlashCommandBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+  MessageFlags,
+  StringSelectMenuBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ChannelSelectMenuBuilder,
+  ChannelType,
+} from 'discord.js';
+import wol from 'wol';
+import archiver from 'archiver';
 import dotenv from 'dotenv';
+
+import {
+  commandBuilder,
+  COMMANDS_PER_PAGE,
+  createButtonsRow,
+  embedBuilder,
+  formatDate,
+  formatDateToDDMMYYYY,
+  getDateKey,
+  logWithTime,
+  parseBirthdayDate,
+  parseDurationOrDateString,
+  pendingReactionRoleSetups,
+  PermissionLevel,
+  reminderDaysCache,
+  safeReply,
+  sourceRequestTracker,
+} from './utils';
+import {
+  addReactionRole,
+  createReminder,
+  deleteReminder,
+  getAllUsersCharsAndMessages,
+  getAllUsersDataTodayIs,
+  getGuild,
+  getPointGiverIdOfGuild,
+  getReactionRolesByMessage,
+  getUserCharsAndMessages,
+  getUserPoints,
+  getUserReminders,
+  insertUserData,
+  setBirthday,
+  setPointGiverOfGuild,
+  updateChannel,
+  updateUserPoints,
+} from './database';
+import {
+  channelOption,
+  integerOption,
+  roleOption,
+  stringOption,
+  userOption,
+} from './options';
+
+import { botId } from './index';
 
 dotenv.config();
 
@@ -16,20 +73,28 @@ dotenv.config();
 const wolCommand = commandBuilder(
   'magic',
   'does some magic (bot owner only)',
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async (interaction, client) => {
-    if(!process.env.WOL_MAC || !process.env.WOL_IP){
-      logWithTime('Cannot execute WOL because MAC or IP is not set','error',true)
+    if (!process.env.WOL_MAC || !process.env.WOL_IP) {
+      logWithTime(
+        'Cannot execute WOL because MAC or IP is not set',
+        'error',
+        true,
+      );
       return await safeReply(interaction, 'IP or MAC has not been set');
     }
 
     const succes = await wol.wake(process.env.WOL_MAC, {
       address: process.env.WOL_IP,
-      port: 9
+      port: 9,
     });
-    return await safeReply(interaction, (succes ? 'magic...' : 'magic failed... :('));
+    return await safeReply(
+      interaction,
+      succes ? 'magic...' : 'magic failed... :(',
+    );
   },
   false,
-  'owner'
+  'owner',
 );
 
 const helpCommand = commandBuilder(
@@ -53,7 +118,7 @@ const helpCommand = commandBuilder(
       footer: `Page ${index + 1} of ${totalPages}`,
     });
 
-    const components = [createButtonsRow(index, totalPages,['prev', 'next'])];
+    const components = [createButtonsRow(index, totalPages, ['prev', 'next'])];
 
     await safeReply(interaction, '', false, [embed], components);
 
@@ -66,7 +131,11 @@ const helpCommand = commandBuilder(
 
     collector.on('collect', async (buttonInteraction) => {
       if (buttonInteraction.user.id !== interaction.user.id) {
-        return await safeReply(buttonInteraction, 'You cannot use this button.', true);
+        return await safeReply(
+          buttonInteraction,
+          'You cannot use this button.',
+          true,
+        );
       }
 
       const action = buttonInteraction.customId;
@@ -96,29 +165,35 @@ const helpCommand = commandBuilder(
         footer: `Page ${index + 1} of ${totalPages}`,
       });
 
-      const newComponents = [createButtonsRow(index, totalPages,['prev', 'next'])];
+      const newComponents = [
+        createButtonsRow(index, totalPages, ['prev', 'next']),
+      ];
 
-      await buttonInteraction.update({ embeds: [newEmbed], components: newComponents });
+      await buttonInteraction.update({
+        embeds: [newEmbed],
+        components: newComponents,
+      });
     });
 
-    collector.on('end', () => {
+    collector.on('end', async () => {
       if (msg.editable) {
-        msg.edit({ components: [] });
+        await msg.edit({ components: [] });
       }
     });
   },
   false,
-  'user'
+  'user',
 );
 
 const pingCommand = commandBuilder(
   'ping',
   'Responds with "pong" to check if the bot is online.',
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async (interaction, client) => {
-    await safeReply(interaction,'pong');
+    await safeReply(interaction, 'pong');
   },
   false,
-  'user'
+  'user',
 );
 
 //#endregion
@@ -128,26 +203,33 @@ const pingCommand = commandBuilder(
 const messagesCommand = commandBuilder(
   'messages',
   'Displays the message count for a specified user.',
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async (interaction, client) => {
     const targetUser = interaction.options.getUser('target');
-    
-    if(!targetUser){
-      return await safeReply(interaction, 'No target user was provided.')
+
+    if (!targetUser) {
+      return await safeReply(interaction, 'No target user was provided.');
     }
 
     const user = await getUserCharsAndMessages(targetUser.id);
-    if(user){
-      await safeReply(interaction,`User ${targetUser.username} has sent ${user.char_count} charachter(s) in ${user.msg_count} message(s).`);
-    }else{
-      await safeReply(interaction, `User ${targetUser.username} has not sent any messages yet.`);
+    if (user) {
+      await safeReply(
+        interaction,
+        `User ${targetUser.username} has sent ${user.char_count} charachter(s) in ${user.msg_count} message(s).`,
+      );
+    } else {
+      await safeReply(
+        interaction,
+        `User ${targetUser.username} has not sent any messages yet.`,
+      );
     }
   },
   false,
   'user',
-  builder => {
-    builder.addUserOption(userOption('target','The user to check'));
+  (builder) => {
+    builder.addUserOption(userOption('target', 'The user to check'));
     return builder;
-  }    
+  },
 );
 
 const leaderboardCommand = commandBuilder(
@@ -157,7 +239,10 @@ const leaderboardCommand = commandBuilder(
     const users = await getAllUsersCharsAndMessages();
 
     if (!users || users.length === 0) {
-      return await safeReply(interaction, 'No user data available for the leaderboard.');
+      return await safeReply(
+        interaction,
+        'No user data available for the leaderboard.',
+      );
     }
 
     const fields = await Promise.all(
@@ -168,28 +253,28 @@ const leaderboardCommand = commandBuilder(
           return {
             name: `#${index + 1} - ${user.displayName ?? user.username}`,
             value: `Messages: ${row.msg_count}, Characters: ${row.char_count}`,
-            inline: false
+            inline: false,
           };
-        } catch (error) {
-          logWithTime('Error fetching user:' + error, 'error', true);
+        } catch (err: any) {
+          logWithTime('Error fetching user:' + err, 'error', true);
           return {
             name: `#${index + 1} - Unknown User`,
             value: `Messages: ${row.msg_count}, Characters: ${row.char_count}`,
-            inline: false
+            inline: false,
           };
         }
-      })
+      }),
     );
 
     const leaderboardEmbed = embedBuilder({
       title: 'Leaderboard',
-      fields
+      fields,
     });
 
     await safeReply(interaction, '', false, [leaderboardEmbed]);
   },
   false,
-  'user'
+  'user',
 );
 
 //#endregion
@@ -199,26 +284,34 @@ const leaderboardCommand = commandBuilder(
 const catCommand = commandBuilder(
   'cat',
   'Sends a random cat picture.',
-  async (interaction, client) =>
-  {
-    try{
-      const response = await fetch('https://api.thecatapi.com/v1/images/search');
-      const data = await response.json();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async (interaction, client) => {
+    try {
+      const response = await fetch(
+        'https://api.thecatapi.com/v1/images/search',
+      );
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const data: { url: string }[] = await response.json();
+
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        throw new Error('No cat image found');
+      }
       const imageUrl = data[0].url;
 
       const catEmbed = embedBuilder({
-        title: 'Here\'s a cat for you!',
+        title: "Here's a cat for you!",
         customize: (embed) => embed.setImage(imageUrl),
       });
 
-      await safeReply(interaction,'',false, [catEmbed] );
-    } catch (err) {
-      logWithTime('Error fetching cat image:'+err,'warn',true);
-      await safeReply(interaction,'Sorry, I couldn\'t fetch a cat image.');
+      await safeReply(interaction, '', false, [catEmbed]);
+    } catch (err: any) {
+      logWithTime('Error fetching cat image:' + err, 'warn', true);
+      await safeReply(interaction, "Sorry, I couldn't fetch a cat image.");
     }
   },
   false,
-  'user'
+  'user',
 );
 
 //#endregion
@@ -228,76 +321,118 @@ const catCommand = commandBuilder(
 const setPointGiverCommand = commandBuilder(
   'set_point_giver',
   'Sets the point giver for this server. (admin only)',
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async (interaction, client) => {
     const guild = await getGuild(interaction.guildId as string);
 
-    if(!guild){
-      return await safeReply(interaction,`Guild is not in the database. You should never see this message, contact the bot owner please.`);
+    if (!guild) {
+      return await safeReply(
+        interaction,
+        `Guild is not in the database. You should never see this message, contact the bot owner please.`,
+      );
     }
 
     const targetUser = interaction.options.getUser('target');
 
-    if(!targetUser){
-      return await safeReply(interaction,'No target user was provided.');
+    if (!targetUser) {
+      return await safeReply(interaction, 'No target user was provided.');
     }
 
-    await setPointGiverOfGuild(interaction.guildId as string,targetUser.id);
-    await safeReply(interaction,guild.todayIsChannelId ? `set <@${targetUser.id}> as the server's point giver` : `set <@${targetUser.id}> as the server's point giver. Dont forget to also set a todayIs channel!`);
-    logWithTime(`Set ${targetUser.id} as pointgiver for ${guild.guildId}`,'info');
+    await setPointGiverOfGuild(interaction.guildId as string, targetUser.id);
+    await safeReply(
+      interaction,
+      guild.todayIsChannelId
+        ? `set <@${targetUser.id}> as the server's point giver`
+        : `set <@${targetUser.id}> as the server's point giver. Dont forget to also set a todayIs channel!`,
+    );
+    logWithTime(
+      `Set ${targetUser.id} as pointgiver for ${guild.guildId}`,
+      'info',
+    );
   },
   true,
   'admin',
-  builder => {
-    builder.addUserOption(userOption('target','The user put as point giver'));
+  (builder) => {
+    builder.addUserOption(userOption('target', 'The user put as point giver'));
     return builder;
-  } 
+  },
 );
 
 const addPointsCommand = commandBuilder(
   'add_points',
   'adds points to the user (can only be used by the servers point giver)',
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async (interaction, client) => {
-    const pointGiverId = await getPointGiverIdOfGuild(interaction.guildId as string);
+    const pointGiverId = await getPointGiverIdOfGuild(
+      interaction.guildId as string,
+    );
 
-    if(!pointGiverId){
-      return await safeReply(interaction,'This server doesnt have a point giver')
+    if (!pointGiverId) {
+      return await safeReply(
+        interaction,
+        'This server doesnt have a point giver',
+      );
     }
 
     if (interaction.user.id !== pointGiverId) {
-      return await safeReply(interaction,`Only <@${pointGiverId}> can give points`);
+      return await safeReply(
+        interaction,
+        `Only <@${pointGiverId}> can give points`,
+      );
     }
 
     const targetUser = interaction.options.getUser('target');
     const amount = interaction.options.getInteger('amount');
 
-    if(!amount || !targetUser){
-      return await safeReply(interaction,`You did not provide a target user or points!`);
+    if (!amount || !targetUser) {
+      return await safeReply(
+        interaction,
+        `You did not provide a target user or points!`,
+      );
     }
 
-    if(amount<0){
-      await safeReply(interaction,`Could not add ${amount} points for ${targetUser.username} as negative values are not accepted.`);
-      logWithTime(`Error: Could not add \'${amount}\' points for \'${targetUser.username}\' as negative values are not accepted.`,'error',true);
+    if (amount < 0) {
+      await safeReply(
+        interaction,
+        `Could not add ${amount} points for ${targetUser.username} as negative values are not accepted.`,
+      );
+      logWithTime(
+        `Error: Could not add '${amount}' points for '${targetUser.username}' as negative values are not accepted.`,
+        'error',
+        true,
+      );
     }
 
     const row = await getUserPoints(targetUser.id);
-    if(!row){
-      await insertUserData(targetUser.id,BigInt(0),0,BigInt(amount));
-    }else{
-      await updateUserPoints(targetUser.id,BigInt(amount)+row.points,interaction);
+    if (!row) {
+      await insertUserData(targetUser.id, BigInt(0), 0, BigInt(amount));
+    } else {
+      await updateUserPoints(targetUser.id, BigInt(amount) + row.points);
     }
-    if(targetUser.id === botId){
-      await safeReply(interaction,`Thank you <@${interaction.user.id}> for the ${amount} points`);
-      logWithTime(`${amount} points were given to the bot`,'info');
-    }else{
-      await safeReply(interaction,`Added ${amount} points for ${targetUser.username}.`);
-      logWithTime(`${amount} points were given to \'${targetUser.username}\'`,'info');
+    if (targetUser.id === botId) {
+      await safeReply(
+        interaction,
+        `Thank you <@${interaction.user.id}> for the ${amount} points`,
+      );
+      logWithTime(`${amount} points were given to the bot`, 'info');
+    } else {
+      await safeReply(
+        interaction,
+        `Added ${amount} points for ${targetUser.username}.`,
+      );
+      logWithTime(
+        `${amount} points were given to '${targetUser.username}'`,
+        'info',
+      );
     }
   },
   false,
   'user',
-  builder => {
-    builder.addUserOption(userOption('target','The user to give points to'));
-    builder.addIntegerOption(integerOption('amount','The amount of points to give'));
+  (builder) => {
+    builder.addUserOption(userOption('target', 'The user to give points to'));
+    builder.addIntegerOption(
+      integerOption('amount', 'The amount of points to give'),
+    );
     return builder;
   },
 );
@@ -309,7 +444,10 @@ const todayIsBoardCommand = commandBuilder(
     const users = await getAllUsersDataTodayIs();
 
     if (!users || users.length === 0) {
-      return await safeReply(interaction, 'No user data available for the leaderboard.');
+      return await safeReply(
+        interaction,
+        'No user data available for the leaderboard.',
+      );
     }
 
     const fields = await Promise.all(
@@ -322,16 +460,16 @@ const todayIsBoardCommand = commandBuilder(
             value: `${row.points} points`,
             inline: false,
           };
-        } catch (error) {
-          console.error('Error fetching user:', error);
+        } catch (err: any) {
+          logWithTime('Error fetching user: ' + err, 'error', true);
           return {
             name: `#${index + 1}: Unknown User`,
             value: `${row.points} points`,
             inline: false,
           };
         }
-      }
-    ));
+      }),
+    );
 
     const pointboardEmbed = embedBuilder({
       title: 'Today Is Leaderboard',
@@ -341,7 +479,7 @@ const todayIsBoardCommand = commandBuilder(
     await safeReply(interaction, '', false, [pointboardEmbed]);
   },
   false,
-  'user'
+  'user',
 );
 
 //#endregion
@@ -351,38 +489,60 @@ const todayIsBoardCommand = commandBuilder(
 const setBirthdayCommand = commandBuilder(
   'set_birthday',
   'Set your birthday for this server',
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async (interaction, client) => {
     const guild = await getGuild(interaction.guildId as string); // ? this gets checked in the main loop before it reaches this
 
-    if(!guild){
-      return await safeReply(interaction,`Guild is not in the database. You should never see this message, contact the bot owner please.`);
+    if (!guild) {
+      return await safeReply(
+        interaction,
+        `Guild is not in the database. You should never see this message, contact the bot owner please.`,
+      );
     }
 
     const date = interaction.options.getString('date');
 
-    if(!date){
-      return await safeReply(interaction,'No birthday was provided');
+    if (!date) {
+      return await safeReply(interaction, 'No birthday was provided');
     }
 
     const birthday = parseBirthdayDate(date);
 
-    if(!birthday){
-      return await safeReply(interaction,'Invalid date format. Please use DD-MM-YYYY or YYYY-MM-DD.');
+    if (!birthday) {
+      return await safeReply(
+        interaction,
+        'Invalid date format. Please use DD-MM-YYYY or YYYY-MM-DD.',
+      );
     }
 
-    const newBirthday = await setBirthday(guild.guildId,interaction.user.id,birthday);
-    
-    if(!newBirthday){
-      return await safeReply(interaction,'Something went wrong while setting your birthday...');
+    const newBirthday = await setBirthday(
+      guild.guildId,
+      interaction.user.id,
+      birthday,
+    );
+
+    if (!newBirthday) {
+      return await safeReply(
+        interaction,
+        'Something went wrong while setting your birthday...',
+      );
     } else {
-      logWithTime(`Set birthday for ${newBirthday.userId} on ${formatDate(newBirthday.birthday)}`,'info');
-      return await safeReply(interaction,`Set birthday for <@${newBirthday.userId}> on ${formatDate(newBirthday.birthday)}`);
+      logWithTime(
+        `Set birthday for ${newBirthday.userId} on ${formatDate(newBirthday.birthday)}`,
+        'info',
+      );
+      return await safeReply(
+        interaction,
+        `Set birthday for <@${newBirthday.userId}> on ${formatDate(newBirthday.birthday)}`,
+      );
     }
   },
   false,
   'user',
-  builder => {
-    builder.addStringOption(stringOption('date','Enter a date (DD-MM-YYYY or YYYY-MM-DD)'));
+  (builder) => {
+    builder.addStringOption(
+      stringOption('date', 'Enter a date (DD-MM-YYYY or YYYY-MM-DD)'),
+    );
     return builder;
   },
 );
@@ -394,14 +554,15 @@ const setBirthdayCommand = commandBuilder(
 const reactionRolesCommand = commandBuilder(
   'reaction_roles',
   'Set up a reaction role message. (admin only)',
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async (interaction, client) => {
     const userId = interaction.user.id;
 
     const targetChannel = interaction.options.getChannel('target');
     const title = interaction.options.getString('title');
 
-    if(!targetChannel){
-      return await safeReply(interaction,'No target channel was provided.');
+    if (!targetChannel) {
+      return await safeReply(interaction, 'No target channel was provided.');
     }
 
     pendingReactionRoleSetups.set(userId, {
@@ -416,17 +577,29 @@ const reactionRolesCommand = commandBuilder(
     await safeReply(
       interaction,
       'Please send the emoji + role pairs in this format: `🟥 @RedTeam`\nSend `done` when finished.',
-      true
+      true,
     );
-    logWithTime('Reaction message proces started','info');
+    logWithTime('Reaction message proces started', 'info');
   },
   true,
   'admin',
-  builder => {
-    builder.addChannelOption(channelOption('target','The channel where reaction message will be in.',true));
-    builder.addStringOption(stringOption('title','The title of the reaction role message (defaults to "Choose your role")',false));
+  (builder) => {
+    builder.addChannelOption(
+      channelOption(
+        'target',
+        'The channel where reaction message will be in.',
+        true,
+      ),
+    );
+    builder.addStringOption(
+      stringOption(
+        'title',
+        'The title of the reaction role message (defaults to "Choose your role")',
+        false,
+      ),
+    );
     return builder;
-  }
+  },
 );
 
 const addReactionRoleToMessageCommand = commandBuilder(
@@ -435,76 +608,118 @@ const addReactionRoleToMessageCommand = commandBuilder(
   async (interaction, client) => {
     const guild = await getGuild(interaction.guildId as string);
 
-    if(!guild){
-      return await safeReply(interaction,`Guild is not in the database. You should never see this message, contact the bot owner please.`);
+    if (!guild) {
+      return await safeReply(
+        interaction,
+        `Guild is not in the database. You should never see this message, contact the bot owner please.`,
+      );
     }
 
     const targetMessageId = interaction.options.getString('message_id');
     const emoji = interaction.options.getString('emoji');
     const role = interaction.options.getRole('role');
 
-    if(!targetMessageId){
-      return await safeReply(interaction,'No target message ID was provided.');
-    } else if(!emoji){
-      return await safeReply(interaction,'No emoji was provided.');
-    } else if(!role){
-      return await safeReply(interaction,'No role was provided.');
+    if (!targetMessageId) {
+      return await safeReply(interaction, 'No target message ID was provided.');
+    } else if (!emoji) {
+      return await safeReply(interaction, 'No emoji was provided.');
+    } else if (!role) {
+      return await safeReply(interaction, 'No role was provided.');
     }
 
     const reactionRoles = await getReactionRolesByMessage(targetMessageId);
 
-    if(!reactionRoles || reactionRoles.length < 1){
-      return await safeReply(interaction,'Message does not have any reaction roles.');
+    if (!reactionRoles || reactionRoles.length < 1) {
+      return await safeReply(
+        interaction,
+        'Message does not have any reaction roles.',
+      );
     }
 
     const channel = await client.channels.fetch(reactionRoles[0].channelId);
 
-    if (!channel || !channel.isTextBased()) return await safeReply(interaction,'Invalid channel.');
-    
+    if (!channel || !channel.isTextBased())
+      return await safeReply(interaction, 'Invalid channel.');
+
     const message = await channel.messages.fetch(targetMessageId);
 
     if (message && message.editable) {
-      if(reactionRoles.some(rr => rr.emoji === emoji)){
-        return await safeReply(interaction,'This emoji is already used for a reaction role on this message.');
+      if (reactionRoles.some((rr) => rr.emoji === emoji)) {
+        return await safeReply(
+          interaction,
+          'This emoji is already used for a reaction role on this message.',
+        );
       }
 
-      const newReactionRole = await addReactionRole(guild.guildId, targetMessageId, reactionRoles[0].channelId, emoji, role.id);
+      const newReactionRole = await addReactionRole(
+        guild.guildId,
+        targetMessageId,
+        reactionRoles[0].channelId,
+        emoji,
+        role.id,
+      );
 
-      if(!newReactionRole){
-        logWithTime('Something went wrong while creating a reaction role','error',true);
-        return await safeReply(interaction,'Something went wrong while creating the reaction role.');
+      if (!newReactionRole) {
+        logWithTime(
+          'Something went wrong while creating a reaction role',
+          'error',
+          true,
+        );
+        return await safeReply(
+          interaction,
+          'Something went wrong while creating the reaction role.',
+        );
       }
 
       const description = Object.entries([newReactionRole, ...reactionRoles])
-        .map(([, reactionRole]) => `${reactionRole.emoji} = <@&${reactionRole.role}>`)
+        .map(
+          ([, reactionRole]) =>
+            `${reactionRole.emoji} = <@&${reactionRole.role}>`,
+        )
         .join('\n');
 
       const oldEmbed = message.embeds[0];
 
-      const embed = embedBuilder(
-        {
-          title: oldEmbed.title ?? '',
-          description,
-          footer: oldEmbed.footer?.text ?? `Click the emojis to get the roles!`,
-        }
-      )
+      const embed = embedBuilder({
+        title: oldEmbed.title ?? '',
+        description,
+        footer: oldEmbed.footer?.text ?? `Click the emojis to get the roles!`,
+      });
 
       await message.edit({ embeds: [embed] });
       await message.react(newReactionRole.emoji);
 
-      return await safeReply(interaction,`Added reaction role ${emoji} for <@&${role.id}> to the message.`,true);
+      return await safeReply(
+        interaction,
+        `Added reaction role ${emoji} for <@&${role.id}> to the message.`,
+        true,
+      );
     } else {
-      return await safeReply(interaction,'Message not found or not editable.');
+      return await safeReply(interaction, 'Message not found or not editable.');
     }
   },
   true,
   'admin',
-  builder => {
-    builder.addStringOption(stringOption('message_id','The ID of the message to add the reaction role to',true));
-    builder.addStringOption(stringOption('emoji','The emoji to use for the reaction role',true));
-    builder.addRoleOption(roleOption('role','The role to assign when the emoji is reacted to',true));
+  (builder) => {
+    builder.addStringOption(
+      stringOption(
+        'message_id',
+        'The ID of the message to add the reaction role to',
+        true,
+      ),
+    );
+    builder.addStringOption(
+      stringOption('emoji', 'The emoji to use for the reaction role', true),
+    );
+    builder.addRoleOption(
+      roleOption(
+        'role',
+        'The role to assign when the emoji is reacted to',
+        true,
+      ),
+    );
     return builder;
-  }
+  },
 );
 
 //#endregion
@@ -514,30 +729,42 @@ const addReactionRoleToMessageCommand = commandBuilder(
 const setReminderCommand = commandBuilder(
   'set_reminder',
   'Sets a reminder',
-  async interaction => {
+  async (interaction) => {
     const when = interaction.options.getString('when', true);
     const message = interaction.options.getString('message', true);
 
     const targetTime = parseDurationOrDateString(when);
     if (!targetTime) {
-      return await safeReply(interaction, 'Invalid date/time format.', true );
+      return await safeReply(interaction, 'Invalid date/time format.', true);
     }
 
     const maxTime = Date.now() + 1000 * 60 * 60 * 24 * 365;
     if (targetTime.getTime() > maxTime) {
-      return await safeReply(interaction, 'Reminders can only be up to 1 year in the future.', true );
+      return await safeReply(
+        interaction,
+        'Reminders can only be up to 1 year in the future.',
+        true,
+      );
     }
 
     const userReminders = await getUserReminders(interaction.user.id);
-    if(userReminders.length > 10){
-      return await safeReply(interaction, 'You cannot have more than 10 reminders!', true );
+    if (userReminders.length > 10) {
+      return await safeReply(
+        interaction,
+        'You cannot have more than 10 reminders!',
+        true,
+      );
     }
 
-    const reminder = await createReminder(interaction.user.id,message,targetTime);
+    const reminder = await createReminder(
+      interaction.user.id,
+      message,
+      targetTime,
+    );
 
     const maxCacheDate = new Date();
     maxCacheDate.setDate(maxCacheDate.getDate() + 1);
-    if(targetTime < maxCacheDate){
+    if (targetTime < maxCacheDate) {
       const dateKey = getDateKey(reminder.remindAt);
       if (!reminderDaysCache.has(dateKey)) {
         reminderDaysCache.set(dateKey, []);
@@ -550,21 +777,28 @@ const setReminderCommand = commandBuilder(
       `Reminder set for <t:${Math.floor(targetTime.getTime() / 1000)}:F>, make sure you have direct messages turned on for this server!`,
       true,
     );
-    logWithTime(`Created reminder for ${interaction.user.id} on ${targetTime}`,'info');
+    logWithTime(
+      `Created reminder for ${interaction.user.id} on ${targetTime.toISOString()}`,
+      'info',
+    );
   },
   false,
   'user',
-  builder => {
-    builder.addStringOption(stringOption('when','When you need to be reminded',true));
-    builder.addStringOption(stringOption('message','What you needed to be reminded of',true));
+  (builder) => {
+    builder.addStringOption(
+      stringOption('when', 'When you need to be reminded', true),
+    );
+    builder.addStringOption(
+      stringOption('message', 'What you needed to be reminded of', true),
+    );
     return builder;
-  }
+  },
 );
 
 const remindersCommand = commandBuilder(
   'my_reminders',
   'Shows all your reminders and allows you to edit them',
-  async interaction => {
+  async (interaction) => {
     const reminders = await getUserReminders(interaction.user.id);
     if (!reminders.length) {
       return await safeReply(interaction, 'You have no reminders.', true);
@@ -580,20 +814,30 @@ const remindersCommand = commandBuilder(
         message: string;
         userId: string;
         remindAt: Date;
-      }, 
-      index: number
-    ) => embedBuilder({
-      title: `Reminder ${index + 1} of ${reminders.length}`,
-      fields: [
-        { name: 'Message', value: reminder.message },
-        { name: 'Remind At', value: `<t:${Math.floor(reminder.remindAt.getTime() / 1000)}:F>` },
-      ],
-      footer: `Created: ${formatDateToDDMMYYYY(reminder.createdAt)}`
-    });
+      },
+      index: number,
+    ) =>
+      embedBuilder({
+        title: `Reminder ${index + 1} of ${reminders.length}`,
+        fields: [
+          { name: 'Message', value: reminder.message },
+          {
+            name: 'Remind At',
+            value: `<t:${Math.floor(reminder.remindAt.getTime() / 1000)}:F>`,
+          },
+        ],
+        footer: `Created: ${formatDateToDDMMYYYY(reminder.createdAt)}`,
+      });
 
     const buildComponents = () => [createButtonsRow(index, reminders.length)];
 
-    await safeReply(interaction, '', true, [buildEmbed(reminders[index], index)], buildComponents());
+    await safeReply(
+      interaction,
+      '',
+      true,
+      [buildEmbed(reminders[index], index)],
+      buildComponents(),
+    );
 
     const msg = await interaction.fetchReply();
 
@@ -604,7 +848,11 @@ const remindersCommand = commandBuilder(
 
     collector.on('collect', async (btnInteraction) => {
       if (btnInteraction.user.id !== userId) {
-        return await safeReply(btnInteraction, 'You cannot use this button.', true);
+        return await safeReply(
+          btnInteraction,
+          'You cannot use this button.',
+          true,
+        );
       }
 
       const action = btnInteraction.customId;
@@ -627,7 +875,7 @@ const remindersCommand = commandBuilder(
             return await btnInteraction.update({
               content: 'All reminders deleted.',
               embeds: [],
-              components: []
+              components: [],
             });
           }
 
@@ -647,15 +895,15 @@ const remindersCommand = commandBuilder(
                   .setLabel('Reminder Message')
                   .setStyle(TextInputStyle.Paragraph)
                   .setRequired(true)
-                  .setValue(reminder.message)
+                  .setValue(reminder.message),
               ),
               new ActionRowBuilder<TextInputBuilder>().addComponents(
                 new TextInputBuilder()
                   .setCustomId('editTime')
                   .setLabel('Remind at (e.g. in 2 hours or in 3 days)')
                   .setStyle(TextInputStyle.Short)
-                  .setRequired(true)
-              )
+                  .setRequired(true),
+              ),
             );
 
           return await btnInteraction.showModal(modal);
@@ -678,7 +926,7 @@ const remindersCommand = commandBuilder(
     });
   },
   false,
-  'user'
+  'user',
 );
 
 //#endregion
@@ -722,22 +970,26 @@ const sourceCommand = commandBuilder(
           files: [zipPath],
         });
 
-        await interaction.editReply({ content: 'Source code sent to your DMs!' });
-      } catch (error) {
-        logWithTime('Failed to send source ZIP:' + error, 'error',true);
         await interaction.editReply({
-          content: 'Failed to send the source code via DM. Please check your privacy settings.',
+          content: 'Source code sent to your DMs!',
+        });
+      } catch (err: any) {
+        logWithTime('Failed to send source ZIP:' + err, 'error', true);
+        await interaction.editReply({
+          content:
+            'Failed to send the source code via DM. Please check your privacy settings.',
         });
       } finally {
-        fs.unlink(zipPath, err => {
-          if (err) console.error('Failed to delete temp zip:', err);
+        fs.unlink(zipPath, (err: any) => {
+          if (err)
+            logWithTime('Failed to delete temp zip: ' + err, 'error', true);
         });
       }
     });
 
-    archive.on('error', err => {
-      logWithTime('Archive error:' + err, 'error',true);
-      interaction.editReply('An error occurred while creating the ZIP.');
+    archive.on('error', async (err: any) => {
+      logWithTime('Archive error:' + err, 'error', true);
+      await interaction.editReply('An error occurred while creating the ZIP.');
     });
 
     archive.pipe(output);
@@ -745,14 +997,20 @@ const sourceCommand = commandBuilder(
     archive.directory(srcFolderPath, 'src');
     archive.directory(prismaPath, 'prisma');
 
-    ['README.md', 'LICENSE', 'package.json', 'tsconfig.json', '.example.env'].forEach(file =>
-      archive.file(path.join(rootPath, file), { name: file })
+    [
+      'README.md',
+      'LICENSE',
+      'package.json',
+      'tsconfig.json',
+      '.example.env',
+    ].forEach((file) =>
+      archive.file(path.join(rootPath, file), { name: file }),
     );
 
     await archive.finalize();
   },
   false,
-  'user'
+  'user',
 );
 
 //#endregion
@@ -762,23 +1020,28 @@ const sourceCommand = commandBuilder(
 const manageChannelsCommand = commandBuilder(
   'manage_channels',
   'Manage channels for the guild (admin only)',
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async (interaction, client) => {
     const guild = await getGuild(interaction.guildId as string);
 
-    if(!guild){
-      return await safeReply(interaction,`Guild is not in the database. You should never see this message, contact the bot owner please.`);
+    if (!guild) {
+      return await safeReply(
+        interaction,
+        `Guild is not in the database. You should never see this message, contact the bot owner please.`,
+      );
     }
 
-    const selectRow = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-      new StringSelectMenuBuilder()
-        .setCustomId('channel_config_menu')
-        .setPlaceholder('Select a channel setting to manage')
-        .addOptions([
-          { label: 'Birthday Channel', value: 'birthday' },
-          { label: 'Counting Channel', value: 'count' },
-          { label: 'Today-is Channel', value: 'today-is' },
-        ])
-    );
+    const selectRow =
+      new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId('channel_config_menu')
+          .setPlaceholder('Select a channel setting to manage')
+          .addOptions([
+            { label: 'Birthday Channel', value: 'birthday' },
+            { label: 'Counting Channel', value: 'count' },
+            { label: 'Today-is Channel', value: 'today-is' },
+          ]),
+      );
 
     await safeReply(
       interaction,
@@ -791,7 +1054,9 @@ const manageChannelsCommand = commandBuilder(
     const msg = await interaction.fetchReply();
 
     const menuCollector = msg.createMessageComponentCollector({
-      filter: (i) => i.user.id === interaction.user.id && i.customId === 'channel_config_menu',
+      filter: (i) =>
+        i.user.id === interaction.user.id &&
+        i.customId === 'channel_config_menu',
       componentType: ComponentType.StringSelect,
       time: 60000,
     });
@@ -811,7 +1076,7 @@ const manageChannelsCommand = commandBuilder(
         new ButtonBuilder()
           .setCustomId(`cancel`)
           .setLabel('Cancel')
-          .setStyle(ButtonStyle.Secondary)
+          .setStyle(ButtonStyle.Secondary),
       );
 
       await menuInteraction.update({
@@ -822,7 +1087,11 @@ const manageChannelsCommand = commandBuilder(
       menuCollector.stop();
 
       const buttonCollector = msg.createMessageComponentCollector({
-        filter: (i) => i.user.id === interaction.user.id && (i.customId.startsWith('set_') || i.customId.startsWith('reset_') || i.customId === 'cancel'),
+        filter: (i) =>
+          i.user.id === interaction.user.id &&
+          (i.customId.startsWith('set_') ||
+            i.customId.startsWith('reset_') ||
+            i.customId === 'cancel'),
         componentType: ComponentType.Button,
         time: 60000,
       });
@@ -832,23 +1101,30 @@ const manageChannelsCommand = commandBuilder(
 
         if (action === 'cancel') {
           await buttonInteraction.update({
-            content: 'Action cancelled.', components: []
+            content: 'Action cancelled.',
+            components: [],
           });
           return buttonCollector.stop();
         } else if (action === 'reset') {
-          await updateChannel(guild.guildId, selected as 'count' | 'today-is' | 'birthday',null);
-          logWithTime(`Reset ${selected} channel for ${guild.guildId}`,'info');
+          await updateChannel(
+            guild.guildId,
+            selected as 'count' | 'today-is' | 'birthday',
+            null,
+          );
+          logWithTime(`Reset ${selected} channel for ${guild.guildId}`, 'info');
           await buttonInteraction.update({
-            content: `${selected} channel reset.`, components: []
+            content: `${selected} channel reset.`,
+            components: [],
           });
           return buttonCollector.stop();
         } else {
-          const channelSelect = new ActionRowBuilder<ChannelSelectMenuBuilder>().addComponents(
-            new ChannelSelectMenuBuilder()
-              .setCustomId(`choose_${selected}`)
-              .setPlaceholder('Select a channel')
-              .addChannelTypes(ChannelType.GuildText)
-          );
+          const channelSelect =
+            new ActionRowBuilder<ChannelSelectMenuBuilder>().addComponents(
+              new ChannelSelectMenuBuilder()
+                .setCustomId(`choose_${selected}`)
+                .setPlaceholder('Select a channel')
+                .addChannelTypes(ChannelType.GuildText),
+            );
 
           const channelMsg = await buttonInteraction.update({
             content: 'Pick a new channel below:',
@@ -856,18 +1132,32 @@ const manageChannelsCommand = commandBuilder(
           });
 
           const channelCollector = channelMsg.createMessageComponentCollector({
-            filter: (i) => i.user.id === interaction.user.id && i.customId === `choose_${selected}`,
+            filter: (i) =>
+              i.user.id === interaction.user.id &&
+              i.customId === `choose_${selected}`,
             componentType: ComponentType.ChannelSelect,
             time: 60000,
           });
 
           channelCollector.on('collect', async (channelInteraction) => {
             const newChannel = channelInteraction.channels.first();
-            if (!newChannel) return safeReply(channelInteraction, 'Invalid channel selected.', true );
+            if (!newChannel)
+              return safeReply(
+                channelInteraction,
+                'Invalid channel selected.',
+                true,
+              );
 
-            await updateChannel(guild.guildId, selected as 'count' | 'today-is' | 'birthday', newChannel.id);
+            await updateChannel(
+              guild.guildId,
+              selected as 'count' | 'today-is' | 'birthday',
+              newChannel.id,
+            );
 
-            logWithTime(`Set ${selected} channel to ${newChannel.id} for ${guild.guildId}`,'info');
+            logWithTime(
+              `Set ${selected} channel to ${newChannel.id} for ${guild.guildId}`,
+              'info',
+            );
 
             await channelInteraction.update({
               content: `The ${selected} channel has been set to <#${newChannel.id}>.`,
@@ -877,9 +1167,12 @@ const manageChannelsCommand = commandBuilder(
             channelCollector.stop();
           });
 
-          channelCollector.on('end', (collected) => {
+          channelCollector.on('end', async (collected) => {
             if (collected.size === 0) {
-              interaction.followUp({ content: 'Channel selection timed out.', flags: MessageFlags.Ephemeral });
+              await interaction.followUp({
+                content: 'Channel selection timed out.',
+                flags: MessageFlags.Ephemeral,
+              });
             }
           });
 
@@ -887,21 +1180,27 @@ const manageChannelsCommand = commandBuilder(
         }
       });
 
-      buttonCollector.on('end', (collected) => {
+      buttonCollector.on('end', async (collected) => {
         if (collected.size === 0) {
-          interaction.followUp({ content: 'No action selected in time.', flags: MessageFlags.Ephemeral });
+          await interaction.followUp({
+            content: 'No action selected in time.',
+            flags: MessageFlags.Ephemeral,
+          });
         }
       });
 
-      menuCollector.on('end', (collected) => {
+      menuCollector.on('end', async (collected) => {
         if (collected.size === 0) {
-          interaction.editReply({ content: 'Menu timed out.', components: [] });
+          await interaction.editReply({
+            content: 'Menu timed out.',
+            components: [],
+          });
         }
       });
     });
   },
   true,
-  'admin'
+  'admin',
 );
 
 //#endregion
@@ -927,7 +1226,7 @@ export interface Command {
   description: string;
   permissionLevel: PermissionLevel;
   guildOnly: boolean;
-  execute: (...args: any[]) => Promise<any> | any;
+  execute: (...args: any[]) => Promise<any>;
 }
 
 export const commands: Command[] = [
@@ -946,9 +1245,10 @@ export const commands: Command[] = [
   sourceCommand,
   reactionRolesCommand,
   addReactionRoleToMessageCommand,
-  manageChannelsCommand
-]
+  manageChannelsCommand,
+];
 
-export const commandsToRegister: RESTPostAPIChatInputApplicationCommandsJSONBody[] = commands.map(command => command.data.toJSON());
+export const commandsToRegister: RESTPostAPIChatInputApplicationCommandsJSONBody[] =
+  commands.map((command) => command.data.toJSON());
 
 //#endregion

@@ -1,7 +1,27 @@
-import { ActionRowBuilder, APIEmbedField, ButtonBuilder, ButtonInteraction, ButtonStyle, ChannelSelectMenuInteraction, ChatInputCommandInteraction, Client, ColorResolvable, EmbedBuilder, MessageFlags, ModalSubmitInteraction, PermissionFlagsBits, PermissionsBitField, SlashCommandBuilder, StringSelectMenuInteraction } from 'discord.js';
-import { Command } from './commands';
 import path from 'path';
-import fs from "fs";
+import fs from 'fs';
+
+import {
+  ActionRowBuilder,
+  APIEmbedField,
+  ButtonBuilder,
+  ButtonInteraction,
+  ButtonStyle,
+  ChannelSelectMenuInteraction,
+  ChatInputCommandInteraction,
+  Client,
+  ColorResolvable,
+  EmbedBuilder,
+  InteractionReplyOptions,
+  MessageFlags,
+  ModalSubmitInteraction,
+  PermissionFlagsBits,
+  PermissionsBitField,
+  SlashCommandBuilder,
+  StringSelectMenuInteraction,
+} from 'discord.js';
+
+import { Command } from './commands';
 
 //#region General
 
@@ -11,7 +31,7 @@ export const CUSTOM_ID_SPLITTER = '_';
 
 /**
  * Utility function so replies don't fail
- * 
+ *
  * @param interaction - The interaction that should be replied to
  * @param content - The content of the reply
  * @param ephemeral - If it's ephemeral or not
@@ -19,13 +39,18 @@ export const CUSTOM_ID_SPLITTER = '_';
  * @param components - Components that should be replied with
  */
 export async function safeReply(
-  interaction: ChatInputCommandInteraction | ButtonInteraction | ModalSubmitInteraction | ChannelSelectMenuInteraction | StringSelectMenuInteraction,
+  interaction:
+    | ChatInputCommandInteraction
+    | ButtonInteraction
+    | ModalSubmitInteraction
+    | ChannelSelectMenuInteraction
+    | StringSelectMenuInteraction,
   content: string,
   ephemeral: boolean = false,
   embeds?: EmbedBuilder[],
-  components?: ActionRowBuilder<any>[]
+  components?: ActionRowBuilder<any>[],
 ) {
-  const payload: any = {
+  const payload: InteractionReplyOptions = {
     ...(content ? { content } : {}),
     ...(ephemeral ? { flags: MessageFlags.Ephemeral } : {}),
     ...(embeds ? { embeds } : {}),
@@ -51,27 +76,31 @@ if (!fs.existsSync(logDir)) {
 
 const logFilePath = path.join(logDir, 'latest.log');
 
-type LogLevel = "info" | "warn" | "error";
+type LogLevel = 'info' | 'warn' | 'error';
 
 /**
  * Logs a message with a timestamp and level to the log file.
- * 
+ *
  * @param message - The message to log
  * @param level - The level of the log (info, warn, error)
  * @param logToConsole - If it should also be logged to the console or not, default false
  */
-export function logWithTime(message: string, level: LogLevel = 'info', logToConsole: boolean = false): void {
+export function logWithTime(
+  message: string,
+  level: LogLevel = 'info',
+  logToConsole: boolean = false,
+): void {
   const now = new Date();
   const timestamp = now.toISOString().replace('T', ' ').slice(0, 19); // Format: YYYY-MM-DD HH:MM:SS
   const logMessage = `[${timestamp}] [${level.toUpperCase()}] ${message}\n`;
 
   fs.appendFileSync(logFilePath, logMessage, 'utf8');
 
-  if(logToConsole){
+  if (logToConsole) {
     const colorMap = {
-      info: '\x1b[36m',   // Cyan
-      warn: '\x1b[33m',   // Yellow
-      error: '\x1b[31m',  // Red
+      info: '\x1b[36m', // Cyan
+      warn: '\x1b[33m', // Yellow
+      error: '\x1b[31m', // Red
     };
     const reset = '\x1b[0m';
 
@@ -96,7 +125,7 @@ export type PermissionLevel =
 
 /**
  * Utility function to return the proper permission bits
- * 
+ *
  * @param level - the PermissionLevel the bits need to be returned of. Can be an array
  * @returns the permission's bit value or null for unrestricted
  */
@@ -142,16 +171,19 @@ export function getPermissionsForLevel(level: PermissionLevel): bigint | null {
 export function commandBuilder(
   name: string,
   description: string,
-  execute: (interaction: ChatInputCommandInteraction, client: Client) => Promise<any> | any,
+  execute: (
+    interaction: ChatInputCommandInteraction,
+    client: Client,
+  ) => Promise<any>,
   guildOnly: boolean,
   permissionLevel: PermissionLevel,
-  customize: (builder: SlashCommandBuilder) => SlashCommandBuilder = b => b
+  customize: (builder: SlashCommandBuilder) => SlashCommandBuilder = (b) => b,
 ): Command {
   const builder = customize(
     new SlashCommandBuilder()
       .setName(name)
       .setDescription(description)
-      .setDefaultMemberPermissions(getPermissionsForLevel(permissionLevel))
+      .setDefaultMemberPermissions(getPermissionsForLevel(permissionLevel)),
   );
 
   return {
@@ -160,7 +192,7 @@ export function commandBuilder(
     description,
     permissionLevel,
     guildOnly,
-    execute: async (interaction, client) =>
+    execute: async (interaction: ChatInputCommandInteraction, client: Client) =>
       safeExecute(name, interaction, () => execute(interaction, client)),
   };
 }
@@ -168,14 +200,14 @@ export function commandBuilder(
 async function safeExecute(
   commandName: string,
   interaction: ChatInputCommandInteraction,
-  fn: () => Promise<any> | any
+  fn: () => Promise<any>,
 ) {
   try {
     await fn();
-    logWithTime(`${commandName} command executed`,'info');
-  } catch (err) {
-    logWithTime('An Error occured'+err,'error',true);
-    return await safeReply(interaction, "An unexpected error occurred.");
+    logWithTime(`${commandName} command executed`, 'info');
+  } catch (err: any) {
+    logWithTime('An Error occured' + err, 'error', true);
+    return await safeReply(interaction, 'An unexpected error occurred.');
   }
 }
 
@@ -185,34 +217,41 @@ async function safeExecute(
 
 /**
  * Util function for formatting a `Date` like 2000-01-01 into January 1st
- * 
+ *
  * @param date - the date that needs formatting
  * @returns the formatted date
  */
 export function formatDate(date: Date) {
   const daySuffix = getDaySuffix(date.getDate());
-  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) + daySuffix;
+  return (
+    date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) +
+    daySuffix
+  );
 }
 
 /**
  * Util function to get the suffix of a number, e.g. 1st, 2nd, 3rd, 4th, etc.
- * 
+ *
  * @param number - the number you want the suffix of
  * @returns the suffix of the number
  */
 export function getDaySuffix(number: number) {
   if (number > 3 && number < 21) return 'th';
   switch (number % 10) {
-    case 1: return 'st';
-    case 2: return 'nd';
-    case 3: return 'rd';
-    default: return 'th';
+    case 1:
+      return 'st';
+    case 2:
+      return 'nd';
+    case 3:
+      return 'rd';
+    default:
+      return 'th';
   }
 }
 
 /**
  * Util function to format a date into a string with the DD-MM-YYYY format
- * 
+ *
  * @param date - The date to format
  * @returns A formatted string in the format DD-MM-YYYY
  */
@@ -274,27 +313,31 @@ export function parseDurationOrDateString(input: string): Date | null {
   const altMatch = input.match(/^(\d{2})-(\d{2})-(\d{4})$/);
 
   // YYYY-MM-DD
-  if(isoMatch) returnDate = parseAbsoluteIsoDate(isoMatch);
+  if (isoMatch) returnDate = parseAbsoluteIsoDate(isoMatch);
 
   // DD-MM-YYYY
-  if(altMatch) returnDate = parseAbsoluteAltDate(altMatch);
+  if (altMatch) returnDate = parseAbsoluteAltDate(altMatch);
 
   // Natural keywords - (EN + NL)
   if (keywordMap[input]) return keywordMap[input]();
 
   // Weekdays - (EN + NL)
-  const weekdayMatch = input.match(/^(next|volgende(?:\s+week)?)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)$/i);
+  const weekdayMatch = input.match(
+    /^(next|volgende(?:\s+week)?)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)$/i,
+  );
   if (weekdayMatch) {
     returnDate = parseWeekDay(weekdayMatch);
   }
 
   // Relative duration time
-  const durationMatch = input.match(/\b(?:in|over)\s+((?:\d+\s*(?:min(?:uut)?(?:en)?|u(?:ren)?|hours?|dagen?|days?|weken?|weeks?|maanden?|months?)\s*(?:en|and)?\s*)+)/i);
+  const durationMatch = input.match(
+    /\b(?:in|over)\s+((?:\d+\s*(?:min(?:uut)?(?:en)?|u(?:ren)?|hours?|dagen?|days?|weken?|weeks?|maanden?|months?)\s*(?:en|and)?\s*)+)/i,
+  );
   if (durationMatch) {
     returnDate = parseRelativeTime(durationMatch);
   }
 
-  if(returnDate){
+  if (returnDate) {
     returnDate.setSeconds(0);
     returnDate.setMilliseconds(0);
   }
@@ -303,15 +346,14 @@ export function parseDurationOrDateString(input: string): Date | null {
 }
 
 function parseAbsoluteIsoDate(match: RegExpMatchArray): Date | null {
-  const [_, y, m, d] = match;
+  const [, y, m, d] = match;
   return new Date(`${y}-${m}-${d}T00:00:00`);
 }
 
 function parseAbsoluteAltDate(match: RegExpMatchArray): Date | null {
-  const [_, d, m, y] = match;
+  const [, d, m, y] = match;
   return new Date(`${y}-${m}-${d}T00:00:00`);
 }
-
 
 function parseWeekDay(match: RegExpMatchArray): Date | null {
   const targetDayStr = match[2];
@@ -331,7 +373,11 @@ function parseRelativeTime(match: RegExpMatchArray): Date | null {
   const result = new Date();
   const seen = new Set<string>();
 
-  const components = [...match[1].matchAll(/(\d+(?:\.\d+)?)\s*(days?|dagen|hours?|uren|u|minutes?|minuten|min|weeks?|weken|months?|maanden?|maand|uur|minuut)/gi)];
+  const components = [
+    ...match[1].matchAll(
+      /(\d+(?:\.\d+)?)\s*(days?|dagen|hours?|uren|u|minutes?|minuten|min|weeks?|weken|months?|maanden?|maand|uur|minuut)/gi,
+    ),
+  ];
 
   if (components.length === 0) return null;
 
@@ -346,29 +392,32 @@ function parseRelativeTime(match: RegExpMatchArray): Date | null {
 
     let normalized: 'minute' | 'hour' | 'day' | 'week' | 'month' | null = null;
 
-    if (["minute", "minutes", "minuten", "min", "minuut"].includes(unit)) normalized = "minute";
-    else if (["hour", "hours", "uren", "u", "uur"].includes(unit)) normalized = "hour";
-    else if (["day", "days", "dagen", "dag"].includes(unit)) normalized = "day";
-    else if (["week", "weeks", "weken"].includes(unit)) normalized = "week";
-    else if (["month", "months", "maanden", "maand"].includes(unit)) normalized = "month";
+    if (['minute', 'minutes', 'minuten', 'min', 'minuut'].includes(unit))
+      normalized = 'minute';
+    else if (['hour', 'hours', 'uren', 'u', 'uur'].includes(unit))
+      normalized = 'hour';
+    else if (['day', 'days', 'dagen', 'dag'].includes(unit)) normalized = 'day';
+    else if (['week', 'weeks', 'weken'].includes(unit)) normalized = 'week';
+    else if (['month', 'months', 'maanden', 'maand'].includes(unit))
+      normalized = 'month';
 
     if (!normalized || seen.has(normalized)) return null;
     seen.add(normalized);
 
     switch (normalized) {
-      case "minute":
+      case 'minute':
         totalMs += value * 60 * 1000;
         break;
-      case "hour":
+      case 'hour':
         totalMs += value * 60 * 60 * 1000;
         break;
-      case "day":
+      case 'day':
         totalMs += value * 24 * 60 * 60 * 1000;
         break;
-      case "week":
+      case 'week':
         totalMs += value * 7 * 24 * 60 * 60 * 1000;
         break;
-      case "month":
+      case 'month': {
         const wholeMonths = Math.floor(value);
         const fractional = value - wholeMonths;
 
@@ -378,10 +427,15 @@ function parseRelativeTime(match: RegExpMatchArray): Date | null {
           const tempDate = new Date(result);
           tempDate.setMonth(tempDate.getMonth() + totalWholeMonths);
 
-          const daysInThatMonth = new Date(tempDate.getFullYear(), tempDate.getMonth() + 1, 0).getDate();
+          const daysInThatMonth = new Date(
+            tempDate.getFullYear(),
+            tempDate.getMonth() + 1,
+            0,
+          ).getDate();
           extraDaysFromFractionalMonths += fractional * daysInThatMonth;
         }
         break;
+      }
     }
   }
 
@@ -399,33 +453,33 @@ function parseRelativeTime(match: RegExpMatchArray): Date | null {
 }
 
 const weekdayMap: Record<string, number> = {
-  "sunday": 0,
-  "monday": 1,
-  "tuesday": 2,
-  "wednesday": 3,
-  "thursday": 4,
-  "friday": 5,
-  "saturday": 6,
-  "zondag": 0,
-  "maandag": 1,
-  "dinsdag": 2,
-  "woensdag": 3,
-  "donderdag": 4,
-  "vrijdag": 5,
-  "zaterdag": 6
+  sunday: 0,
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6,
+  zondag: 0,
+  maandag: 1,
+  dinsdag: 2,
+  woensdag: 3,
+  donderdag: 4,
+  vrijdag: 5,
+  zaterdag: 6,
 };
 
 const keywordMap: Record<string, () => Date> = {
-  "tomorrow": () => addDays(1),
-  "morgen": () => addDays(1),
-  "the day after tomorrow": () => addDays(2),
-  "overmorgen": () => addDays(2),
-  "next week": () => addDays(7),
-  "volgende week": () => addDays(7),
-  "over een week": () => addDays(7),
-  "next month": () => addMonths(1),
-  "volgende maand": () => addMonths(1),
-  "over een maand": () => addMonths(1),
+  tomorrow: () => addDays(1),
+  morgen: () => addDays(1),
+  'the day after tomorrow': () => addDays(2),
+  overmorgen: () => addDays(2),
+  'next week': () => addDays(7),
+  'volgende week': () => addDays(7),
+  'over een week': () => addDays(7),
+  'next month': () => addMonths(1),
+  'volgende maand': () => addMonths(1),
+  'over een maand': () => addMonths(1),
 };
 
 function addDays(days: number): Date {
@@ -446,7 +500,7 @@ function addMonths(months: number): Date {
 
 /**
  * Util function for building an embed
- * 
+ *
  * @param title - The title of the embed
  * @param fields - The fields of the embed
  * @param description - The description of the embed, optional
@@ -454,8 +508,8 @@ function addMonths(months: number): Date {
  * @param timestamp - If the embed should have a timestamp, defaults to false
  * @param color - The color of the embed, defaults to STANDARD_COLOR
  * @param customize - A function to customize the embed further, defaults to no customization
- * 
- * @returns An EmbedBuilder instance with the specified properties 
+ *
+ * @returns An EmbedBuilder instance with the specified properties
  */
 export function embedBuilder({
   title,
@@ -488,12 +542,12 @@ type ButtonType = 'prev' | 'next' | 'edit' | 'delete';
 
 /**
  * Creates a single button based on its type and config.
- * 
+ *
  * @param type - The `ButtonType` of the button (prev, next, edit, delete)
  * @param actionId - The base action ID for the button
  * @param disabled - Whether the button should be disabled, defaults to false
  * @param label - Optional label for the button, defaults to type-based label
- * 
+ *
  * @return A ButtonBuilder instance configured with the specified properties
  */
 function createButton({
@@ -515,7 +569,9 @@ function createButton({
 
   switch (type) {
     case 'prev':
-      return button.setLabel(label ?? 'Previous').setStyle(ButtonStyle.Secondary);
+      return button
+        .setLabel(label ?? 'Previous')
+        .setStyle(ButtonStyle.Secondary);
     case 'next':
       return button.setLabel(label ?? 'Next').setStyle(ButtonStyle.Secondary);
     case 'edit':
@@ -523,24 +579,26 @@ function createButton({
     case 'delete':
       return button.setLabel(label ?? 'Delete').setStyle(ButtonStyle.Danger);
     default:
-      return button.setLabel(label ?? 'Unknown').setStyle( style ?? ButtonStyle.Secondary);
+      return button
+        .setLabel(label ?? 'Unknown')
+        .setStyle(style ?? ButtonStyle.Secondary);
   }
 }
 
 /**
  * Creates one action row of standard buttons with optional auto-disable logic.
- * 
+ *
  * @param actionId - The base action ID for the buttons
  * @param index - The current index of the item being paginated
  * @param total - The total number of pages
  * @param types - The types of buttons to include, defaults to all
- * 
+ *
  * @returns An ActionRowBuilder containing the buttons
  */
 export function createButtonsRow(
   index: number,
   total: number,
-  types: ButtonType[] = ['prev', 'edit', 'delete', 'next']
+  types: ButtonType[] = ['prev', 'edit', 'delete', 'next'],
 ): ActionRowBuilder<ButtonBuilder> {
   const buttons = types.map((type) =>
     createButton({
@@ -548,7 +606,7 @@ export function createButtonsRow(
       disabled:
         (type === 'prev' && index === 0) ||
         (type === 'next' && index === total - 1),
-    })
+    }),
   );
 
   return new ActionRowBuilder<ButtonBuilder>().addComponents(...buttons);
@@ -572,12 +630,12 @@ export function parseBirthdayDate(input: string): Date | null {
   const altMatch = input.match(/^(\d{2})-(\d{2})-(\d{4})$/);
 
   // YYYY-MM-DD
-  if(isoMatch) returnDate = parseAbsoluteIsoDate(isoMatch);
+  if (isoMatch) returnDate = parseAbsoluteIsoDate(isoMatch);
 
   // DD-MM-YYYY
-  if(altMatch) returnDate = parseAbsoluteAltDate(altMatch);
+  if (altMatch) returnDate = parseAbsoluteAltDate(altMatch);
 
-  if(returnDate){
+  if (returnDate) {
     returnDate.setSeconds(0);
     returnDate.setMilliseconds(0);
   }
@@ -591,19 +649,26 @@ export function parseBirthdayDate(input: string): Date | null {
 /**
  * Util function to preprocess numeric expressions in a string.
  * Used mainly so mathjs can handle things like 0b101 + 5 etc.
- * 
+ *
  * @param expr - The input string that should be preprocessed
  * @returns the preprocessed string
  */
 export function preprocessNumerics(expr: string): string {
-  return expr.replace(/\b0([box])[0-9a-fA-F]+\b/g, match => {
+  return expr.replace(/\b0([box])[0-9a-fA-F]+\b/g, (match) => {
     const prefix = match.slice(0, 2);
     let base: number;
     switch (prefix) {
-      case '0b': base = 2; break;
-      case '0o': base = 8; break;
-      case '0x': base = 16; break;
-      default: return match;
+      case '0b':
+        base = 2;
+        break;
+      case '0o':
+        base = 8;
+        break;
+      case '0x':
+        base = 16;
+        break;
+      default:
+        return match;
     }
     return parseInt(match.slice(2), base).toString();
   });
@@ -626,18 +691,21 @@ export const sourceRequestTracker = new Set<string>();
 /**
  * In-memory storage for the role react message building proces
  */
-export const pendingReactionRoleSetups = new Map <string, {
-  interaction: ChatInputCommandInteraction,
-  emojiRoleMap: Record<string, string>,
-  channelId: string,
-  targetChannelId: string,
-  title: string,
-  messageIds: string[]
-} >();
+export const pendingReactionRoleSetups = new Map<
+  string,
+  {
+    interaction: ChatInputCommandInteraction;
+    emojiRoleMap: Record<string, string>;
+    channelId: string;
+    targetChannelId: string;
+    title: string;
+    messageIds: string[];
+  }
+>();
 
 /**
  * Utility function to get the key for the reminder cache
- * 
+ *
  * @param date - the date you want the key of
  * @returns the key of the provided date
  */
