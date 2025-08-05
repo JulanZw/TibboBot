@@ -1,4 +1,4 @@
-import { ChannelType, SlashCommandChannelOption, SlashCommandIntegerOption, SlashCommandStringOption, SlashCommandUserOption } from "discord.js";
+import { ChannelType, SlashCommandChannelOption, SlashCommandIntegerOption, SlashCommandRoleOption, SlashCommandStringOption, SlashCommandUserOption } from "discord.js";
 
 type AllowedChannelTypeChannelOption =
   | ChannelType.GuildText
@@ -49,3 +49,12 @@ export const channelOption = (
   .setDescription(desc)
   .setRequired(required)
   .addChannelTypes(...(Array.isArray(channelType) ? channelType : [channelType]));
+
+export const roleOption = (
+  name: string,
+  desc: string,
+  required = true
+) => (opt: SlashCommandRoleOption) =>
+  opt.setName(name)
+  .setDescription(desc)
+  .setRequired(required);

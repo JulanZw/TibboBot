@@ -1,5 +1,4 @@
 import { ActionRowBuilder, APIEmbedField, ButtonBuilder, ButtonInteraction, ButtonStyle, ChannelSelectMenuInteraction, ChatInputCommandInteraction, Client, ColorResolvable, EmbedBuilder, MessageFlags, ModalSubmitInteraction, PermissionFlagsBits, PermissionsBitField, SlashCommandBuilder, StringSelectMenuInteraction } from 'discord.js';
-import { addGuild, getGuild } from './database';
 import { Command } from './commands';
 import path from 'path';
 import fs from "fs";
@@ -39,18 +38,6 @@ export async function safeReply(
     return await interaction.followUp(payload);
   }
 }
-
-/**
- * Util function to ensure a guild exists in the database. It checks if its in the database and if not it creates it.
- * 
- * @param messageOrInteraction - the interaction or message that will provide the ID
- * @returns the found or created guild
- */
-export async function ensureGuildExistance(guildId: string ) {
-  const guild = await getGuild(guildId);
-  return guild ? guild : await addGuild(guildId);
-}
-
 
 //#endregion
 
@@ -223,6 +210,12 @@ export function getDaySuffix(number: number) {
   }
 }
 
+/**
+ * Util function to format a date into a string with the DD-MM-YYYY format
+ * 
+ * @param date - The date to format
+ * @returns A formatted string in the format DD-MM-YYYY
+ */
 export function formatDateToDDMMYYYY(date: Date) {
   const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -280,10 +273,10 @@ export function parseDurationOrDateString(input: string): Date | null {
   const isoMatch = input.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   const altMatch = input.match(/^(\d{2})-(\d{2})-(\d{4})$/);
 
-  // Absolute: YYYY-MM-DD
+  // YYYY-MM-DD
   if(isoMatch) returnDate = parseAbsoluteIsoDate(isoMatch);
 
-  // Absolute: DD-MM-YYYY
+  // DD-MM-YYYY
   if(altMatch) returnDate = parseAbsoluteAltDate(altMatch);
 
   // Natural keywords - (EN + NL)
@@ -507,13 +500,17 @@ function createButton({
   type,
   disabled = false,
   label,
+  style,
+  customId,
 }: {
   type: ButtonType;
   disabled?: boolean;
   label?: string;
+  style?: ButtonStyle;
+  customId?: string;
 }): ButtonBuilder {
   const button = new ButtonBuilder()
-    .setCustomId(`${type}`)
+    .setCustomId(customId ?? `${type}`)
     .setDisabled(disabled);
 
   switch (type) {
@@ -526,7 +523,7 @@ function createButton({
     case 'delete':
       return button.setLabel(label ?? 'Delete').setStyle(ButtonStyle.Danger);
     default:
-      throw new Error(`Unsupported button type: ${type}`);
+      return button.setLabel(label ?? 'Unknown').setStyle( style ?? ButtonStyle.Secondary);
   }
 }
 
@@ -574,10 +571,10 @@ export function parseBirthdayDate(input: string): Date | null {
   const isoMatch = input.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   const altMatch = input.match(/^(\d{2})-(\d{2})-(\d{4})$/);
 
-  // Absolute: YYYY-MM-DD
+  // YYYY-MM-DD
   if(isoMatch) returnDate = parseAbsoluteIsoDate(isoMatch);
 
-  // Absolute: DD-MM-YYYY
+  // DD-MM-YYYY
   if(altMatch) returnDate = parseAbsoluteAltDate(altMatch);
 
   if(returnDate){
@@ -593,9 +590,10 @@ export function parseBirthdayDate(input: string): Date | null {
 //#region preprocessors
 /**
  * Util function to preprocess numeric expressions in a string.
+ * Used mainly so mathjs can handle things like 0b101 + 5 etc.
  * 
- * @param expr - The number that should be preprocessed
- * @returns the preprocessed number as a string
+ * @param expr - The input string that should be preprocessed
+ * @returns the preprocessed string
  */
 export function preprocessNumerics(expr: string): string {
   return expr.replace(/\b0([box])[0-9a-fA-F]+\b/g, match => {

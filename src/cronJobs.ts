@@ -11,7 +11,7 @@ import {
 export function setupCronJobs(client: Client): void {
   cron.schedule('0 0 * * *', async () => {
     try {
-      let randomDelay = Math.floor(Math.random() * 3001); // 0–3000 ms
+      let randomDelay = Math.floor(Math.random() * 2801) + 200; // 0–3000 ms
 
       await new Promise(resolve => setTimeout(resolve, randomDelay < 0 ? 1500 : randomDelay)); // the delay below 0 happend once so this is just in case
 

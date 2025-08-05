@@ -114,39 +114,6 @@ export async function updateCountsForUser(author: User, content: string){
 
 //#region Guild
 
-export async function setCountChannel(guildId: string, channelId: string) {
-  return await prisma.guild.upsert({
-    where: { guildId },
-    update: { countChannelId: channelId },
-    create: {
-      guildId,
-      countChannelId: channelId,
-    }
-  });
-}
-
-export async function setTodayIsChannel(guildId: string, channelId: string) {
-  return await prisma.guild.upsert({
-    where: { guildId },
-    update: { todayIsChannelId: channelId },
-    create: {
-      guildId,
-      todayIsChannelId: channelId,
-    }
-  });
-}
-
-export async function setBirthdayChannel(guildId: string, channelId: string) {
-  return await prisma.guild.upsert({
-    where: { guildId },
-    update: { birthdayChannelId: channelId },
-    create: {
-      guildId,
-      birthdayChannelId: channelId,
-    }
-  });
-}
-
 export async function checkAndUpdateCount(guildId: string, providedNumber: number): Promise<boolean> {
   const guild = await prisma.guild.findUnique({
     where: { guildId },
@@ -187,6 +154,11 @@ export async function getGuild( guildId: string ) {
   });
 }
 
+export async function ensureGuildExistance(guildId: string ) {
+  const guild = await getGuild(guildId);
+  return guild ? guild : await addGuild(guildId);
+}
+
 export async function getCountChannelOfGuild(guildId: string){
   return prisma.guild.findUnique({
     where: { guildId },
@@ -223,7 +195,7 @@ export function resetCount(guildId: string) {
   });
 }
 
-export async function updateChannel(guildId: string, channelType: 'count' | 'todayIs' | 'birthday',channelId: string | null) {
+export async function updateChannel(guildId: string, channelType: 'count' | 'today-is' | 'birthday',channelId: string | null) {
   const updateData: { countChannelId?: string | null; todayIsChannelId?: string | null; birthdayChannelId?: string | null } = {};
   
   switch (channelType) {
@@ -232,9 +204,9 @@ export async function updateChannel(guildId: string, channelType: 'count' | 'tod
       await setLastCountUser(guildId, '0');
       logWithTime(`Count channel updated to ${channelId} for guild ${guildId}`, 'info');
       break;
-    case 'todayIs':
+    case 'today-is':
       updateData.todayIsChannelId = channelId;
-      logWithTime(`TodayIs channel updated to ${channelId} for guild ${guildId}`, 'info');
+      logWithTime(`Today-is channel updated to ${channelId} for guild ${guildId}`, 'info');
       break;
     case 'birthday':
       updateData.birthdayChannelId = channelId;
