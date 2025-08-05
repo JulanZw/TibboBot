@@ -18,7 +18,6 @@
     "better-sqlite3": "^12.2.0",
     "discord-api-types": "^0.38.16",
     "discord.js": "^14.16.3",
-    "dotenv": "^16.4.5",
     "mathjs": "^14.5.3",
     "node-cron": "^3.0.3",
     "node-fetch": "^3.3.2",
