@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-misused-promises */
 import fs from 'fs';
 import path from 'path';
 
@@ -129,6 +128,7 @@ const helpCommand = commandBuilder(
       time: 120000, // 2 mins
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     collector.on('collect', async (buttonInteraction) => {
       if (buttonInteraction.user.id !== interaction.user.id) {
         return await safeReply(
@@ -175,6 +175,7 @@ const helpCommand = commandBuilder(
       });
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     collector.on('end', async () => {
       if (msg.editable) {
         await msg.edit({ components: [] });
@@ -846,6 +847,7 @@ const remindersCommand = commandBuilder(
       time: 120000,
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     collector.on('collect', async (btnInteraction) => {
       if (btnInteraction.user.id !== userId) {
         return await safeReply(
@@ -919,6 +921,7 @@ const remindersCommand = commandBuilder(
       });
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     collector.on('end', async () => {
       if (msg.editable) {
         await msg.edit({ components: [] });
@@ -962,6 +965,7 @@ const sourceCommand = commandBuilder(
     const output = fs.createWriteStream(zipPath);
     const archive = archiver('zip', { zlib: { level: 9 } });
 
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     output.on('close', async () => {
       try {
         const user = await client.users.fetch(userId);
@@ -987,6 +991,7 @@ const sourceCommand = commandBuilder(
       }
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     archive.on('error', async (err: any) => {
       logWithTime('Archive error:' + err, 'error', true);
       await interaction.editReply('An error occurred while creating the ZIP.');
@@ -1061,6 +1066,7 @@ const manageChannelsCommand = commandBuilder(
       time: 60000,
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     menuCollector.on('collect', async (menuInteraction) => {
       const selected = menuInteraction.values[0];
 
@@ -1096,6 +1102,7 @@ const manageChannelsCommand = commandBuilder(
         time: 60000,
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
       buttonCollector.on('collect', async (buttonInteraction) => {
         const [action, selected] = buttonInteraction.customId.split('_');
 
@@ -1139,6 +1146,7 @@ const manageChannelsCommand = commandBuilder(
             time: 60000,
           });
 
+          // eslint-disable-next-line @typescript-eslint/no-misused-promises
           channelCollector.on('collect', async (channelInteraction) => {
             const newChannel = channelInteraction.channels.first();
             if (!newChannel)
@@ -1167,6 +1175,7 @@ const manageChannelsCommand = commandBuilder(
             channelCollector.stop();
           });
 
+          // eslint-disable-next-line @typescript-eslint/no-misused-promises
           channelCollector.on('end', async (collected) => {
             if (collected.size === 0) {
               await interaction.followUp({
@@ -1180,6 +1189,7 @@ const manageChannelsCommand = commandBuilder(
         }
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
       buttonCollector.on('end', async (collected) => {
         if (collected.size === 0) {
           await interaction.followUp({
@@ -1189,6 +1199,7 @@ const manageChannelsCommand = commandBuilder(
         }
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
       menuCollector.on('end', async (collected) => {
         if (collected.size === 0) {
           await interaction.editReply({

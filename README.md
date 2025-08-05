@@ -1,13 +1,13 @@
 # JZZWutils Discord Bot
 
 A custom multipurpose Discord bot built with TypeScript using `discord.js`.  
-Includes features like counting channels, reminders, point tracking, and more.
+Includes features like counting channels, reminders and more.
 
 ---
 
 ## Setup
 
-1. **Clone the repository** (soon)
+1. **Clone the repository** (soon?)
 
    ```bash
    git clone https://soon.git.repo/discord_bot.git
@@ -65,7 +65,7 @@ Includes features like counting channels, reminders, point tracking, and more.
 | /set_birthday        | Set your birthday for this server                                           |
 | /set_count_channel   | Sets the count channel of the guild. (admin only)                           |
 | /set_reminder        | Sets a reminder                                                             |
-| /my_reminders        | Shows all your reminders and allows you to edit them                       |
+| /my_reminders        | Shows all your reminders and allows you to edit them                        |
 | /source              | Get a zipped archive of the source code                                     |
 
 Implementation can be found in [this file](./src/commands.ts)

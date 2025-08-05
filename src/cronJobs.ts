@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-misused-promises */
 import cron from 'node-cron';
 import { Client, TextChannel } from 'discord.js';
 
@@ -18,6 +17,7 @@ import {
 } from './database';
 
 export function setupCronJobs(client: Client): void {
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   cron.schedule('0 0 * * *', async () => {
     try {
       const randomDelay = Math.floor(Math.random() * 2801) + 200; // 0–3000 ms
@@ -131,6 +131,7 @@ export function setupCronJobs(client: Client): void {
     }
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   cron.schedule('0 0 1 1 *', async () => {
     try {
       const guilds = await getAllGuilds();
@@ -168,6 +169,7 @@ export function setupCronJobs(client: Client): void {
     }
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   cron.schedule('* * * * *', async () => {
     try {
       const now = new Date();

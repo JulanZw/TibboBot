@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-misused-promises */
 import {
   Client,
   Events,
@@ -64,6 +63,7 @@ const client = new Client({
   partials: [Partials.Message, Partials.Reaction, Partials.User],
 });
 
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
 client.once('ready', async () => {
   setupCronJobs(client);
 
@@ -84,6 +84,7 @@ client.once('ready', async () => {
 
 //#region Message creation
 
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
 client.on(Events.MessageCreate, async (message: Message) => {
   if (message.author.bot) return;
   await updateCountsForUser(message.author, message.content);
@@ -231,6 +232,7 @@ client.on(Events.MessageCreate, async (message: Message) => {
 
 //#region Interaction handling
 
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
 client.on(Events.InteractionCreate, async (interaction: Interaction) => {
   if (interaction.guildId) {
     await ensureGuildExistance(interaction.guildId);
@@ -312,6 +314,7 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 
 //#region Reaction add
 
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
 client.on(Events.MessageReactionAdd, async (reaction, user) => {
   if (user.bot) return;
 
@@ -347,6 +350,7 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
 
 //#region Reaction remove
 
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
 client.on(Events.MessageReactionRemove, async (reaction, user) => {
   if (user.bot) return;
 
@@ -376,6 +380,7 @@ client.on(Events.MessageReactionRemove, async (reaction, user) => {
 
 //#endregion
 
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
 client.on(Events.MessageDelete, async (message) => {
   if (!message.guild || !message.id) return;
 
