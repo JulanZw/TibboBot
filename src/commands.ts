@@ -64,7 +64,6 @@ import {
 
 import { botId } from './index';
 
-
 //#region Utility
 
 const wolCommand = commandBuilder(
