@@ -1,20 +1,45 @@
 {
-  "name": "todayis_bot",
-  "version": "1.0.0",
+  "name": "jzzwutils",
+  "version": "2.23.2",
   "description": "a small bot for funny",
-  "main": "/src/index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "private": true,
+  "license": "MIT",
   "author": "Julan Zwiggelaar",
-  "license": "ISC",
+  "scripts": {
+    "dev": "ts-node src/index.ts",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "migrate": "ts-node migrateData.ts",
+    "export": "node src/commandsExport.ts"
+  },
   "dependencies": {
     "@discordjs/builders": "^1.9.0",
+    "@prisma/client": "^6.11.1",
+    "archiver": "^7.0.1",
+    "better-sqlite3": "^12.2.0",
+    "discord-api-types": "^0.38.16",
     "discord.js": "^14.16.3",
-    "dotenv": "^16.4.5",
+    "mathjs": "^14.5.3",
     "node-cron": "^3.0.3",
     "node-fetch": "^3.3.2",
+    "prisma": "^6.11.1",
     "sqlite3": "^5.1.7",
     "wol": "^1.0.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.32.0",
+    "@types/archiver": "^6.0.3",
+    "@types/node": "^24.0.14",
+    "@types/node-cron": "^3.0.11",
+    "@types/wol": "^1.0.4",
+    "eslint": "^9.32.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-prettier": "^5.5.1",
+    "globals": "^16.3.0",
+    "jiti": "^2.5.1",
+    "prettier": "^3.6.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.39.0"
   }
 }

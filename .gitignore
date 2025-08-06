@@ -1,9 +1,9 @@
+/.env
 /src/.env
-/src/ZWutils.db
-package-lock.json
 todayis_bot.iml
 .idea/
 node_modules/
-generated/
-old/
-.env
+/old/
+/logs/
+/scripts/output/
+/JZZWutils.db

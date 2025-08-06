@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Guild {
+  guildId           String   @id
+  countChannelId    String?
+  countNumber       Int      @default(0)
+  highestNumber     Int      @default(0)
+  lastCountUser     String?
+  todayIsChannelId  String?
+  birthdayChannelId String?
+
+  pointGiverId      String?
+  pointGiver        User?    @relation(fields: [pointGiverId], references: [discordId])
+
+  birthdays         Birthday[]
+}
+
+model User {
+  discordId   String     @id
+  points      BigInt
+  char_count  BigInt
+  msg_count   Int
+
+  pointGiverIn Guild[]
+
+  birthdays   Birthday[]
+}
+
+model Birthday {
+  birthday   DateTime
+
+  guildId    String
+  userId     String
+
+  guild      Guild    @relation(fields: [guildId], references: [guildId])
+  user       User     @relation(fields: [userId], references: [discordId])
+
+  @@unique([guildId, userId])
+}
+
+model ReactionRoles {
+  id        String   @id @default(cuid())
+  messageId String
+  channelId String
+  emoji     String
+  role      String
+  guildId   String
+
+  @@unique([guildId, messageId, emoji])
+}
+
+model Reminders {
+  id           String @id @default(cuid())
+  userId       String
+  message      String
+  remindAt     DateTime
+  createdAt    DateTime
+}
