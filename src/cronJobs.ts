@@ -1,3 +1,6 @@
+import path from 'path';
+import fs from 'fs';
+
 import cron from 'node-cron';
 import { Client, TextChannel } from 'discord.js';
 
@@ -202,5 +205,35 @@ export function setupCronJobs(client: Client): void {
     }
   });
 
+  cron.schedule('0 0 * * 1', () => {
+    try {
+      const logsDir = path.resolve(__dirname, '../logs');
+      const latestLog = path.join(logsDir, 'latest.log');
+      const now = new Date();
+      const year = now.getFullYear();
+      const week = getISOWeekNumber(now);
+      const newLogName = `${year}_W${week}.log`;
+      const newLogPath = path.join(logsDir, newLogName);
+
+      if (fs.existsSync(latestLog)) {
+        fs.renameSync(latestLog, newLogPath);
+        fs.writeFileSync(latestLog, '');
+        logWithTime(`Rotated log: ${newLogName}`, 'info');
+      }
+    } catch (err: any) {
+      logWithTime('Error in weekly log rotation: ' + err, 'error', true);
+    }
+  });
+
   logWithTime('Cron jobs have been set up successfully.', 'info');
+}
+
+function getISOWeekNumber(date: Date): number {
+  const tmp = new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
+  );
+  const dayNum = tmp.getUTCDay() || 7;
+  tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
+  return Math.ceil(((tmp.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
 }

@@ -134,6 +134,8 @@ export async function updateCountsForUser(author: User, content: string) {
 
 //#region Guild
 
+export type BotChannel = 'count' | 'today-is' | 'birthday';
+
 export async function checkAndUpdateCount(
   guildId: string,
   providedNumber: number,
@@ -218,9 +220,9 @@ export function resetCount(guildId: string) {
   });
 }
 
-export async function updateChannel(
+export async function updateBotChannel(
   guildId: string,
-  channelType: 'count' | 'today-is' | 'birthday',
+  channelType: BotChannel,
   channelId: string | null,
 ) {
   const updateData: {
@@ -254,7 +256,7 @@ export async function updateChannel(
       break;
     default:
       return logWithTime(
-        `Invalid channel type: ${channelType as 'count' | 'today-is' | 'birthday'}`,
+        `Invalid channel type: ${channelType as BotChannel}`,
         'error',
         true,
       );
@@ -264,6 +266,49 @@ export async function updateChannel(
     where: { guildId },
     data: updateData,
   });
+}
+
+export async function getBotChannel(
+  guildId: string,
+  channelType: BotChannel,
+): Promise<string | null> {
+  const selectField: {
+    countChannelId?: boolean;
+    todayIsChannelId?: boolean;
+    birthdayChannelId?: boolean;
+  } = {};
+
+  switch (channelType) {
+    case 'count':
+      selectField.countChannelId = true;
+      break;
+    case 'today-is':
+      selectField.todayIsChannelId = true;
+      break;
+    case 'birthday':
+      selectField.birthdayChannelId = true;
+      break;
+    default:
+      logWithTime(
+        `Invalid channel type: ${channelType as string}`,
+        'error',
+        true,
+      );
+      return null;
+  }
+
+  const guild = await prisma.guild.findUnique({
+    where: { guildId },
+    select: selectField,
+  });
+
+  if (!guild) return null;
+
+  if (channelType === 'count') return guild.countChannelId ?? null;
+  if (channelType === 'today-is') return guild.todayIsChannelId ?? null;
+  if (channelType === 'birthday') return guild.birthdayChannelId ?? null;
+
+  return null;
 }
 
 //#endregion

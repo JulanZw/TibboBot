@@ -38,10 +38,12 @@ import {
 } from './utils';
 import {
   addReactionRole,
+  BotChannel,
   createReminder,
   deleteReminder,
   getAllUsersCharsAndMessages,
   getAllUsersDataTodayIs,
+  getBotChannel,
   getGuild,
   getPointGiverIdOfGuild,
   getReactionRolesByMessage,
@@ -51,7 +53,7 @@ import {
   insertUserData,
   setBirthday,
   setPointGiverOfGuild,
-  updateChannel,
+  updateBotChannel,
   updateUserPoints,
 } from './database';
 import {
@@ -920,7 +922,7 @@ const remindersCommand = commandBuilder(
 
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     collector.on('end', async () => {
-      if (msg.editable) {
+      if (msg && msg.editable) {
         await msg.edit({ components: [] });
       }
     });
@@ -1070,7 +1072,7 @@ const manageChannelsCommand = commandBuilder(
       const buttonRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder()
           .setCustomId(`set_${selected}`)
-          .setLabel('Set New Channel')
+          .setLabel('Set')
           .setStyle(ButtonStyle.Primary),
         new ButtonBuilder()
           .setCustomId(`reset_${selected}`)
@@ -1082,8 +1084,15 @@ const manageChannelsCommand = commandBuilder(
           .setStyle(ButtonStyle.Secondary),
       );
 
+      const existingBotChannel = await getBotChannel(
+        guild.guildId,
+        selected as BotChannel,
+      );
+
       await menuInteraction.update({
-        content: `You selected: **${selected}**. Choose an action:`,
+        content: existingBotChannel
+          ? `You selected: **${selected}**.\nCurrent channel: <#${existingBotChannel}>\nChoose an action:`
+          : `You selected: **${selected}**.\nCurrent channel: [not set]\nChoose an action:`,
         components: [buttonRow],
       });
 
@@ -1110,11 +1119,7 @@ const manageChannelsCommand = commandBuilder(
           });
           return buttonCollector.stop();
         } else if (action === 'reset') {
-          await updateChannel(
-            guild.guildId,
-            selected as 'count' | 'today-is' | 'birthday',
-            null,
-          );
+          await updateBotChannel(guild.guildId, selected as BotChannel, null);
           logWithTime(`Reset ${selected} channel for ${guild.guildId}`, 'info');
           await buttonInteraction.update({
             content: `${selected} channel reset.`,
@@ -1153,9 +1158,9 @@ const manageChannelsCommand = commandBuilder(
                 true,
               );
 
-            await updateChannel(
+            await updateBotChannel(
               guild.guildId,
-              selected as 'count' | 'today-is' | 'birthday',
+              selected as BotChannel,
               newChannel.id,
             );
 
