@@ -1403,7 +1403,6 @@ export const commandNamesAndDescriptions: { name: string; value: string }[][] =
     while (otherCommands.length) {
       allPages.push(otherCommands.splice(0, COMMANDS_PER_PAGE));
     }
-    console.log(allPages);
     return allPages;
   })();
 
