@@ -18,10 +18,11 @@ import {
   PermissionFlagsBits,
   PermissionsBitField,
   SlashCommandBuilder,
+  SlashCommandSubcommandBuilder,
   StringSelectMenuInteraction,
 } from 'discord.js';
 
-import { Command } from './commands';
+import { Command, Subcommand } from './commands';
 
 //#region General
 
@@ -178,13 +179,24 @@ export function commandBuilder(
   guildOnly: boolean,
   permissionLevel: PermissionLevel,
   customize: (builder: SlashCommandBuilder) => SlashCommandBuilder = (b) => b,
+  subcommands?: Map<string,Subcommand>
 ): Command {
-  const builder = customize(
-    new SlashCommandBuilder()
+  const builder = new SlashCommandBuilder()
       .setName(name)
       .setDescription(description)
-      .setDefaultMemberPermissions(getPermissionsForLevel(permissionLevel)),
-  );
+      .setDefaultMemberPermissions(getPermissionsForLevel(permissionLevel));
+
+  if (subcommands && subcommands.size > 0) {
+    for (const [name, sub] of subcommands) {
+      builder.addSubcommand((sc) =>
+        (sub.customize ?? ((b) => b))(
+          sc.setName(name).setDescription(sub.description),
+        ),
+      );
+    }
+  } else {
+    customize(builder);
+  }
 
   return {
     data: builder,
@@ -193,7 +205,24 @@ export function commandBuilder(
     permissionLevel,
     guildOnly,
     execute: async (interaction: ChatInputCommandInteraction, client: Client) =>
-      safeExecute(name, interaction, () => execute(interaction, client)),
+      safeExecute(name, interaction, async () => {
+        const subcommandName = interaction.options.getSubcommand(false);
+
+        if (subcommandName && subcommands) {
+          const sub = subcommands.get(subcommandName);
+          if (sub) {
+            return await sub.execute(interaction, client);
+          } else {
+            return await interaction.reply({
+              content: `Unknown subcommand: ${subcommandName}`,
+              ephemeral: true,
+            });
+          }
+        }
+
+        return await execute(interaction, client);
+      }),
+    subcommands
   };
 }
 

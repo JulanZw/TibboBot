@@ -173,7 +173,9 @@ export async function addGuild(guildId: string) {
   });
 }
 
-export async function getGuild(guildId: string) {
+export async function getGuild(guildId: string | null) {
+  if(!guildId) return null;
+  
   return await prisma.guild.findUnique({
     where: { guildId },
   });

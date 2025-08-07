@@ -22,6 +22,7 @@ import {
   safeReply,
 } from './utils';
 import { commands, commandsToRegister } from './commands';
+import { PermissionLevel } from './utils';
 import {
   addReactionRole,
   checkAndUpdateCount,
@@ -249,7 +250,18 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
       );
     }
 
-    if (command.guildOnly && !interaction.guildId) {
+    if (
+      (command.permissionLevel === 'admin' || (command.subcommands && command.subcommands.get(interaction.options.getSubcommand())?.permissionLevel !== 'admin')) &&
+      !interaction.memberPermissions?.has('Administrator')
+    ) {
+      return safeReply(
+        interaction,
+        'You do not have permission to use this command.',
+        true
+      );
+    }
+
+    if ((command.guildOnly || (command.subcommands && command.subcommands.get(interaction.options.getSubcommand())?.guildOnly)) && !interaction.guildId) {
       return await safeReply(
         interaction,
         'This command can only be used in a server.',
