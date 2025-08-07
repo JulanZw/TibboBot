@@ -18,7 +18,6 @@ import {
   PermissionFlagsBits,
   PermissionsBitField,
   SlashCommandBuilder,
-  SlashCommandSubcommandBuilder,
   StringSelectMenuInteraction,
 } from 'discord.js';
 
@@ -179,12 +178,12 @@ export function commandBuilder(
   guildOnly: boolean,
   permissionLevel: PermissionLevel,
   customize: (builder: SlashCommandBuilder) => SlashCommandBuilder = (b) => b,
-  subcommands?: Map<string,Subcommand>
+  subcommands?: Map<string, Subcommand>,
 ): Command {
   const builder = new SlashCommandBuilder()
-      .setName(name)
-      .setDescription(description)
-      .setDefaultMemberPermissions(getPermissionsForLevel(permissionLevel));
+    .setName(name)
+    .setDescription(description)
+    .setDefaultMemberPermissions(getPermissionsForLevel(permissionLevel));
 
   if (subcommands && subcommands.size > 0) {
     for (const [name, sub] of subcommands) {
@@ -211,6 +210,7 @@ export function commandBuilder(
         if (subcommandName && subcommands) {
           const sub = subcommands.get(subcommandName);
           if (sub) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return await sub.execute(interaction, client);
           } else {
             return await interaction.reply({
@@ -220,9 +220,10 @@ export function commandBuilder(
           }
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return await execute(interaction, client);
       }),
-    subcommands
+    subcommands,
   };
 }
 

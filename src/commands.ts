@@ -196,13 +196,14 @@ const messageCommands = commandBuilder(
   false,
   'user',
   (builder) => builder,
-  new Map<string,Subcommand>([
+  new Map<string, Subcommand>([
     [
       'leaderboard',
       {
         name: 'leaderboard',
-        description: 'Show the leaderboard for all characters and messages sent',
-        async execute(interaction,client) {
+        description:
+          'Show the leaderboard for all characters and messages sent',
+        async execute(interaction, client) {
           const users = await getAllUsersCharsAndMessages();
 
           if (!users || users.length === 0) {
@@ -241,7 +242,7 @@ const messageCommands = commandBuilder(
           await safeReply(interaction, '', false, [leaderboardEmbed]);
         },
         permissionLevel: 'user',
-        guildOnly: true
+        guildOnly: true,
       },
     ],
     [
@@ -271,18 +272,15 @@ const messageCommands = commandBuilder(
         },
         customize: (builder) => {
           return builder.addUserOption(
-            userOption(
-              'target',
-              'The user to check'
-            )
+            userOption('target', 'The user to check'),
           );
         },
         permissionLevel: 'user',
-        guildOnly: true
-      }
-    ]
-  ])
-)
+        guildOnly: true,
+      },
+    ],
+  ]),
+);
 
 //#endregion
 
@@ -331,13 +329,13 @@ const todayIsCommands = commandBuilder(
   true,
   'user',
   (builder) => builder,
-  new Map<string,Subcommand>([
+  new Map<string, Subcommand>([
     [
       'leaderboard',
       {
         name: 'leaderboard',
         description: 'Show the leaderboard for the today-is points',
-        async execute(interaction,client) {
+        async execute(interaction, client) {
           const users = await getAllUsersDataTodayIs();
 
           if (!users || users.length === 0) {
@@ -376,15 +374,15 @@ const todayIsCommands = commandBuilder(
           await safeReply(interaction, '', false, [pointboardEmbed]);
         },
         permissionLevel: 'user',
-        guildOnly: true
-      }
+        guildOnly: true,
+      },
     ],
     [
       'add',
       {
         name: 'add',
         description: 'Give today-is points to someone',
-        async execute(interaction, client) {
+        async execute(interaction) {
           const pointGiverId = await getPointGiverIdOfGuild(
             interaction.guildId as string,
           );
@@ -449,21 +447,14 @@ const todayIsCommands = commandBuilder(
           }
         },
         customize: (builder) => {
-          return builder.addUserOption(
-            userOption(
-              'target',
-              'The user to give points to'
-            ),
-          )
-          .addIntegerOption(
-            integerOption(
-              'amount',
-              'The amount of points to give'
-            ),
-          )
+          return builder
+            .addUserOption(userOption('target', 'The user to give points to'))
+            .addIntegerOption(
+              integerOption('amount', 'The amount of points to give'),
+            );
         },
         permissionLevel: 'user',
-        guildOnly: true
+        guildOnly: true,
       },
     ],
     [
@@ -487,7 +478,10 @@ const todayIsCommands = commandBuilder(
             return await safeReply(interaction, 'No target user was provided.');
           }
 
-          await setPointGiverOfGuild(interaction.guildId as string, targetUser.id);
+          await setPointGiverOfGuild(
+            interaction.guildId as string,
+            targetUser.id,
+          );
           await safeReply(
             interaction,
             guild.todayIsChannelId
@@ -501,18 +495,15 @@ const todayIsCommands = commandBuilder(
         },
         customize: (builder) => {
           return builder.addUserOption(
-            userOption(
-              'target',
-              'The user put as point giver'
-            ),
-          )
+            userOption('target', 'The user put as point giver'),
+          );
         },
         permissionLevel: 'admin',
-        guildOnly: true
-      }
-    ]
-  ])
-)
+        guildOnly: true,
+      },
+    ],
+  ]),
+);
 
 //#endregion
 
@@ -520,7 +511,7 @@ const todayIsCommands = commandBuilder(
 
 const birthdayCommands = commandBuilder(
   'birthday',
-  'Manage your birthday for this server',
+  'All commands related to birthdays',
   async () => {},
   false,
   'user',
@@ -579,14 +570,18 @@ const birthdayCommands = commandBuilder(
         },
         customize: (builder) => {
           return builder.addStringOption(
-            stringOption('date', 'Enter a date (DD-MM-YYYY or YYYY-MM-DD)', true),
-          )
+            stringOption(
+              'date',
+              'Enter a date (DD-MM-YYYY or YYYY-MM-DD)',
+              true,
+            ),
+          );
         },
         permissionLevel: 'user',
-        guildOnly: true
+        guildOnly: true,
       },
     ],
-  ])
+  ]),
 );
 
 //#endregion
@@ -595,7 +590,7 @@ const birthdayCommands = commandBuilder(
 
 const reactionCommands = commandBuilder(
   'reaction',
-  'All commands for creating and updating a reaction message!',
+  'All commands for creating and updating a reaction message',
   async () => {},
   false,
   'admin',
@@ -605,8 +600,12 @@ const reactionCommands = commandBuilder(
       'add',
       {
         name: 'add',
-        description: 'Adds a reaction role to a message after creating a reaction role message.',
-        async execute(interaction: ChatInputCommandInteraction, client: Client) {
+        description:
+          'Adds a reaction role to a message after creating a reaction role message.',
+        async execute(
+          interaction: ChatInputCommandInteraction,
+          client: Client,
+        ) {
           const guild = await getGuild(interaction.guildId);
 
           if (!guild) {
@@ -621,14 +620,18 @@ const reactionCommands = commandBuilder(
           const role = interaction.options.getRole('role');
 
           if (!targetMessageId) {
-            return await safeReply(interaction, 'No target message ID was provided.');
+            return await safeReply(
+              interaction,
+              'No target message ID was provided.',
+            );
           } else if (!emoji) {
             return await safeReply(interaction, 'No emoji was provided.');
           } else if (!role) {
             return await safeReply(interaction, 'No role was provided.');
           }
 
-          const reactionRoles = await getReactionRolesByMessage(targetMessageId);
+          const reactionRoles =
+            await getReactionRolesByMessage(targetMessageId);
 
           if (!reactionRoles || reactionRoles.length < 1) {
             return await safeReply(
@@ -637,7 +640,9 @@ const reactionCommands = commandBuilder(
             );
           }
 
-          const channel = await client.channels.fetch(reactionRoles[0].channelId);
+          const channel = await client.channels.fetch(
+            reactionRoles[0].channelId,
+          );
 
           if (!channel || !channel.isTextBased())
             return await safeReply(interaction, 'Invalid channel.');
@@ -672,7 +677,10 @@ const reactionCommands = commandBuilder(
               );
             }
 
-            const description = Object.entries([newReactionRole, ...reactionRoles])
+            const description = Object.entries([
+              newReactionRole,
+              ...reactionRoles,
+            ])
               .map(
                 ([, reactionRole]) =>
                   `${reactionRole.emoji} = <@&${reactionRole.role}>`,
@@ -684,7 +692,8 @@ const reactionCommands = commandBuilder(
             const embed = embedBuilder({
               title: oldEmbed.title ?? '',
               description,
-              footer: oldEmbed.footer?.text ?? `Click the emojis to get the roles!`,
+              footer:
+                oldEmbed.footer?.text ?? `Click the emojis to get the roles!`,
             });
 
             await message.edit({ embeds: [embed] });
@@ -696,32 +705,38 @@ const reactionCommands = commandBuilder(
               true,
             );
           } else {
-            return await safeReply(interaction, 'Message not found or not editable.');
+            return await safeReply(
+              interaction,
+              'Message not found or not editable.',
+            );
           }
         },
         customize: (builder: SlashCommandSubcommandBuilder) => {
-          return builder.addStringOption(
-            stringOption(
-              'message_id',
-              'The ID of the message to add the reaction role to',
-              true,
-            ),
-          ).addStringOption(
-            stringOption(
-              'emoji',
-              'The emoji to use for the reaction role',
-              true
-            ),
-          ).addRoleOption(
-            roleOption(
-              'role',
-              'The role to assign when the emoji is reacted to',
-              true,
-            ),
-          )
+          return builder
+            .addStringOption(
+              stringOption(
+                'message_id',
+                'The ID of the message to add the reaction role to',
+                true,
+              ),
+            )
+            .addStringOption(
+              stringOption(
+                'emoji',
+                'The emoji to use for the reaction role',
+                true,
+              ),
+            )
+            .addRoleOption(
+              roleOption(
+                'role',
+                'The role to assign when the emoji is reacted to',
+                true,
+              ),
+            );
         },
         permissionLevel: 'admin',
-        guildOnly: true
+        guildOnly: true,
       },
     ],
     [
@@ -736,7 +751,10 @@ const reactionCommands = commandBuilder(
           const title = interaction.options.getString('title');
 
           if (!targetChannel) {
-            return await safeReply(interaction, 'No target channel was provided.');
+            return await safeReply(
+              interaction,
+              'No target channel was provided.',
+            );
           }
 
           pendingReactionRoleSetups.set(userId, {
@@ -756,25 +774,27 @@ const reactionCommands = commandBuilder(
           logWithTime('Reaction message proces started', 'info');
         },
         customize: (builder: SlashCommandSubcommandBuilder) => {
-          return builder.addChannelOption(
-            channelOption(
-              'target',
-              'The channel where reaction message will be in.',
-              true,
-            ),
-          ).addStringOption(
-            stringOption(
-              'title',
-              'The title of the reaction role message (defaults to "Choose your role")',
-              false,
-            ),
-          )
+          return builder
+            .addChannelOption(
+              channelOption(
+                'target',
+                'The channel where reaction message will be in.',
+                true,
+              ),
+            )
+            .addStringOption(
+              stringOption(
+                'title',
+                'The title of the reaction role message (defaults to "Choose your role")',
+                false,
+              ),
+            );
         },
         permissionLevel: 'admin',
-        guildOnly: true
+        guildOnly: true,
       },
     ],
-  ])
+  ]),
 );
 
 //#endregion
@@ -783,7 +803,7 @@ const reactionCommands = commandBuilder(
 
 const reminderCommands = commandBuilder(
   'reminders',
-  'Manage your reminders',
+  'All commands related to your reminders',
   async () => {},
   false,
   'user',
@@ -800,7 +820,11 @@ const reminderCommands = commandBuilder(
 
           const targetTime = parseDurationOrDateString(when);
           if (!targetTime) {
-            return await safeReply(interaction, 'Invalid date/time format.', true);
+            return await safeReply(
+              interaction,
+              'Invalid date/time format.',
+              true,
+            );
           }
 
           const maxTime = Date.now() + 1000 * 60 * 60 * 24 * 365;
@@ -848,15 +872,16 @@ const reminderCommands = commandBuilder(
           );
         },
         customize: (builder: SlashCommandSubcommandBuilder) => {
-          return builder.addStringOption(
-            stringOption('when', 'When you need to be reminded', true),
-          )
-          .addStringOption(
-            stringOption('message', 'What you need to be reminded of', true),
-          )
+          return builder
+            .addStringOption(
+              stringOption('when', 'When you need to be reminded', true),
+            )
+            .addStringOption(
+              stringOption('message', 'What you need to be reminded of', true),
+            );
         },
         permissionLevel: 'user',
-        guildOnly: false
+        guildOnly: false,
       },
     ],
     [
@@ -895,9 +920,17 @@ const reminderCommands = commandBuilder(
               footer: `Created: ${formatDateToDDMMYYYY(reminder.createdAt)}`,
             });
 
-          const buildComponents = () => [createButtonsRow(index, reminders.length)];
+          const buildComponents = () => [
+            createButtonsRow(index, reminders.length),
+          ];
 
-          await safeReply(interaction, '', true, [buildEmbed(reminders[index], index)], buildComponents());
+          await safeReply(
+            interaction,
+            '',
+            true,
+            [buildEmbed(reminders[index], index)],
+            buildComponents(),
+          );
 
           const msg = await interaction.fetchReply();
 
@@ -988,10 +1021,10 @@ const reminderCommands = commandBuilder(
           });
         },
         permissionLevel: 'user',
-        guildOnly: false
+        guildOnly: false,
       },
     ],
-  ])
+  ]),
 );
 
 //#endregion
@@ -1302,7 +1335,7 @@ export interface Command {
   permissionLevel: PermissionLevel;
   guildOnly: boolean;
   execute: (...args: any[]) => Promise<any>;
-  subcommands?: Map<string,Subcommand>
+  subcommands?: Map<string, Subcommand>;
 }
 
 export type Subcommand = {
@@ -1333,47 +1366,46 @@ export const commands: Command[] = [
   todayIsCommands,
 ];
 
-const commandNamesAndDescriptions: { name: string, value: string }[][] = (() => {
-  const subcommandPages = [];
-  const otherCommands: { name: string, value: string }[] = [];
+export const commandNamesAndDescriptions: { name: string; value: string }[][] =
+  (() => {
+    const subcommandPages = [];
+    const otherCommands: { name: string; value: string }[] = [];
 
-  for (const command of commands) {
-    if (command.subcommands?.size) {
-      const page = [
-        {
-          name: `─── ${command.name.toUpperCase()} ───`,
-          value: command.description || 'No description.',
-        },
-        ...Array.from(command.subcommands.values()).map(sub => ({
-          name: `› ${sub.name}`,
-          value: sub.description,
-        })),
-      ];
-      subcommandPages.push(page);
-    } else {
-      if(otherCommands.length % 5 === 0){
-        otherCommands.push(
-        {
-          name: `─── OTHER ───`,
-          value:'Other commands',
-        },)
+    for (const command of commands) {
+      if (command.subcommands?.size) {
+        const page = [
+          {
+            name: `─── ${command.name.toUpperCase()} ───`,
+            value: command.description || 'No description.',
+          },
+          ...Array.from(command.subcommands.values()).map((sub) => ({
+            name: `› ${sub.name}`,
+            value: sub.description,
+          })),
+        ];
+        subcommandPages.push(page);
+      } else {
+        if (otherCommands.length % COMMANDS_PER_PAGE === 0) {
+          otherCommands.push({
+            name: `─── OTHER ───`,
+            value: 'Other commands',
+          });
+        }
+        otherCommands.push({
+          name: `› ${command.name}`,
+          value: command.description,
+        });
       }
-      otherCommands.push({
-        name: `› ${command.name}`,
-        value: command.description,
-      });
     }
-  }
 
-  const allPages = [...subcommandPages];
+    const allPages = [...subcommandPages];
 
-  while (otherCommands.length) {
-    allPages.push(otherCommands.splice(0, 5));
-  }
-  return allPages;
-})();
-
-
+    while (otherCommands.length) {
+      allPages.push(otherCommands.splice(0, COMMANDS_PER_PAGE));
+    }
+    console.log(allPages);
+    return allPages;
+  })();
 
 export const commandsToRegister: RESTPostAPIChatInputApplicationCommandsJSONBody[] =
   commands.map((command) => command.data.toJSON());
