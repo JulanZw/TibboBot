@@ -30,14 +30,13 @@ import {
   embedBuilder,
   formatDate,
   formatDateToDDMMYYYY,
-  getDateKey,
   logWithTime,
   parseBirthdayDate,
   parseDurationOrDateString,
   pendingReactionRoleSetups,
   PermissionLevel,
-  reminderDaysCache,
   safeReply,
+  scheduleReminder,
   sourceRequestTracker,
 } from './utils';
 import {
@@ -177,8 +176,7 @@ const helpCommand = commandBuilder(
 const pingCommand = commandBuilder(
   'ping',
   'Responds with "pong" to check if the bot is online.',
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async (interaction, client) => {
+  async (interaction) => {
     await safeReply(interaction, 'pong');
   },
   false,
@@ -854,11 +852,7 @@ const reminderCommands = commandBuilder(
           const maxCacheDate = new Date();
           maxCacheDate.setDate(maxCacheDate.getDate() + 1);
           if (targetTime < maxCacheDate) {
-            const dateKey = getDateKey(reminder.remindAt);
-            if (!reminderDaysCache.has(dateKey)) {
-              reminderDaysCache.set(dateKey, []);
-            }
-            reminderDaysCache.get(dateKey)!.push(reminder);
+            scheduleReminder(interaction.user, reminder);
           }
 
           await safeReply(
@@ -890,6 +884,7 @@ const reminderCommands = commandBuilder(
         name: 'list',
         description: 'List and manage your reminders',
         async execute(interaction: ChatInputCommandInteraction) {
+          let deletedAll = false;
           const reminders = await getUserReminders(interaction.user.id);
           if (!reminders.length) {
             return await safeReply(interaction, 'You have no reminders.', true);
@@ -965,6 +960,7 @@ const reminderCommands = commandBuilder(
                 reminders.splice(index, 1);
 
                 if (!reminders.length) {
+                  deletedAll = true;
                   collector.stop();
                   return await btnInteraction.update({
                     content: 'All reminders deleted.',
@@ -1015,8 +1011,16 @@ const reminderCommands = commandBuilder(
 
           // eslint-disable-next-line @typescript-eslint/no-misused-promises
           collector.on('end', async () => {
-            if (msg && msg.editable) {
-              await msg.edit({ components: [] });
+            if (deletedAll) return;
+            if (msg.editable) {
+              try {
+                await msg.edit({ components: [] });
+              } catch (err: any) {
+                logWithTime(
+                  `Could not edit message after collector ended: ${err}`,
+                  'warn',
+                );
+              }
             }
           });
         },

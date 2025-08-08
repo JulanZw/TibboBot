@@ -20,6 +20,7 @@ import {
   pendingReactionRoleSetups,
   preprocessNumerics,
   safeReply,
+  scheduleReminder,
 } from './utils';
 import { commands, commandsToRegister } from './commands';
 import {
@@ -29,6 +30,7 @@ import {
   getLastCountUserAndHighestNumber,
   getReactionRolesByMessage,
   getReminderById,
+  getRemindersOfToday,
   getRoleForReaction,
   removeReactionRolesByMessageId,
   resetCount,
@@ -74,7 +76,29 @@ client.once('ready', async () => {
     await rest.put(Routes.applicationCommands(client.user!.id), {
       body: commandsToRegister,
     });
-    logWithTime('Slash commands registered.', 'info');
+    logWithTime('Slash commands registered.', 'startup');
+
+    if (process.env.ENV !== 'dev') {
+      try {
+        const todaysReminders = await getRemindersOfToday();
+
+        for (const reminder of todaysReminders) {
+          const user = await client.users.fetch(reminder.userId);
+          scheduleReminder(user, reminder);
+        }
+
+        logWithTime(
+          `Scheduled ${todaysReminders.length} reminders for today.`,
+          'startup',
+        );
+      } catch (err: any) {
+        logWithTime(
+          `Failed to schedule today's reminders: ${err}`,
+          'error',
+          true,
+        );
+      }
+    }
   } catch (err: any) {
     logWithTime('Error registering slash commands: ' + err, 'error', true);
   }
@@ -113,7 +137,8 @@ client.on(Events.MessageCreate, async (message: Message) => {
             return;
           } else if (
             lastCountUser?.lastCountUser &&
-            lastCountUser.lastCountUser === message.author.id
+            lastCountUser.lastCountUser === message.author.id &&
+            process.env.ENV !== 'dev'
           ) {
             await message.react('❌');
             await message.reply(
@@ -267,7 +292,7 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
       (command.permissionLevel === 'admin' ||
         (command.subcommands &&
           command.subcommands.get(interaction.options.getSubcommand())
-            ?.permissionLevel !== 'admin')) &&
+            ?.permissionLevel === 'admin')) &&
       !interaction.memberPermissions?.has('Administrator')
     ) {
       return safeReply(
@@ -421,6 +446,7 @@ client
   .then(() =>
     logWithTime(
       `logged in as ${client.user ? `${client.user.username}#${client.user.discriminator}` : 'ERROR'}`,
+      'startup',
     ),
   )
   .catch((err: any) => {

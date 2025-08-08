@@ -6,17 +6,15 @@ import { Client, TextChannel } from 'discord.js';
 
 import {
   formatDate,
-  getDateKey,
   getDaySuffix as getSuffix,
   logWithTime,
-  reminderDaysCache,
+  scheduleReminder,
   sourceRequestTracker,
 } from './utils';
 import {
-  deleteReminder,
   getAllBirthdaysInGuildForGivenDate,
   getAllGuilds,
-  getRemindersBetween,
+  getRemindersOfToday,
 } from './database';
 
 export function setupCronJobs(client: Client): void {
@@ -109,22 +107,24 @@ export function setupCronJobs(client: Client): void {
         }),
       );
 
-      // Rebuild reminder cache
-      const start = new Date();
-      const end = new Date();
-      end.setDate(end.getDate() + 1);
+      try {
+        const todaysReminders = await getRemindersOfToday();
 
-      const upcomingReminders = await getRemindersBetween(start, end);
-
-      reminderDaysCache.clear();
-      for (const reminder of upcomingReminders) {
-        const dateKey = getDateKey(reminder.remindAt);
-
-        if (!reminderDaysCache.has(dateKey)) {
-          reminderDaysCache.set(dateKey, []);
+        for (const reminder of todaysReminders) {
+          const user = await client.users.fetch(reminder.userId);
+          scheduleReminder(user, reminder);
         }
 
-        reminderDaysCache.get(dateKey)!.push(reminder);
+        logWithTime(
+          `Scheduled ${todaysReminders.length} reminders for today.`,
+          'info',
+        );
+      } catch (err: any) {
+        logWithTime(
+          `Failed to schedule today's reminders: ${err}`,
+          'error',
+          true,
+        );
       }
 
       // Reset sourceRequestTracker
@@ -172,39 +172,6 @@ export function setupCronJobs(client: Client): void {
     }
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  cron.schedule('* * * * *', async () => {
-    try {
-      const now = new Date();
-      const todayKey = getDateKey(now);
-      const reminders = reminderDaysCache.get(todayKey);
-      if (!reminders) return;
-
-      const due = reminders.filter((r) => r.remindAt <= now);
-
-      await Promise.allSettled(
-        due.map(async (reminder) => {
-          try {
-            const user = await client.users.fetch(reminder.userId);
-            await user.send(`**Reminder:** ${reminder.message}`);
-          } catch (err: any) {
-            logWithTime('Failed to send reminder: ' + err, 'error', true);
-          }
-          await deleteReminder(reminder.id);
-
-          const index = reminders.indexOf(reminder);
-          if (index !== -1) reminders.splice(index, 1);
-        }),
-      );
-    } catch (err: any) {
-      logWithTime(
-        'Something went wrong while sending reminders' + err,
-        'error',
-        true,
-      );
-    }
-  });
-
   cron.schedule('0 0 * * 1', () => {
     try {
       const logsDir = path.resolve(__dirname, '../logs');
@@ -225,7 +192,7 @@ export function setupCronJobs(client: Client): void {
     }
   });
 
-  logWithTime('Cron jobs have been set up successfully.', 'info');
+  logWithTime('Cron jobs have been set up successfully.', 'startup');
 }
 
 function getISOWeekNumber(date: Date): number {

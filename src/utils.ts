@@ -19,9 +19,12 @@ import {
   PermissionsBitField,
   SlashCommandBuilder,
   StringSelectMenuInteraction,
+  User,
 } from 'discord.js';
+import cron from 'node-cron';
 
 import { Command, Subcommand } from './commands';
+import { deleteReminder } from './database';
 
 //#region General
 
@@ -76,7 +79,7 @@ if (!fs.existsSync(logDir)) {
 
 const logFilePath = path.join(logDir, 'latest.log');
 
-type LogLevel = 'info' | 'warn' | 'error';
+type LogLevel = 'info' | 'warn' | 'error' | 'startup';
 
 /**
  * Logs a message with a timestamp and level to the log file.
@@ -87,7 +90,7 @@ type LogLevel = 'info' | 'warn' | 'error';
  */
 export function logWithTime(
   message: string,
-  level: LogLevel = 'info',
+  level: LogLevel,
   logToConsole: boolean = false,
 ): void {
   const now = new Date();
@@ -101,6 +104,7 @@ export function logWithTime(
       info: '\x1b[36m', // Cyan
       warn: '\x1b[33m', // Yellow
       error: '\x1b[31m', // Red
+      startup: '\x1b[32m', // Green
     };
     const reset = '\x1b[0m';
 
@@ -768,12 +772,48 @@ export function parseBirthdayDate(input: string): Date | null {
 
 //#endregion
 
-//#region Cache and Mem Storage
+//#region Reminders
 
-/**
- * Cache for reminders by date string (YYYY-MM-DD)
- */
-export const reminderDaysCache = new Map<string, ReminderCacheEntry[]>();
+export function scheduleReminder(
+  user: User,
+  reminder: {
+    id: string;
+    userId: string;
+    message: string;
+    remindAt: Date;
+  },
+) {
+  const date = reminder.remindAt;
+  const cronExpression = `${date.getMinutes()} ${date.getHours()} ${date.getDate()} ${
+    date.getMonth() + 1
+  } *`;
+
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  const job = cron.schedule(cronExpression, async () => {
+    try {
+      await user.send(`**Reminder:** ${reminder.message}`);
+      await deleteReminder(reminder.id);
+      logWithTime(`Sent reminder ${reminder.id} to ${reminder.userId}`, 'info');
+    } catch (err: any) {
+      logWithTime(
+        `Failed to send reminder ${reminder.id}: ${err}`,
+        'error',
+        true,
+      );
+    } finally {
+      job.stop();
+    }
+  });
+
+  logWithTime(
+    `Scheduled reminder ${reminder.id} for ${date.toISOString()}`,
+    'info',
+  );
+}
+
+//#endregion
+
+//#region Mem Storage Objects
 
 /**
  * In memory storage for tracking who requested the source files today
@@ -794,15 +834,5 @@ export const pendingReactionRoleSetups = new Map<
     messageIds: string[];
   }
 >();
-
-/**
- * Utility function to get the key for the reminder cache
- *
- * @param date - the date you want the key of
- * @returns the key of the provided date
- */
-export function getDateKey(date: Date): string {
-  return date.toISOString().split('T')[0];
-}
 
 //#endregion

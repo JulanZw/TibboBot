@@ -507,6 +507,13 @@ export async function getRemindersBetween(start: Date, end: Date) {
   });
 }
 
+export async function getRemindersOfToday() {
+  const start = new Date();
+  const end = new Date();
+  end.setDate(end.getDate() + 1);
+  return await getRemindersBetween(start, end);
+}
+
 export async function updateReminder(
   id: string,
   message: string,

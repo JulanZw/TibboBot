@@ -6,13 +6,15 @@
   "license": "MIT",
   "author": "Julan Zwiggelaar",
   "scripts": {
-    "dev": "ts-node src/index.ts",
+    "dev": "cross-env ENV=dev ts-node src/index.ts",
+    "prod": "cross-env ENV=prod ts-node src/index.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix"
   },
   "dependencies": {
     "@discordjs/builders": "^1.9.0",
     "@prisma/client": "^6.11.1",
     "archiver": "^7.0.1",
+    "cross-env": "^10.0.0",
     "discord.js": "^14.16.3",
     "mathjs": "^14.5.3",
     "node-cron": "^3.0.3",
@@ -21,12 +23,12 @@
     "wol": "^1.0.7"
   },
   "devDependencies": {
-    "discord-api-types": "^0.38.16",
     "@eslint/js": "^9.32.0",
     "@types/archiver": "^6.0.3",
     "@types/node": "^24.0.14",
     "@types/node-cron": "^3.0.11",
     "@types/wol": "^1.0.4",
+    "discord-api-types": "^0.38.16",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-import": "^2.32.0",
