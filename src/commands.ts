@@ -44,6 +44,7 @@ import {
   BotChannel,
   createReminder,
   deleteReminder,
+  getAllBirthdaysInGuild,
   getAllUsersCharsAndMessages,
   getAllUsersDataTodayIs,
   getBotChannel,
@@ -574,6 +575,144 @@ const birthdayCommands = commandBuilder(
               true,
             ),
           );
+        },
+        permissionLevel: 'user',
+        guildOnly: true,
+      },
+    ],
+    [
+      'calender',
+      {
+        name: 'calender',
+        description: 'Get all the birthdays in this server',
+        async execute(interaction) {
+          const guild = await getGuild(interaction.guildId);
+
+          if (!guild) {
+            return await safeReply(
+              interaction,
+              `Guild is not in the database. You should never see this message, contact the bot owner please.`,
+            );
+          }
+
+          const birthdays = await getAllBirthdaysInGuild(guild.guildId);
+
+          const birthdayPages = new Map<
+            string,
+            { name: string; value: string }[]
+          >();
+
+          for (const birthday of birthdays) {
+            const birthdayMonth = birthday.birthday.toLocaleString('en-US', {
+              month: 'long',
+            });
+            if (birthdayPages.has(birthdayMonth)) {
+              birthdayPages.get(birthdayMonth)?.push({
+                name: formatDate(birthday.birthday),
+                value: `<@${birthday.userId}>`,
+              });
+            } else {
+              birthdayPages.set(birthdayMonth, [
+                {
+                  name: formatDate(birthday.birthday),
+                  value: `<@${birthday.userId}>`,
+                },
+              ]);
+            }
+          }
+
+          const monthOrder = [
+            'January',
+            'February',
+            'March',
+            'April',
+            'May',
+            'June',
+            'July',
+            'August',
+            'September',
+            'October',
+            'November',
+            'December',
+          ];
+
+          const months = Array.from(birthdayPages.keys()).sort(
+            (a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b),
+          );
+
+          let index = 0;
+          const totalPages = birthdayPages.size;
+
+          const embed = embedBuilder({
+            title: 'Calender',
+            description: `The birthdays for: **${months[index]}**`,
+            fields: birthdayPages.get(months[index]) ?? [],
+            footer: `Page ${index + 1} of ${totalPages}`,
+          });
+
+          const components = [
+            createButtonsRow(index, totalPages, ['prev', 'next']),
+          ];
+
+          await safeReply(interaction, '', false, [embed], components);
+
+          const msg = await interaction.fetchReply();
+
+          const collector = msg.createMessageComponentCollector({
+            componentType: ComponentType.Button,
+            time: 120000, // 2 mins
+          });
+
+          // eslint-disable-next-line @typescript-eslint/no-misused-promises
+          collector.on('collect', async (buttonInteraction) => {
+            if (buttonInteraction.user.id !== interaction.user.id) {
+              return await safeReply(
+                buttonInteraction,
+                'You cannot use this button.',
+                true,
+              );
+            }
+
+            const action = buttonInteraction.customId;
+
+            switch (action) {
+              case 'prev':
+                index = Math.max(0, index - 1);
+                break;
+              case 'next':
+                index = Math.min(totalPages - 1, index + 1);
+                break;
+              default:
+                return await safeReply(
+                  buttonInteraction,
+                  'Invalid action.',
+                  true,
+                );
+            }
+
+            const newEmbed = embedBuilder({
+              title: 'Calender',
+              description: `The birthdays for: **${months[index]}**`,
+              fields: birthdayPages.get(months[index]),
+              footer: `Page ${index + 1} of ${totalPages}`,
+            });
+
+            const newComponents = [
+              createButtonsRow(index, totalPages, ['prev', 'next']),
+            ];
+
+            await buttonInteraction.update({
+              embeds: [newEmbed],
+              components: newComponents,
+            });
+          });
+
+          // eslint-disable-next-line @typescript-eslint/no-misused-promises
+          collector.on('end', async () => {
+            if (msg.editable) {
+              await msg.edit({ components: [] });
+            }
+          });
         },
         permissionLevel: 'user',
         guildOnly: true,

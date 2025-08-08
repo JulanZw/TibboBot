@@ -367,16 +367,20 @@ export async function getAllBirthdaysInGuildForGivenDate(
   const targetMonth = date.getUTCMonth();
   const targetDate = date.getUTCDate();
 
-  const birthdays = await prisma.birthday.findMany({
-    where: { guildId },
-    include: { user: true },
-  });
+  const birthdays = await getAllBirthdaysInGuild(guildId);
 
   return birthdays.filter((entry) => {
     const bday = new Date(entry.birthday);
     return (
       bday.getUTCMonth() === targetMonth && bday.getUTCDate() === targetDate
     );
+  });
+}
+
+export async function getAllBirthdaysInGuild(guildId: string) {
+  return await prisma.birthday.findMany({
+    where: { guildId },
+    include: { user: true },
   });
 }
 
