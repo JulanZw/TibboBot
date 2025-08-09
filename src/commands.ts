@@ -440,7 +440,7 @@ const todayIsCommands = commandBuilder(
         description: 'Give today-is points to someone',
         async execute(interaction) {
           const pointGiverId = await getPointGiverIdOfGuild(
-            interaction.guildId as string,
+            interaction.guildId,
           );
 
           if (!pointGiverId) {
@@ -579,12 +579,10 @@ const birthdayCommands = commandBuilder(
         name: 'set',
         description: 'Set your birthday for this server',
         async execute(interaction) {
-          const guild = await getGuild(interaction.guildId);
-
-          if (!guild) {
+          if (!interaction.guildId) {
             return await safeReply(
               interaction,
-              `Guild is not in the database. You should never see this message, contact the bot owner please.`,
+              `Uhhh... Well this is akward... You arent supposed to see this message... Please contact the bot owner`,
             );
           }
 
@@ -602,7 +600,7 @@ const birthdayCommands = commandBuilder(
           }
 
           const newBirthday = await setBirthday(
-            guild.guildId,
+            interaction.guildId,
             interaction.user.id,
             birthday,
           );
@@ -643,16 +641,14 @@ const birthdayCommands = commandBuilder(
         name: 'calender',
         description: 'Get all the birthdays in this server',
         async execute(interaction) {
-          const guild = await getGuild(interaction.guildId);
-
-          if (!guild) {
+          if (!interaction.guildId) {
             return await safeReply(
               interaction,
-              `Guild is not in the database. You should never see this message, contact the bot owner please.`,
+              `Uhhh... Well this is akward... You arent supposed to see this message... Please contact the bot owner`,
             );
           }
 
-          const birthdays = await getAllBirthdaysInGuild(guild.guildId);
+          const birthdays = await getAllBirthdaysInGuild(interaction.guildId);
 
           const birthdayPages = new Map<
             string,
@@ -800,12 +796,10 @@ const reactionCommands = commandBuilder(
           interaction: ChatInputCommandInteraction,
           client: Client,
         ) {
-          const guild = await getGuild(interaction.guildId);
-
-          if (!guild) {
+          if (!interaction.guildId) {
             return await safeReply(
               interaction,
-              `Guild is not in the database. You should never see this message, contact the bot owner please.`,
+              `Uhhh... Well this is akward... You arent supposed to see this message... Please contact the bot owner`,
             );
           }
 
@@ -852,7 +846,7 @@ const reactionCommands = commandBuilder(
             }
 
             const newReactionRole = await addReactionRole(
-              guild.guildId,
+              interaction.guildId,
               targetMessageId,
               reactionRoles[0].channelId,
               emoji,
@@ -1321,14 +1315,14 @@ const manageChannelsCommand = commandBuilder(
   'manage_channels',
   'Manage channels for the guild (admin only)',
   async (interaction) => {
-    const guild = await getGuild(interaction.guildId);
-
-    if (!guild) {
+    if (!interaction.guildId) {
       return await safeReply(
         interaction,
-        `Guild is not in the database. You should never see this message, contact the bot owner please.`,
+        `Uhhh... Well this is akward... You arent supposed to see this message... Please contact the bot owner`,
       );
     }
+
+    const guildId = interaction.guildId;
 
     const selectRow =
       new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
@@ -1380,7 +1374,7 @@ const manageChannelsCommand = commandBuilder(
       );
 
       const existingBotChannel = await getBotChannel(
-        guild.guildId,
+        guildId,
         selected as BotChannel,
       );
 
@@ -1414,8 +1408,8 @@ const manageChannelsCommand = commandBuilder(
           });
           return buttonCollector.stop();
         } else if (action === 'reset') {
-          await updateBotChannel(guild.guildId, selected as BotChannel, null);
-          logWithTime(`Reset ${selected} channel for ${guild.guildId}`, 'info');
+          await updateBotChannel(guildId, selected as BotChannel, null);
+          logWithTime(`Reset ${selected} channel for ${guildId}`, 'info');
           await buttonInteraction.update({
             content: `${selected} channel reset.`,
             components: [],
@@ -1454,13 +1448,13 @@ const manageChannelsCommand = commandBuilder(
               );
 
             await updateBotChannel(
-              guild.guildId,
+              guildId,
               selected as BotChannel,
               newChannel.id,
             );
 
             logWithTime(
-              `Set ${selected} channel to ${newChannel.id} for ${guild.guildId}`,
+              `Set ${selected} channel to ${newChannel.id} for ${guildId}`,
               'info',
             );
 

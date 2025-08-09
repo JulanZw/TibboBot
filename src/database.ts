@@ -163,7 +163,8 @@ export async function checkAndUpdateCount(
   return isCorrect;
 }
 
-export async function getPointGiverIdOfGuild(guildId: string) {
+export async function getPointGiverIdOfGuild(guildId: string | null) {
+  if (!guildId) return null;
   const pointGiver = await prisma.guild.findUnique({
     where: { guildId },
     select: { pointGiverId: true },
