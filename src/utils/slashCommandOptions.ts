@@ -8,17 +8,7 @@ import {
   SlashCommandUserOption,
 } from 'discord.js';
 
-type AllowedChannelTypeChannelOption =
-  | ChannelType.GuildText
-  | ChannelType.GuildVoice
-  | ChannelType.GuildCategory
-  | ChannelType.GuildAnnouncement
-  | ChannelType.AnnouncementThread
-  | ChannelType.PublicThread
-  | ChannelType.PrivateThread
-  | ChannelType.GuildStageVoice
-  | ChannelType.GuildForum
-  | ChannelType.GuildMedia;
+import { AllowedChannelTypeChannelOption } from './typesAndInterfaces';
 
 export const userOption =
   (name: string, desc: string, required = true) =>

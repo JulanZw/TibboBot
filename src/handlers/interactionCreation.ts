@@ -1,0 +1,108 @@
+import { Interaction } from 'discord.js';
+
+import { client } from '..';
+import { commands } from '../commands';
+import { safeReply } from '../utils/general';
+import { parseDurationOrDateString } from '../utils/parsers';
+import { ownerId } from '../utils/constants';
+import { ensureGuildExistance } from '../database/guild';
+import { getReminderById, updateReminder } from '../database/reminders';
+import { logWithTime } from '../utils/logging';
+
+export async function handleInteractionCreation(interaction: Interaction) {
+  if (interaction.guildId) {
+    await ensureGuildExistance(interaction.guildId);
+  }
+
+  if (interaction.isChatInputCommand()) {
+    const command = commands.find((c) => c.name === interaction.commandName);
+
+    if (!command) {
+      return safeReply(
+        interaction,
+        `Unknown command: ${interaction.commandName}`,
+        true,
+      );
+    }
+
+    if (
+      (command.guildOnly ||
+        (command.subcommands &&
+          command.subcommands.get(interaction.options.getSubcommand())
+            ?.guildOnly)) &&
+      (!interaction.guildId || !interaction.guild)
+    ) {
+      return await safeReply(
+        interaction,
+        'This command can only be used in a server.',
+        true,
+      );
+    }
+
+    if (
+      (command.permissionLevel === 'admin' ||
+        (command.subcommands &&
+          command.subcommands.get(interaction.options.getSubcommand())
+            ?.permissionLevel === 'admin')) &&
+      !interaction.memberPermissions?.has('Administrator')
+    ) {
+      return safeReply(
+        interaction,
+        'You do not have permission to use this command.',
+        true,
+      );
+    }
+
+    if (
+      command.permissionLevel === 'owner' &&
+      (!process.env.OWNER_DISCORD_ID || interaction.user.id !== ownerId)
+    ) {
+      return await safeReply(interaction, 'You didn’t say the magic word...');
+    }
+
+    try {
+      await command.execute(interaction, client);
+    } catch (err: any) {
+      logWithTime(
+        `Error executing command ${interaction.commandName}: ` + err,
+        'error',
+        true,
+      );
+      await safeReply(
+        interaction,
+        'There was an error executing that command.',
+        true,
+      );
+    }
+  } else if (
+    interaction.isModalSubmit() &&
+    interaction.customId.startsWith('editReminderModal:')
+  ) {
+    const reminderId = interaction.customId.split(':')[1];
+    const newMessage = interaction.fields.getTextInputValue('editMessage');
+    const newTimeString = interaction.fields.getTextInputValue('editTime');
+
+    const reminder = await getReminderById(reminderId);
+    if (!reminder || reminder.userId !== interaction.user.id) {
+      return await safeReply(
+        interaction,
+        'Reminder not found or unauthorized.',
+        true,
+      );
+    }
+
+    const newRemindAt = parseDurationOrDateString(newTimeString);
+
+    if (!newRemindAt || newRemindAt < new Date()) {
+      return await safeReply(interaction, 'Invalid or past date.', true);
+    }
+
+    await updateReminder(reminderId, newMessage, newRemindAt);
+
+    return await safeReply(
+      interaction,
+      `Reminder updated!\n**New Message:** ${newMessage}\n**New Time:** <t:${Math.floor(newRemindAt.getTime() / 1000)}:F>`,
+      true,
+    );
+  }
+}

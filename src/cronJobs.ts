@@ -4,18 +4,13 @@ import fs from 'fs';
 import cron from 'node-cron';
 import { Client, TextChannel } from 'discord.js';
 
-import {
-  formatDate,
-  getDaySuffix as getSuffix,
-  logWithTime,
-  scheduleReminder,
-  sourceRequestTracker,
-} from './utils';
-import {
-  getAllBirthdaysInGuildForGivenDate,
-  getAllGuilds,
-  getRemindersOfToday,
-} from './database';
+import { scheduleReminder } from './utils/general';
+import { formatDate, getDaySuffix } from './utils/formatting';
+import { sourceRequestTracker } from './utils/constants';
+import { getAllBirthdaysInGuildForGivenDate } from './database/birthday';
+import { getAllGuilds } from './database/guild';
+import { getRemindersOfToday } from './database/reminders';
+import { logWithTime } from './utils/logging';
 
 export function setupCronJobs(client: Client): void {
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -89,7 +84,7 @@ export function setupCronJobs(client: Client): void {
                 const birthdayYear =
                   new Date().getFullYear() - birthday.birthday.getFullYear();
                 await channel.send(
-                  `Congratulations with your ${birthdayYear + getSuffix(birthdayYear)} birthday <@${birthday.userId}> 🎉!`,
+                  `Congratulations with your ${birthdayYear + getDaySuffix(birthdayYear)} birthday <@${birthday.userId}> 🎉!`,
                 );
                 logWithTime(
                   `Message send in ${birthday.guildId}: "Happy Birthday <@${birthday.userId}>!"`,
