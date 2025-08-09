@@ -279,7 +279,7 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
         (command.subcommands &&
           command.subcommands.get(interaction.options.getSubcommand())
             ?.guildOnly)) &&
-      !interaction.guildId
+      (!interaction.guildId || !interaction.guild)
     ) {
       return await safeReply(
         interaction,

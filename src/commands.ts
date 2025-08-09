@@ -61,6 +61,7 @@ import {
   updateUserPoints,
 } from './database';
 import {
+  booleanOption,
   channelOption,
   integerOption,
   roleOption,
@@ -203,12 +204,31 @@ const messageCommands = commandBuilder(
         description:
           'Show the leaderboard for all characters and messages sent',
         async execute(interaction, client) {
-          const users = await getAllUsersCharsAndMessages();
+          const guildOnlyFilter = interaction.options.getBoolean('guild_only');
+
+          let users;
+
+          if (guildOnlyFilter) {
+            if (!interaction.guild) {
+              return await safeReply(
+                interaction,
+                `Uhhh... Well this is akward... You arent supposed to see this message... Please contact the bot owner`,
+              );
+            }
+
+            const usersIds = (await interaction.guild.members.fetch()).map(
+              (m) => m.id,
+            );
+
+            users = await getAllUsersCharsAndMessages(usersIds);
+          } else {
+            users = await getAllUsersCharsAndMessages();
+          }
 
           if (!users || users.length === 0) {
             return await safeReply(
               interaction,
-              'No user data available for the leaderboard.',
+              'No users for the leaderboard.',
             );
           }
 
@@ -239,6 +259,15 @@ const messageCommands = commandBuilder(
           });
 
           await safeReply(interaction, '', false, [leaderboardEmbed]);
+        },
+        customize: (builder) => {
+          return builder.addBooleanOption(
+            booleanOption(
+              'guild_only',
+              'show the leaderboard with only people from this server',
+              false,
+            ),
+          );
         },
         permissionLevel: 'user',
         guildOnly: true,
@@ -335,7 +364,26 @@ const todayIsCommands = commandBuilder(
         name: 'leaderboard',
         description: 'Show the leaderboard for the today-is points',
         async execute(interaction, client) {
-          const users = await getAllUsersDataTodayIs();
+          const guildOnlyFilter = interaction.options.getBoolean('guild_only');
+
+          let users;
+
+          if (guildOnlyFilter) {
+            if (!interaction.guild) {
+              return await safeReply(
+                interaction,
+                `Uhhh... Well this is akward... You arent supposed to see this message... Please contact the bot owner`,
+              );
+            }
+
+            const usersIds = (await interaction.guild.members.fetch()).map(
+              (m) => m.id,
+            );
+
+            users = await getAllUsersDataTodayIs(usersIds);
+          } else {
+            users = await getAllUsersDataTodayIs();
+          }
 
           if (!users || users.length === 0) {
             return await safeReply(
@@ -371,6 +419,15 @@ const todayIsCommands = commandBuilder(
           });
 
           await safeReply(interaction, '', false, [pointboardEmbed]);
+        },
+        customize: (builder) => {
+          return builder.addBooleanOption(
+            booleanOption(
+              'guild_only',
+              'show the leaderboard with only people from this server',
+              false,
+            ),
+          );
         },
         permissionLevel: 'user',
         guildOnly: true,

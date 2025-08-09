@@ -35,9 +35,13 @@ export async function insertUserData(
   return newUser;
 }
 
-export async function getAllUsersCharsAndMessages() {
+export async function getAllUsersCharsAndMessages(userdIds?: string[]) {
   return await prisma.user.findMany({
-    where: { char_count: { gt: BigInt(0) }, msg_count: { gt: 0 } },
+    where: {
+      char_count: { gt: BigInt(0) },
+      msg_count: { gt: 0 },
+      ...(userdIds ? { discordId: { in: userdIds } } : {}),
+    },
     orderBy: { char_count: 'desc' },
     select: {
       discordId: true,
@@ -58,16 +62,16 @@ export async function getUserCharsAndMessages(id: string) {
   });
 }
 
-export async function getAllUsersDataTodayIs(): Promise<
-  { discordId: string; points: bigint }[]
-> {
-  const rows = await prisma.user.findMany({
-    where: { points: { gt: BigInt(0) } },
+export async function getAllUsersDataTodayIs(userdIds?: string[]) {
+  return await prisma.user.findMany({
+    where: {
+      points: { gt: BigInt(0) },
+      ...(userdIds ? { discordId: { in: userdIds } } : {}),
+    },
     orderBy: { points: 'desc' },
     take: 10,
     select: { discordId: true, points: true },
   });
-  return rows;
 }
 
 export async function updateUserPoints(discordId: string, points: bigint) {

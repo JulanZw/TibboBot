@@ -1,5 +1,6 @@
 import {
   ChannelType,
+  SlashCommandBooleanOption,
   SlashCommandChannelOption,
   SlashCommandIntegerOption,
   SlashCommandRoleOption,
@@ -55,4 +56,9 @@ export const channelOption =
 export const roleOption =
   (name: string, desc: string, required = true) =>
   (opt: SlashCommandRoleOption) =>
+    opt.setName(name).setDescription(desc).setRequired(required);
+
+export const booleanOption =
+  (name: string, desc: string, required = true) =>
+  (opt: SlashCommandBooleanOption) =>
     opt.setName(name).setDescription(desc).setRequired(required);
