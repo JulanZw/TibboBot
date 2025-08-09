@@ -1,4 +1,5 @@
 import {
+  ActivityType,
   Client,
   Events,
   GatewayIntentBits,
@@ -66,19 +67,21 @@ const client = new Client({
 });
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
-client.once('ready', async () => {
+client.once('ready', async (client) => {
   setupCronJobs(client);
 
-  botId = client.user!.id;
+  botId = client.user.id;
 
   const rest = new REST({ version: '10' }).setToken(token);
   try {
-    await rest.put(Routes.applicationCommands(client.user!.id), {
+    await rest.put(Routes.applicationCommands(client.user.id), {
       body: commandsToRegister,
     });
     logWithTime('Slash commands registered.', 'startup');
 
     if (process.env.ENV !== 'dev') {
+      client.user.setStatus('online');
+      client.user.setActivity('commands', { type: ActivityType.Listening });
       try {
         const todaysReminders = await getRemindersOfToday();
 
@@ -98,6 +101,12 @@ client.once('ready', async () => {
           true,
         );
       }
+    } else {
+      client.user.setStatus('dnd');
+      client.user.setActivity('Being tested', {
+        type: ActivityType.Custom,
+        state: 'Being tested',
+      });
     }
   } catch (err: any) {
     logWithTime('Error registering slash commands: ' + err, 'error', true);
