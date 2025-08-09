@@ -1,12 +1,12 @@
 {
   "name": "jzzwutils",
-  "version": "2.26.2",
+  "version": "2.26.3",
   "description": "A discord bot for some features I wanted",
   "private": true,
   "license": "MIT",
   "author": "Julan Zwiggelaar",
   "scripts": {
-    "dev": "cross-env ENV=dev ts-node src/index.ts",
+    "dev": "cross-env ENV=dev tsx watch src/index.ts",
     "prod": "cross-env ENV=prod ts-node src/index.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix"
   },
@@ -20,6 +20,7 @@
     "node-cron": "^3.0.3",
     "node-fetch": "^3.3.2",
     "prisma": "^6.11.1",
+    "ts-node": "^10.9.2",
     "wol": "^1.0.7"
   },
   "devDependencies": {
@@ -36,7 +37,7 @@
     "globals": "^16.3.0",
     "jiti": "^2.5.1",
     "prettier": "^3.6.2",
-    "ts-node": "^10.9.2",
+    "tsx": "^4.20.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.39.0"
   }
