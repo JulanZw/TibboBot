@@ -1,4 +1,3 @@
-import { client } from '../index';
 import {
   booleanOption,
   userOption,
@@ -105,7 +104,7 @@ export const todayIsCommands = commandBuilder(
       {
         name: 'add',
         description: 'Give today-is points to someone',
-        async execute(interaction) {
+        async execute(interaction, client) {
           const pointGiverId = await getPointGiverIdOfGuild(
             interaction.guildId,
           );
@@ -135,22 +134,22 @@ export const todayIsCommands = commandBuilder(
           }
 
           if (amount < 0) {
-            await safeReply(
-              interaction,
-              `Could not add ${amount} points for ${targetUser.username} as negative values are not accepted.`,
-            );
             logWithTime(
-              `Error: Could not add '${amount}' points for '${targetUser.username}' as negative values are not accepted.`,
+              `Error: Could not add '${amount}' points for '${targetUser.username}' (${targetUser.id}) as negative values are not accepted.`,
               'error',
               true,
             );
+            return await safeReply(
+              interaction,
+              `Could not add ${amount} points for <@${targetUser.id}> as negative values are not accepted.`,
+            );
           }
 
-          const row = await getUserPoints(targetUser.id);
-          if (!row) {
+          const user = await getUserPoints(targetUser.id);
+          if (!user) {
             await insertUserData(targetUser.id, BigInt(0), 0, BigInt(amount));
           } else {
-            await updateUserPoints(targetUser.id, BigInt(amount) + row.points);
+            await updateUserPoints(targetUser.id, BigInt(amount) + user.points);
           }
           if (targetUser.id === client.user?.id) {
             await safeReply(
@@ -161,10 +160,10 @@ export const todayIsCommands = commandBuilder(
           } else {
             await safeReply(
               interaction,
-              `Added ${amount} points for ${targetUser.username}.`,
+              `Added ${amount} points for <@${targetUser.username}>.`,
             );
             logWithTime(
-              `${amount} points were given to '${targetUser.username}'`,
+              `${amount} points were given to '${targetUser.username}' (${targetUser.id})`,
               'info',
             );
           }
