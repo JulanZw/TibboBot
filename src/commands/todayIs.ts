@@ -160,7 +160,7 @@ export const todayIsCommands = commandBuilder(
           } else {
             await safeReply(
               interaction,
-              `Added ${amount} points for <@${targetUser.username}>.`,
+              `Added ${amount} points for <@${targetUser.id}>.`,
             );
             logWithTime(
               `${amount} points were given to '${targetUser.username}' (${targetUser.id})`,
