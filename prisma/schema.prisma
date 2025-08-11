@@ -62,4 +62,11 @@ model Reminders {
   message      String
   remindAt     DateTime
   createdAt    DateTime
+  remindInterval Intervals
+}
+
+enum Intervals {
+  DAILY
+  WEEKLY
+  NONE
 }

@@ -12,15 +12,21 @@ export const sourceCommand = commandBuilder(
   'source',
   'Get a zipped archive of the source code',
   async (interaction, client) => {
+    if (process.env.ENV === 'dev') {
+      return await safeReply(
+        interaction,
+        'You cannot request the source code right now. Please try again later (watch the bot status).',
+        true,
+      );
+    }
     const userId = interaction.user.id;
 
     if (sourceRequestTracker.has(userId)) {
-      await safeReply(
+      return await safeReply(
         interaction,
         "You've already requested the source code today. Please try again tomorrow.",
         true,
       );
-      return;
     }
 
     sourceRequestTracker.add(userId);

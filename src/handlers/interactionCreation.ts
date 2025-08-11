@@ -1,8 +1,9 @@
 import { Interaction } from 'discord.js';
+import { $Enums } from '@prisma/client';
 
 import { client } from '..';
 import { commands } from '../commands';
-import { safeReply } from '../utils/general';
+import { safeReply, scheduleReminder } from '../utils/general';
 import { parseDurationOrDateString } from '../utils/parsers';
 import { ownerId } from '../utils/constants';
 import { ensureGuildExistance } from '../database/guild';
@@ -79,8 +80,16 @@ export async function handleInteractionCreation(interaction: Interaction) {
     interaction.customId.startsWith('editReminderModal:')
   ) {
     const reminderId = interaction.customId.split(':')[1];
-    const newMessage = interaction.fields.getTextInputValue('editMessage');
-    const newTimeString = interaction.fields.getTextInputValue('editTime');
+    const editMessage = interaction.fields.getTextInputValue('editMessage');
+    const editTime = interaction.fields.getTextInputValue('editTime');
+    const editRepeat = interaction.fields.getTextInputValue('editRepeat');
+
+    const updateRepeat =
+      editRepeat && editRepeat.toUpperCase() in $Enums.Intervals
+        ? $Enums.Intervals[
+            editRepeat.toUpperCase() as keyof typeof $Enums.Intervals
+          ]
+        : $Enums.Intervals.NONE;
 
     const reminder = await getReminderById(reminderId);
     if (!reminder || reminder.userId !== interaction.user.id) {
@@ -91,17 +100,24 @@ export async function handleInteractionCreation(interaction: Interaction) {
       );
     }
 
-    const newRemindAt = parseDurationOrDateString(newTimeString);
+    const newRemindAt = parseDurationOrDateString(editTime);
 
     if (!newRemindAt || newRemindAt < new Date()) {
       return await safeReply(interaction, 'Invalid or past date.', true);
     }
 
-    await updateReminder(reminderId, newMessage, newRemindAt);
+    const editedReminder = await updateReminder(
+      reminderId,
+      editMessage,
+      newRemindAt,
+      updateRepeat,
+    );
+
+    scheduleReminder(interaction.user, editedReminder);
 
     return await safeReply(
       interaction,
-      `Reminder updated!\n**New Message:** ${newMessage}\n**New Time:** <t:${Math.floor(newRemindAt.getTime() / 1000)}:F>`,
+      `Reminder updated!\n**New Message:** ${editMessage}\n**New Time:** <t:${Math.floor(newRemindAt.getTime() / 1000)}:F>\n**Repeat:** ${updateRepeat.toLowerCase()}`,
       true,
     );
   }

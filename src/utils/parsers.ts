@@ -206,14 +206,14 @@ const keywordMap: Record<string, () => Date> = {
   'over een maand': () => addMonths(1),
 };
 
-function addDays(days: number): Date {
-  const result = new Date();
+export function addDays(days: number, originalDate?: Date): Date {
+  const result = originalDate ?? new Date();
   result.setDate(result.getDate() + days);
   return result;
 }
 
-function addMonths(months: number): Date {
-  const result = new Date();
+export function addMonths(months: number, originalDate?: Date): Date {
+  const result = originalDate ?? new Date();
   result.setMonth(result.getMonth() + months);
   return result;
 }

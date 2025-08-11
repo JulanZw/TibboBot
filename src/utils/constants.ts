@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { ChatInputCommandInteraction } from 'discord.js';
+import { ScheduledTask } from 'node-cron';
 
 /**
  * Standard color for embeds
@@ -30,6 +31,11 @@ export const pendingReactionRoleSetups = new Map<
     messageIds: string[];
   }
 >();
+
+/**
+ * All scheduled reminders
+ */
+export const scheduledReminderJobs = new Map<string, ScheduledTask>();
 
 /**
  * The token required to login

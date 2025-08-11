@@ -14,8 +14,6 @@ import { todayIsCommands } from './commands/todayIs';
 import { Command } from './utils/typesAndInterfaces';
 import { COMMANDS_PER_PAGE } from './utils/constants';
 
-//#region Exports
-
 /**
  * Represents a Discord slash command definition.
  *
@@ -86,4 +84,3 @@ export const commandNamesAndDescriptions: { name: string; value: string }[][] =
 
 export const commandsToRegister: RESTPostAPIChatInputApplicationCommandsJSONBody[] =
   commands.map((command) => command.data.toJSON());
-//#endregion

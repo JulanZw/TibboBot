@@ -8,6 +8,7 @@ import {
   TextInputBuilder,
   TextInputStyle,
 } from 'discord.js';
+import { $Enums } from '@prisma/client';
 
 import { stringOption } from '../utils/slashCommandOptions';
 import { commandBuilder, safeReply, scheduleReminder } from '../utils/general';
@@ -38,6 +39,7 @@ export const reminderCommands = commandBuilder(
         async execute(interaction: ChatInputCommandInteraction) {
           const when = interaction.options.getString('when', true);
           const message = interaction.options.getString('message', true);
+          const repeat = interaction.options.getString('repeat', false);
 
           const targetTime = parseDurationOrDateString(when);
           if (!targetTime) {
@@ -70,11 +72,14 @@ export const reminderCommands = commandBuilder(
             interaction.user.id,
             message,
             targetTime,
+            repeat && repeat in $Enums.Intervals
+              ? $Enums.Intervals[repeat as keyof typeof $Enums.Intervals]
+              : $Enums.Intervals.NONE,
           );
 
-          const maxCacheDate = new Date();
-          maxCacheDate.setDate(maxCacheDate.getDate() + 1);
-          if (targetTime < maxCacheDate) {
+          const maxScheduleDate = new Date();
+          maxScheduleDate.setDate(maxScheduleDate.getDate() + 1);
+          if (targetTime < maxScheduleDate) {
             scheduleReminder(interaction.user, reminder);
           }
 
@@ -95,6 +100,16 @@ export const reminderCommands = commandBuilder(
             )
             .addStringOption(
               stringOption('message', 'What you need to be reminded of', true),
+            )
+            .addStringOption((option) =>
+              option
+                .setName('repeat')
+                .setDescription('How often to repeat this reminder')
+                .addChoices(
+                  { name: 'Daily', value: $Enums.Intervals.DAILY },
+                  { name: 'Weekly', value: $Enums.Intervals.WEEKLY },
+                )
+                .setRequired(false),
             );
         },
         permissionLevel: 'user',
@@ -216,6 +231,14 @@ export const reminderCommands = commandBuilder(
                         .setLabel('Remind at (e.g. in 2 hours or in 3 days)')
                         .setStyle(TextInputStyle.Short)
                         .setRequired(true),
+                    ),
+                    new ActionRowBuilder<TextInputBuilder>().addComponents(
+                      new TextInputBuilder()
+                        .setCustomId('editRepeat')
+                        .setLabel('Repeat? (Daily, Weekly, None)')
+                        .setStyle(TextInputStyle.Short)
+                        .setRequired(true)
+                        .setValue(reminder.remindInterval.toLowerCase()),
                     ),
                   );
 

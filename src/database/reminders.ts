@@ -1,9 +1,12 @@
+import { $Enums } from '@prisma/client';
+
 import { prisma } from '../utils/constants';
 
 export async function createReminder(
   userId: string,
   message: string,
   remindAt: Date,
+  remindInterval: $Enums.Intervals,
 ) {
   return await prisma.reminders.create({
     data: {
@@ -11,6 +14,7 @@ export async function createReminder(
       message,
       remindAt,
       createdAt: new Date(),
+      remindInterval,
     },
   });
 }
@@ -60,10 +64,15 @@ export async function updateReminder(
   id: string,
   message: string,
   remindAt: Date,
+  remindInterval?: $Enums.Intervals,
 ) {
   return await prisma.reminders.update({
     where: { id },
-    data: { message, remindAt },
+    data: {
+      message,
+      remindAt,
+      ...(remindInterval ? { remindInterval } : {}),
+    },
   });
 }
 
