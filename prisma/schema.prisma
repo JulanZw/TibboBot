@@ -62,7 +62,7 @@ model Reminders {
   message      String
   remindAt     DateTime
   createdAt    DateTime
-  remindInterval Intervals
+  remindInterval Intervals @default(NONE)
 }
 
 enum Intervals {
