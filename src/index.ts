@@ -55,7 +55,11 @@ client.once('ready', async (client) => {
     await rest.put(Routes.applicationCommands(client.user.id), {
       body: commandsToRegister,
     });
-    logWithTime('Slash commands registered.', 'info', scope);
+    logWithTime(
+      `${commandsToRegister.length} Slash commands registered.`,
+      'info',
+      scope,
+    );
 
     if (process.env.ENV !== 'dev') {
       client.user.setStatus('online');

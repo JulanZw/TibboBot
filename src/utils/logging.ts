@@ -25,7 +25,7 @@ export function logWithTime(
   scope: string,
   logToConsole: boolean = false,
 ): void {
-  const logMessage = `[${formatDateToYYYYMMDDHHMMSS(new Date())}] [${scope}/${level.toUpperCase()}] ${message}\n`;
+  const logMessage = `[${formatDateToYYYYMMDDHHMMSS(new Date())}] [${level.toUpperCase()}] [${scope}] ${message}\n`;
 
   fs.appendFileSync(logFilePath, logMessage, 'utf8');
 

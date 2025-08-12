@@ -201,11 +201,7 @@ export function setupCronJobs(client: Client): void {
     }
   });
 
-  logWithTime(
-    'Cron jobs have been set up successfully.',
-    'info',
-    'startup_CRON',
-  );
+  logWithTime('Cron jobs have been set up successfully.', 'info', 'startup');
 }
 
 function getISOWeekNumber(date: Date): number {
