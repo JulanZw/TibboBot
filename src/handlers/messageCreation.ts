@@ -15,6 +15,7 @@ import {
 } from '../database/guild';
 import { addReactionRole } from '../database/reactionRoles';
 import { updateCountsForUser } from '../database/user';
+import { looksLikeMathExpression } from '../utils/general';
 
 const scope = 'handler_MESSAGECREATION';
 
@@ -26,51 +27,52 @@ export async function handleMessageCreation(message: Message) {
 
     if (guild.countChannelId && guild.countChannelId === message.channelId) {
       const content = message.content.trim();
+      if (looksLikeMathExpression(content)) {
+        try {
+          const result: unknown = evaluate(preprocessNumerics(content));
 
-      try {
-        const result: unknown = evaluate(preprocessNumerics(content));
+          if (typeof result === 'number' && isFinite(result)) {
+            const number: number = Math.round(result);
+            const success = await checkAndUpdateCount(guild.guildId, number);
+            const lastCountUser = await getLastCountUserAndHighestNumber(
+              guild.guildId,
+            ); // ? maybe make a cache for this
 
-        if (typeof result === 'number' && isFinite(result)) {
-          const number: number = Math.round(result);
-          const success = await checkAndUpdateCount(guild.guildId, number);
-          const lastCountUser = await getLastCountUserAndHighestNumber(
-            guild.guildId,
-          ); // ? maybe make a cache for this
-
-          if (!success) {
-            await message.react('❌');
-            await message.reply(
-              `<@${message.author.id}> entered a wrong number! Next number is 1...`,
-            );
-            await resetCount(guild.guildId);
-            return;
-          } else if (
-            lastCountUser?.lastCountUser &&
-            lastCountUser.lastCountUser === message.author.id &&
-            process.env.ENV !== 'dev'
-          ) {
-            await message.react('❌');
-            await message.reply(
-              `Only count on yourself, not with yourself... Next number is 1...`,
-            );
-            await resetCount(guild.guildId);
-            return;
-          } else if (
-            lastCountUser?.highestNumber &&
-            result > lastCountUser?.highestNumber
-          ) {
-            await message.react('☑️');
-          } else {
-            await message.react('✅');
+            if (!success) {
+              await message.react('❌');
+              await message.reply(
+                `<@${message.author.id}> entered a wrong number! Next number is 1...`,
+              );
+              await resetCount(guild.guildId);
+              return;
+            } else if (
+              lastCountUser?.lastCountUser &&
+              lastCountUser.lastCountUser === message.author.id &&
+              process.env.ENV !== 'dev'
+            ) {
+              await message.react('❌');
+              await message.reply(
+                `Only count on yourself, not with yourself... Next number is 1...`,
+              );
+              await resetCount(guild.guildId);
+              return;
+            } else if (
+              lastCountUser?.highestNumber &&
+              result > lastCountUser?.highestNumber
+            ) {
+              await message.react('☑️');
+            } else {
+              await message.react('✅');
+            }
+            await setLastCountUser(guild.guildId, message.author.id);
           }
-          await setLastCountUser(guild.guildId, message.author.id);
+        } catch (err: any) {
+          logWithTime(
+            `Invalid math expression: "${content}" — ${err}`,
+            'warn',
+            scope,
+          );
         }
-      } catch (err: any) {
-        logWithTime(
-          `Invalid math expression: "${content}" — ${err}`,
-          'warn',
-          scope,
-        );
       }
     }
 

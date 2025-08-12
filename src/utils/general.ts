@@ -16,6 +16,7 @@ import {
 } from 'discord.js';
 import cron from 'node-cron';
 import { Reminders, $Enums } from '@prisma/client';
+import { parse } from 'mathjs';
 
 import { deleteReminder, updateReminder } from '../database/reminders';
 
@@ -247,6 +248,42 @@ export function scheduleReminder(user: User, reminder: Reminders) {
     'info',
     scope,
   );
+}
+
+//#endregion
+
+//#region math
+
+const allowedMathWords = [
+  'sqrt',
+  'sin',
+  'cos',
+  'tan',
+  'log',
+  'ln',
+  'pi',
+  'e',
+  'abs',
+  'mod',
+  'round',
+  'floor',
+  'ceil',
+];
+
+export function looksLikeMathExpression(input: string): boolean {
+  const hasMathThings =
+    /\d/.test(input) ||
+    allowedMathWords.some((word) => input.includes(word)) ||
+    /[+\-*/^=()]/.test(input);
+
+  if (!hasMathThings) return false;
+
+  try {
+    const node = parse(input);
+    return !!node;
+  } catch {
+    return false;
+  }
 }
 
 //#endregion
