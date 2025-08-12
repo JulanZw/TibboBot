@@ -9,6 +9,7 @@ import { ownerId } from '../utils/globals';
 import { ensureGuildExistance } from '../database/guild';
 import { getReminderById, updateReminder } from '../database/reminders';
 import { logWithTime } from '../utils/logging';
+import { capitalizeFirst } from '../utils/formatting';
 
 const scope = 'handler_INTERACTIONCREATION';
 
@@ -120,7 +121,7 @@ export async function handleInteractionCreation(interaction: Interaction) {
 
     return await safeReply(
       interaction,
-      `Reminder updated!\n**New Message:** ${editMessage}\n**New Time:** <t:${Math.floor(newRemindAt.getTime() / 1000)}:F>\n**Repeat:** ${updateRepeat.toLowerCase()}`,
+      `Reminder updated!\n**New Message:** ${editMessage}\n**New Time:** <t:${Math.floor(newRemindAt.getTime() / 1000)}:F>\n**Repeat:** ${capitalizeFirst(updateRepeat)}`,
       true,
     );
   }

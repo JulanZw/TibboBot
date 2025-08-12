@@ -54,3 +54,14 @@ export function formatDateToDDMMYYYY(date: Date) {
 export function formatDateToYYYYMMDDHHMMSS(date: Date) {
   return date.toISOString().replace('T', ' ').slice(0, 19);
 }
+
+/**
+ * Util function to format the first letter of a string
+ * @param str - input string
+ * @returns The formatted string
+ */
+export function capitalizeFirst(input: string): string {
+  if (!input) return '';
+  const lower = input.toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
+}

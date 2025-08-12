@@ -8,14 +8,14 @@ import {
   TextInputBuilder,
   TextInputStyle,
 } from 'discord.js';
-import { $Enums } from '@prisma/client';
+import { $Enums, Reminders } from '@prisma/client';
 
 import { stringOption } from '../utils/slashCommandOptions';
 import { commandBuilder, safeReply, scheduleReminder } from '../utils/general';
 import { logWithTime } from '../utils/logging';
 import { parseDurationOrDateString } from '../utils/parsers';
 import { embedBuilder, createButtonsRow } from '../utils/embeds';
-import { formatDateToDDMMYYYY } from '../utils/formatting';
+import { capitalizeFirst, formatDateToDDMMYYYY } from '../utils/formatting';
 import { Subcommand } from '../utils/typesAndInterfaces';
 import {
   createReminder,
@@ -134,16 +134,7 @@ export const reminderCommands = commandBuilder(
           let index = 0;
           const userId = interaction.user.id;
 
-          const buildEmbed = (
-            reminder: {
-              createdAt: Date;
-              id: string;
-              message: string;
-              userId: string;
-              remindAt: Date;
-            },
-            index: number,
-          ) =>
+          const buildEmbed = (reminder: Reminders, index: number) =>
             embedBuilder({
               title: `Reminder ${index + 1} of ${reminders.length}`,
               fields: [
@@ -152,6 +143,14 @@ export const reminderCommands = commandBuilder(
                   name: 'Remind At',
                   value: `<t:${Math.floor(reminder.remindAt.getTime() / 1000)}:F>`,
                 },
+                ...(reminder.remindInterval === $Enums.Intervals.NONE
+                  ? []
+                  : [
+                      {
+                        name: 'Repeating',
+                        value: capitalizeFirst(reminder.remindInterval),
+                      },
+                    ]),
               ],
               footer: `Created: ${formatDateToDDMMYYYY(reminder.createdAt)}`,
             });
@@ -241,7 +240,7 @@ export const reminderCommands = commandBuilder(
                         .setLabel('Repeat? (Daily, Weekly, None)')
                         .setStyle(TextInputStyle.Short)
                         .setRequired(true)
-                        .setValue(reminder.remindInterval.toLowerCase()),
+                        .setValue(capitalizeFirst(reminder.remindInterval)),
                     ),
                   );
 
