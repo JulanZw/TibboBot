@@ -40,14 +40,62 @@ Includes features like counting channels, reminders and more.
 ## Project Structure
 
 ```markdown
-  discord_bot
-  ├── .env
-  ├── .gitignore
-  ├── package-lock.json
-  ├── package.json
-  ├── prisma/
-  ├── src/
-  └── tsconfig.json
+discord_bot
+├── logs
+│   └── latest.log
+├── package-lock.json
+├── package.json
+├── prisma
+│   ├── migrations/
+│   └── schema.prisma
+├── src
+│   ├── commands
+│   │   ├── birthday.ts
+│   │   ├── cat.ts
+│   │   ├── encode.ts
+│   │   ├── help.ts
+│   │   ├── magic.ts
+│   │   ├── manage.ts
+│   │   ├── messages.ts
+│   │   ├── ping.ts
+│   │   ├── reaction.ts
+│   │   ├── reminders.ts
+│   │   ├── source.ts
+│   │   └── todayIs.ts
+│   ├── database
+│   │   ├── birthday.ts
+│   │   ├── guild.ts
+│   │   ├── reactionRoles.ts
+│   │   ├── reminders.ts
+│   │   └── user.ts
+│   ├── handlers
+│   │   ├── interactionCreation.ts
+│   │   ├── messageCreation.ts
+│   │   ├── messageDeletion.ts
+│   │   ├── reactionAdded.ts
+│   │   └── reactionRemoved.ts
+│   ├── utils
+│   │   ├── embeds.ts
+│   │   ├── formatting.ts
+│   │   ├── general.ts
+│   │   ├── globals.ts
+│   │   ├── logging.ts
+│   │   ├── parsers.ts
+│   │   ├── preproccessors.ts
+│   │   ├── slashCommandOptions.ts
+│   │   └── typesAndInterfaces.ts
+│   ├── commands.ts
+│   ├── cronJobs.ts
+│   └── index.ts
+├── tmp/
+├── README.md
+├── .env
+├── .example.env
+├── .gitignore
+├── .prettierrc
+├── eslint.config.mts
+├── LICENSE
+└── tsconfig.json
 ```
 
 ## Slash Commands

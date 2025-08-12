@@ -13,6 +13,7 @@ import { sourceCommand } from './commands/source';
 import { todayIsCommands } from './commands/todayIs';
 import { Command } from './utils/typesAndInterfaces';
 import { COMMANDS_PER_PAGE } from './utils/globals';
+import { encodeCommands } from './commands/encode';
 
 /**
  * Represents a Discord slash command definition.
@@ -40,6 +41,7 @@ export const commands: Command[] = [
   reminderCommands,
   reactionCommands,
   todayIsCommands,
+  encodeCommands,
 ];
 
 export const commandNamesAndDescriptions: { name: string; value: string }[][] =
