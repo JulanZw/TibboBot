@@ -2,6 +2,8 @@ import { embedBuilder } from '../utils/embeds';
 import { commandBuilder, safeReply } from '../utils/general';
 import { logWithTime } from '../utils/logging';
 
+const scope = 'cat';
+
 export const catCommand = commandBuilder(
   'cat',
   'Sends a random cat picture.',
@@ -26,7 +28,7 @@ export const catCommand = commandBuilder(
 
       await safeReply(interaction, '', false, [catEmbed]);
     } catch (err: any) {
-      logWithTime('Error fetching cat image:' + err, 'warn', true);
+      logWithTime('Error fetching cat image:' + err, 'warn', scope, true);
       await safeReply(interaction, "Sorry, I couldn't fetch a cat image.");
     }
   },

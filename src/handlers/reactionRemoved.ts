@@ -8,6 +8,8 @@ import {
 import { getRoleForReaction } from '../database/reactionRoles';
 import { logWithTime } from '../utils/logging';
 
+const scope = 'handler_REACTIONREMOVAL';
+
 export async function handleReactionRemoval(
   reaction: MessageReaction | PartialMessageReaction,
   user: User | PartialUser,
@@ -32,8 +34,9 @@ export async function handleReactionRemoval(
     logWithTime(
       `Removed role ${record.role} for user ${user.globalName} (${user.id}) in guild ${guildId}`,
       'info',
+      scope,
     );
   } catch (err: any) {
-    logWithTime('Failed to add role: ' + err, 'error', true);
+    logWithTime('Failed to add role: ' + err, 'error', scope, true);
   }
 }

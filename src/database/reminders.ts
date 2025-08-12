@@ -1,6 +1,6 @@
 import { $Enums } from '@prisma/client';
 
-import { prisma } from '../utils/constants';
+import { prisma } from '../utils/globals';
 
 export async function createReminder(
   userId: string,

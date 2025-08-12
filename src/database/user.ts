@@ -1,7 +1,9 @@
 import { User } from 'discord.js';
 
 import { logWithTime } from '../utils/logging';
-import { prisma } from '../utils/constants';
+import { prisma } from '../utils/globals';
+
+const scope = 'database_USER';
 
 export async function updateUserCharMsgCount(
   discordId: string,
@@ -120,12 +122,14 @@ export async function updateCountsForUser(author: User, content: string) {
     logWithTime(
       `Updated user messages and characters for ${author.id} [${author.username}]`,
       'info',
+      scope,
     );
   } else {
     await insertUserData(userId, BigInt(messageLength), 1);
     logWithTime(
       `Added new user for counting messages and characters for ${author.id} [${author.username}]`,
       'info',
+      scope,
     );
   }
 }

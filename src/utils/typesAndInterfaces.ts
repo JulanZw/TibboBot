@@ -11,7 +11,7 @@ export type BotChannel = 'count' | 'today-is' | 'birthday';
 
 export type ButtonType = 'prev' | 'next' | 'edit' | 'delete';
 
-export type LogLevel = 'info' | 'warn' | 'error' | 'startup';
+export type LogLevel = 'info' | 'warn' | 'error';
 
 export interface Command {
   data: SlashCommandBuilder;

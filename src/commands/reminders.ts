@@ -23,6 +23,8 @@ import {
   getUserReminders,
 } from '../database/reminders';
 
+const scope = 'reminder';
+
 export const reminderCommands = commandBuilder(
   'reminders',
   'All commands related to your reminders',
@@ -91,6 +93,7 @@ export const reminderCommands = commandBuilder(
           logWithTime(
             `Created reminder for ${interaction.user.id} on ${targetTime.toISOString()}`,
             'info',
+            scope,
           );
         },
         customize: (builder: SlashCommandSubcommandBuilder) => {
@@ -265,6 +268,7 @@ export const reminderCommands = commandBuilder(
                 logWithTime(
                   `Could not edit message after collector ended: ${err}`,
                   'warn',
+                  scope,
                 );
               }
             }

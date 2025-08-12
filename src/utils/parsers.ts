@@ -230,7 +230,7 @@ export function parseAbsoluteAltDate(match: RegExpMatchArray): Date | null {
 
 //#endregion
 
-//#region Birthday
+//#region Birthday parser
 
 export function parseBirthdayDate(input: string): Date | null {
   let returnDate: Date | null = null;

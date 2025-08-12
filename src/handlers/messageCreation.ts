@@ -1,7 +1,7 @@
 import { Message, MessageFlags, TextChannel } from 'discord.js';
 import { evaluate } from 'mathjs';
 
-import { pendingReactionRoleSetups } from '../utils/constants';
+import { pendingReactionRoleSetups } from '../utils/globals';
 import { embedBuilder } from '../utils/embeds';
 import { logWithTime } from '../utils/logging';
 import { preprocessNumerics } from '../utils/preproccessors';
@@ -15,6 +15,8 @@ import {
 } from '../database/guild';
 import { addReactionRole } from '../database/reactionRoles';
 import { updateCountsForUser } from '../database/user';
+
+const scope = 'handler_MESSAGECREATION';
 
 export async function handleMessageCreation(message: Message) {
   if (message.author.bot) return;
@@ -64,7 +66,11 @@ export async function handleMessageCreation(message: Message) {
           await setLastCountUser(guild.guildId, message.author.id);
         }
       } catch (err: any) {
-        logWithTime(`Invalid math expression: "${content}" — ${err}`, 'warn');
+        logWithTime(
+          `Invalid math expression: "${content}" — ${err}`,
+          'warn',
+          scope,
+        );
       }
     }
 
@@ -111,6 +117,7 @@ export async function handleMessageCreation(message: Message) {
             logWithTime(
               `Something went wrong while creating a reaction message`,
               'error',
+              scope,
               true,
             );
 
@@ -126,7 +133,11 @@ export async function handleMessageCreation(message: Message) {
             const msgToDelete = await channel.messages.fetch(id);
             if (msgToDelete.deletable) await msgToDelete.delete();
           } catch (err: any) {
-            logWithTime(`Failed to delete message ${id}: ` + err, 'warn');
+            logWithTime(
+              `Failed to delete message ${id}: ` + err,
+              'warn',
+              scope,
+            );
           }
         }
 

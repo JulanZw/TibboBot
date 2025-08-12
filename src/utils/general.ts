@@ -22,7 +22,9 @@ import { deleteReminder, updateReminder } from '../database/reminders';
 import { PermissionLevel, Subcommand, Command } from './typesAndInterfaces';
 import { logWithTime } from './logging';
 import { addDays } from './parsers';
-import { scheduledReminderJobs } from './constants';
+import { scheduledReminderJobs } from './globals';
+
+const scope = 'general';
 
 //#region SafeReply
 
@@ -176,9 +178,9 @@ async function safeExecute(
 ) {
   try {
     await fn();
-    logWithTime(`${commandName} command executed`, 'info');
+    logWithTime(`${commandName} command executed`, 'info', scope);
   } catch (err: any) {
-    logWithTime('An Error occured' + err, 'error', true);
+    logWithTime('An Error occured' + err, 'error', scope, true);
     return await safeReply(interaction, 'An unexpected error occurred.');
   }
 }
@@ -202,35 +204,40 @@ export function scheduleReminder(user: User, reminder: Reminders) {
   const job = cron.schedule(cronExpression, async () => {
     try {
       await user.send(`**Reminder:** ${reminder.message}`);
-      logWithTime(`Sent reminder ${reminder.id} to ${reminder.userId}`, 'info');
+      logWithTime(
+        `Sent reminder ${reminder.id} to ${reminder.userId}`,
+        'info',
+        scope,
+      );
       if (reminder.remindInterval === $Enums.Intervals.DAILY) {
         await updateReminder(
           reminder.id,
           reminder.message,
           addDays(1, reminder.remindAt),
         );
-        logWithTime(`Updated daily reminder ${reminder.id}`, 'info');
+        logWithTime(`Updated daily reminder ${reminder.id}`, 'info', scope);
       } else if (reminder.remindInterval === $Enums.Intervals.WEEKLY) {
         await updateReminder(
           reminder.id,
           reminder.message,
           addDays(7, reminder.remindAt),
         );
-        logWithTime(`Updated weekly reminder ${reminder.id}`, 'info');
+        logWithTime(`Updated weekly reminder ${reminder.id}`, 'info', scope);
       } else {
         await deleteReminder(reminder.id);
-        logWithTime(`Deleted reminder ${reminder.id}`, 'info');
+        logWithTime(`Deleted reminder ${reminder.id}`, 'info', scope);
       }
     } catch (err: any) {
       logWithTime(
         `Failed to send reminder ${reminder.id}: ${err}`,
         'error',
+        scope,
         true,
       );
     } finally {
       scheduledReminderJobs.delete(reminder.id);
       job.stop();
-      logWithTime(`Cleaned up reminder ${reminder.id}`, 'info');
+      logWithTime(`Cleaned up reminder ${reminder.id}`, 'info', scope);
     }
   });
   scheduledReminderJobs.set(reminder.id, job);
@@ -238,6 +245,7 @@ export function scheduleReminder(user: User, reminder: Reminders) {
   logWithTime(
     `Scheduled reminder ${reminder.id} for ${date.toISOString()}`,
     'info',
+    scope,
   );
 }
 

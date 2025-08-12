@@ -8,6 +8,8 @@ import {
 import { logWithTime } from '../utils/logging';
 import { getRoleForReaction } from '../database/reactionRoles';
 
+const scope = 'handler_REACTIONADDING';
+
 export async function handleReactionAdded(
   reaction: MessageReaction | PartialMessageReaction,
   user: User | PartialUser,
@@ -36,8 +38,9 @@ export async function handleReactionAdded(
     logWithTime(
       `Added role ${record.role} for user ${user.globalName} (${user.id}) in guild ${guildId}`,
       'info',
+      scope,
     );
   } catch (err: any) {
-    logWithTime('Failed to add role: ' + err, 'error', true);
+    logWithTime('Failed to add role: ' + err, 'error', scope, true);
   }
 }

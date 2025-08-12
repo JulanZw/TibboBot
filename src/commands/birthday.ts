@@ -4,10 +4,12 @@ import { stringOption } from '../utils/slashCommandOptions';
 import { commandBuilder, safeReply } from '../utils/general';
 import { logWithTime } from '../utils/logging';
 import { embedBuilder, createButtonsRow } from '../utils/embeds';
-import { formatDate } from '../utils/formatting';
+import { formatDateToString } from '../utils/formatting';
 import { parseBirthdayDate } from '../utils/parsers';
 import { setBirthday, getAllBirthdaysInGuild } from '../database/birthday';
 import { Subcommand } from '../utils/typesAndInterfaces';
+
+const scope = 'birthday';
 
 export const birthdayCommands = commandBuilder(
   'birthday',
@@ -57,13 +59,14 @@ export const birthdayCommands = commandBuilder(
           }
 
           logWithTime(
-            `Set birthday for ${newBirthday.userId} on ${formatDate(newBirthday.birthday)}`,
+            `Set birthday for ${newBirthday.userId} on ${formatDateToString(newBirthday.birthday)}`,
             'info',
+            scope,
           );
 
           return await safeReply(
             interaction,
-            `Set birthday for <@${newBirthday.userId}> on ${formatDate(newBirthday.birthday)}`,
+            `Set birthday for <@${newBirthday.userId}> on ${formatDateToString(newBirthday.birthday)}`,
           );
         },
         customize: (builder) => {
@@ -105,13 +108,13 @@ export const birthdayCommands = commandBuilder(
             });
             if (birthdayPages.has(birthdayMonth)) {
               birthdayPages.get(birthdayMonth)?.push({
-                name: formatDate(birthday.birthday),
+                name: formatDateToString(birthday.birthday),
                 value: `<@${birthday.userId}>`,
               });
             } else {
               birthdayPages.set(birthdayMonth, [
                 {
-                  name: formatDate(birthday.birthday),
+                  name: formatDateToString(birthday.birthday),
                   value: `<@${birthday.userId}>`,
                 },
               ]);

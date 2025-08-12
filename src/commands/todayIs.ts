@@ -16,6 +16,8 @@ import {
 import { Subcommand } from '../utils/typesAndInterfaces';
 import { logWithTime } from '../utils/logging';
 
+const scope = 'todayis';
+
 export const todayIsCommands = commandBuilder(
   'today-is',
   'All commands for today-is',
@@ -69,7 +71,12 @@ export const todayIsCommands = commandBuilder(
                   inline: false,
                 };
               } catch (err: any) {
-                logWithTime('Error fetching user: ' + err, 'error', true);
+                logWithTime(
+                  'Error fetching user: ' + err,
+                  'error',
+                  scope,
+                  true,
+                );
                 return {
                   name: `#${index + 1}: Unknown User`,
                   value: `${row.points} points`,
@@ -137,6 +144,7 @@ export const todayIsCommands = commandBuilder(
             logWithTime(
               `Error: Could not add '${amount}' points for '${targetUser.username}' (${targetUser.id}) as negative values are not accepted.`,
               'error',
+              scope,
               true,
             );
             return await safeReply(
@@ -156,7 +164,11 @@ export const todayIsCommands = commandBuilder(
               interaction,
               `Thank you <@${interaction.user.id}> for the ${amount} points`,
             );
-            logWithTime(`${amount} points were given to the bot`, 'info');
+            logWithTime(
+              `${amount} points were given to the bot`,
+              'info',
+              scope,
+            );
           } else {
             await safeReply(
               interaction,
@@ -165,6 +177,7 @@ export const todayIsCommands = commandBuilder(
             logWithTime(
               `${amount} points were given to '${targetUser.username}' (${targetUser.id})`,
               'info',
+              scope,
             );
           }
         },
@@ -213,6 +226,7 @@ export const todayIsCommands = commandBuilder(
           logWithTime(
             `Set ${targetUser.id} as pointgiver for ${guild.guildId}`,
             'info',
+            scope,
           );
         },
         customize: (builder) => {

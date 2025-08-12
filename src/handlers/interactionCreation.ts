@@ -5,10 +5,12 @@ import { client } from '..';
 import { commands } from '../commands';
 import { safeReply, scheduleReminder } from '../utils/general';
 import { parseDurationOrDateString } from '../utils/parsers';
-import { ownerId } from '../utils/constants';
+import { ownerId } from '../utils/globals';
 import { ensureGuildExistance } from '../database/guild';
 import { getReminderById, updateReminder } from '../database/reminders';
 import { logWithTime } from '../utils/logging';
+
+const scope = 'handler_INTERACTIONCREATION';
 
 export async function handleInteractionCreation(interaction: Interaction) {
   if (interaction.guildId) {
@@ -67,6 +69,7 @@ export async function handleInteractionCreation(interaction: Interaction) {
       logWithTime(
         `Error executing command ${interaction.commandName}: ` + err,
         'error',
+        scope,
         true,
       );
       await safeReply(

@@ -8,6 +8,8 @@ import {
 } from '../database/user';
 import { Subcommand } from '../utils/typesAndInterfaces';
 
+const scope = 'messages';
+
 export const messageCommands = commandBuilder(
   'messages',
   'All commands related to messages',
@@ -62,7 +64,7 @@ export const messageCommands = commandBuilder(
                   inline: false,
                 };
               } catch (err: any) {
-                logWithTime('Error fetching user:' + err, 'error', true);
+                logWithTime('Error fetching user:' + err, 'error', scope, true);
                 return {
                   name: `#${index + 1} - Unknown User`,
                   value: `Messages: ${row.msg_count}, Characters: ${row.char_count}`,

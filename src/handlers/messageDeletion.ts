@@ -6,6 +6,8 @@ import {
   removeReactionRolesByMessageId,
 } from '../database/reactionRoles';
 
+const scope = 'handler_MESSAGEDELETION';
+
 export async function handleMessageDeletion(
   message: OmitPartialGroupDMChannel<Message<boolean> | PartialMessage>,
 ) {
@@ -17,6 +19,7 @@ export async function handleMessageDeletion(
     logWithTime(
       `Message ${message.id} deleted. Removing ${reactionRoles.length} reaction role(s).`,
       'info',
+      scope,
     );
     await removeReactionRolesByMessageId(message.id);
   }

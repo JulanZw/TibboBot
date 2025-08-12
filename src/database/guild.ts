@@ -1,6 +1,8 @@
 import { logWithTime } from '../utils/logging';
 import { BotChannel } from '../utils/typesAndInterfaces';
-import { prisma } from '../utils/constants';
+import { prisma } from '../utils/globals';
+
+const scope = 'database_GUILD';
 
 export async function checkAndUpdateCount(
   guildId: string,
@@ -107,6 +109,7 @@ export async function updateBotChannel(
       logWithTime(
         `Count channel updated to ${channelId} for guild ${guildId}`,
         'info',
+        scope,
       );
       break;
     case 'today-is':
@@ -114,6 +117,7 @@ export async function updateBotChannel(
       logWithTime(
         `Today-is channel updated to ${channelId} for guild ${guildId}`,
         'info',
+        scope,
       );
       break;
     case 'birthday':
@@ -121,12 +125,14 @@ export async function updateBotChannel(
       logWithTime(
         `Birthday channel updated to ${channelId} for guild ${guildId}`,
         'info',
+        scope,
       );
       break;
     default:
       return logWithTime(
         `Invalid channel type: ${channelType as BotChannel}`,
         'error',
+        scope,
         true,
       );
   }
@@ -161,6 +167,7 @@ export async function getBotChannel(
       logWithTime(
         `Invalid channel type: ${channelType as string}`,
         'error',
+        scope,
         true,
       );
       return null;

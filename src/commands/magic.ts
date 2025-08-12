@@ -3,6 +3,8 @@ import wol from 'wol';
 import { commandBuilder, safeReply } from '../utils/general';
 import { logWithTime } from '../utils/logging';
 
+const scope = 'magic';
+
 export const wolCommand = commandBuilder(
   'magic',
   'does some magic (bot owner only)',
@@ -11,6 +13,7 @@ export const wolCommand = commandBuilder(
       logWithTime(
         'Cannot execute WOL because MAC or IP is not set',
         'error',
+        scope,
         true,
       );
       return await safeReply(interaction, 'IP or MAC has not been set');

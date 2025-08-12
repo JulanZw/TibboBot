@@ -2,6 +2,7 @@ import path from 'path';
 import fs from 'fs';
 
 import { LogLevel } from './typesAndInterfaces';
+import { formatDateToYYYYMMDDHHMMSS } from './formatting';
 
 const logDir = path.resolve(__dirname, '../../logs');
 
@@ -21,11 +22,10 @@ const logFilePath = path.join(logDir, 'latest.log');
 export function logWithTime(
   message: string,
   level: LogLevel,
+  scope: string,
   logToConsole: boolean = false,
 ): void {
-  const now = new Date();
-  const timestamp = now.toISOString().replace('T', ' ').slice(0, 19); // Format: YYYY-MM-DD HH:MM:SS
-  const logMessage = `[${timestamp}] [${level.toUpperCase()}] ${message}\n`;
+  const logMessage = `[${formatDateToYYYYMMDDHHMMSS(new Date())}] [${scope}/${level.toUpperCase()}] ${message}\n`;
 
   fs.appendFileSync(logFilePath, logMessage, 'utf8');
 
@@ -34,7 +34,6 @@ export function logWithTime(
       info: '\x1b[36m', // Cyan
       warn: '\x1b[33m', // Yellow
       error: '\x1b[31m', // Red
-      startup: '\x1b[32m', // Green
     };
     const reset = '\x1b[0m';
 

@@ -14,6 +14,8 @@ import { logWithTime } from '../utils/logging';
 import { getBotChannel, updateBotChannel } from '../database/guild';
 import { BotChannel } from '../utils/typesAndInterfaces';
 
+const scope = 'manage';
+
 export const manageChannelsCommand = commandBuilder(
   'manage_channels',
   'Manage channels for the guild (admin only)',
@@ -112,7 +114,11 @@ export const manageChannelsCommand = commandBuilder(
           return buttonCollector.stop();
         } else if (action === 'reset') {
           await updateBotChannel(guildId, selected as BotChannel, null);
-          logWithTime(`Reset ${selected} channel for ${guildId}`, 'info');
+          logWithTime(
+            `Reset ${selected} channel for ${guildId}`,
+            'info',
+            scope,
+          );
           await buttonInteraction.update({
             content: `${selected} channel reset.`,
             components: [],
@@ -159,6 +165,7 @@ export const manageChannelsCommand = commandBuilder(
             logWithTime(
               `Set ${selected} channel to ${newChannel.id} for ${guildId}`,
               'info',
+              scope,
             );
 
             await channelInteraction.update({

@@ -11,13 +11,15 @@ import {
 } from '../utils/slashCommandOptions';
 import { commandBuilder, safeReply } from '../utils/general';
 import { logWithTime } from '../utils/logging';
-import { pendingReactionRoleSetups } from '../utils/constants';
+import { pendingReactionRoleSetups } from '../utils/globals';
 import { embedBuilder } from '../utils/embeds';
 import {
   getReactionRolesByMessage,
   addReactionRole,
 } from '../database/reactionRoles';
 import { Subcommand } from '../utils/typesAndInterfaces';
+
+const scope = 'reaction';
 
 export const reactionCommands = commandBuilder(
   'reaction',
@@ -98,6 +100,7 @@ export const reactionCommands = commandBuilder(
               logWithTime(
                 'Something went wrong while creating a reaction role',
                 'error',
+                scope,
                 true,
               );
               return await safeReply(
@@ -200,7 +203,7 @@ export const reactionCommands = commandBuilder(
             'Please send the emoji + role pairs in this format: `🟥 @RedTeam`\nSend `done` when finished.',
             true,
           );
-          logWithTime('Reaction message proces started', 'info');
+          logWithTime('Reaction message proces started', 'info', scope);
         },
         customize: (builder: SlashCommandSubcommandBuilder) => {
           return builder

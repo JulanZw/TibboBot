@@ -5,8 +5,10 @@ import archiver from 'archiver';
 import { MessageFlags } from 'discord.js';
 
 import { commandBuilder, safeReply } from '../utils/general';
-import { sourceRequestTracker } from '../utils/constants';
+import { sourceRequestTracker } from '../utils/globals';
 import { logWithTime } from '../utils/logging';
+
+const scope = 'source';
 
 export const sourceCommand = commandBuilder(
   'source',
@@ -56,7 +58,7 @@ export const sourceCommand = commandBuilder(
           content: 'Source code sent to your DMs!',
         });
       } catch (err: any) {
-        logWithTime('Failed to send source ZIP:' + err, 'error', true);
+        logWithTime('Failed to send source ZIP:' + err, 'error', scope, true);
         await interaction.editReply({
           content:
             'Failed to send the source code via DM. Please check your privacy settings.',
@@ -64,14 +66,19 @@ export const sourceCommand = commandBuilder(
       } finally {
         fs.unlink(zipPath, (err: any) => {
           if (err)
-            logWithTime('Failed to delete temp zip: ' + err, 'error', true);
+            logWithTime(
+              'Failed to delete temp zip: ' + err,
+              'error',
+              scope,
+              true,
+            );
         });
       }
     });
 
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     archive.on('error', async (err: any) => {
-      logWithTime('Archive error:' + err, 'error', true);
+      logWithTime('Archive error:' + err, 'error', scope, true);
       await interaction.editReply('An error occurred while creating the ZIP.');
     });
 

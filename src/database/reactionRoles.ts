@@ -1,4 +1,4 @@
-import { prisma } from '../utils/constants';
+import { prisma } from '../utils/globals';
 
 export async function addReactionRole(
   guildId: string,

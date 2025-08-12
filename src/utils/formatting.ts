@@ -4,7 +4,7 @@
  * @param date - the date that needs formatting
  * @returns the formatted date
  */
-export function formatDate(date: Date) {
+export function formatDateToString(date: Date) {
   const daySuffix = getDaySuffix(date.getDate());
   return (
     date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) +
@@ -44,4 +44,13 @@ export function formatDateToDDMMYYYY(date: Date) {
   const year = date.getFullYear();
 
   return `${day}-${month}-${year}`;
+}
+
+/**
+ * Util function to format a date into a string with the YYYY-MM-DD HH:MM:SS format
+ * @param date - The date to format
+ * @returns A formatted string in YYYY-MM-DD HH:MM:SS format
+ */
+export function formatDateToYYYYMMDDHHMMSS(date: Date) {
+  return date.toISOString().replace('T', ' ').slice(0, 19);
 }

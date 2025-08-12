@@ -13,7 +13,7 @@ import {
 import { setupCronJobs } from './cronJobs';
 import { scheduleReminder } from './utils/general';
 import { commandsToRegister } from './commands';
-import { ownerId, token } from './utils/constants';
+import { ownerId, token } from './utils/globals';
 import { handleInteractionCreation } from './handlers/interactionCreation';
 import { handleReactionAdded } from './handlers/reactionAdded';
 import { handleReactionRemoval } from './handlers/reactionRemoved';
@@ -21,6 +21,8 @@ import { handleMessageDeletion } from './handlers/messageDeletion';
 import { getRemindersOfToday } from './database/reminders';
 import { handleMessageCreation } from './handlers/messageCreation';
 import { logWithTime } from './utils/logging';
+
+const scope = 'startup';
 
 //#region Setup
 
@@ -45,7 +47,7 @@ client.once('ready', async (client) => {
   }
 
   if (!ownerId || !process.env.WOL_IP || !process.env.WOL_MAC) {
-    logWithTime('Owner id, WOL IP or WOL MAC not set', 'warn', true);
+    logWithTime('Owner id, WOL IP or WOL MAC not set', 'warn', scope, true);
   }
 
   const rest = new REST({ version: '10' }).setToken(token);
@@ -53,7 +55,7 @@ client.once('ready', async (client) => {
     await rest.put(Routes.applicationCommands(client.user.id), {
       body: commandsToRegister,
     });
-    logWithTime('Slash commands registered.', 'startup');
+    logWithTime('Slash commands registered.', 'info', scope);
 
     if (process.env.ENV !== 'dev') {
       client.user.setStatus('online');
@@ -68,12 +70,14 @@ client.once('ready', async (client) => {
 
         logWithTime(
           `Scheduled ${todaysReminders.length} reminders for today.`,
-          'startup',
+          'info',
+          scope,
         );
       } catch (err: any) {
         logWithTime(
           `Failed to schedule today's reminders: ${err}`,
           'error',
+          scope,
           true,
         );
       }
@@ -85,7 +89,12 @@ client.once('ready', async (client) => {
       });
     }
   } catch (err: any) {
-    logWithTime('Error registering slash commands: ' + err, 'error', true);
+    logWithTime(
+      'Error registering slash commands: ' + err,
+      'error',
+      scope,
+      true,
+    );
   }
 });
 
@@ -119,10 +128,11 @@ client
   .then(() =>
     logWithTime(
       `logged in as ${client.user ? `${client.user.username}#${client.user.discriminator}` : 'ERROR'}`,
-      'startup',
+      'info',
+      scope,
     ),
   )
   .catch((err: any) => {
-    logWithTime('Failed to login: ' + err, 'error', true);
+    logWithTime('Failed to login: ' + err, 'error', scope, true);
     process.exit(1);
   });

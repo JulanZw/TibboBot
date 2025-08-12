@@ -12,7 +12,7 @@ import { reminderCommands } from './commands/reminders';
 import { sourceCommand } from './commands/source';
 import { todayIsCommands } from './commands/todayIs';
 import { Command } from './utils/typesAndInterfaces';
-import { COMMANDS_PER_PAGE } from './utils/constants';
+import { COMMANDS_PER_PAGE } from './utils/globals';
 
 /**
  * Represents a Discord slash command definition.

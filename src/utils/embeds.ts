@@ -7,7 +7,7 @@ import {
   ActionRowBuilder,
 } from 'discord.js';
 
-import { STANDARD_COLOR } from './constants';
+import { STANDARD_COLOR } from './globals';
 import { ButtonType } from './typesAndInterfaces';
 
 /**
