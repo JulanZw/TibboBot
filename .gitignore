@@ -1,4 +1,5 @@
 /.env
+/.env.development
 /src/.env
 todayis_bot.iml
 .idea/

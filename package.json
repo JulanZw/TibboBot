@@ -6,7 +6,7 @@
   "license": "MIT",
   "author": "Julan Zwiggelaar",
   "scripts": {
-    "dev": "cross-env ENV=dev ts-node src/index.ts",
+    "dev": "dotenv -e .env.development -- cross-env ENV=dev ts-node src/index.ts",
     "prod": "cross-env ENV=prod ts-node src/index.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix"
   },
@@ -38,6 +38,7 @@
     "jiti": "^2.5.1",
     "prettier": "^3.6.2",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.39.0"
+    "typescript-eslint": "^8.39.0",
+    "dotenv-cli": "^10.0.0"
   }
 }
