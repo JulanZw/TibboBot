@@ -14,6 +14,7 @@ import { todayIsCommands } from './commands/todayIs';
 import { Command } from './utils/typesAndInterfaces';
 import { COMMANDS_PER_PAGE } from './utils/globals';
 import { encodeCommands } from './commands/encode';
+import { purgeCommand } from './commands/purge';
 
 /**
  * Represents a Discord slash command definition.
@@ -35,6 +36,7 @@ export const commands: Command[] = [
   pingCommand,
   catCommand,
   sourceCommand,
+  purgeCommand,
   manageChannelsCommand,
   birthdayCommands,
   messageCommands,

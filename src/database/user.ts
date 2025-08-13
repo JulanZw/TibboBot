@@ -133,3 +133,15 @@ export async function updateCountsForUser(author: User, content: string) {
     );
   }
 }
+
+export async function deleteUser(discordId: string) {
+  await prisma.user.delete({
+    where: { discordId },
+  });
+}
+
+export async function getUser(discordId: string) {
+  return await prisma.user.findUnique({
+    where: { discordId },
+  });
+}

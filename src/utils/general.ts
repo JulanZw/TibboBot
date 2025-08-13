@@ -110,6 +110,7 @@ export function getPermissionsForLevel(level: PermissionLevel): bigint | null {
  * @param guildOnly - Whether this command can only be used in a server (used for internal checks).
  * @param permissionLevel - The permission level the user needs to have to use this command.
  * @param customize - Optional callback to customize the SlashCommandBuilder with additional options.
+ * @param subcommands - Subcommands of the command
  *
  * @returns The constructed `Command` object.
  */

@@ -43,6 +43,12 @@ export async function deleteBirthday(guildId: string, userId: string) {
   });
 }
 
+export async function deleteAllBirthdaysForUser(userId: string) {
+  return await prisma.birthday.deleteMany({
+    where: { userId },
+  });
+}
+
 export async function getAllBirthdaysInGuildForGivenDate(
   guildId: string,
   date: Date,

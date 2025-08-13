@@ -1,6 +1,6 @@
 import { $Enums } from '@prisma/client';
 
-import { prisma } from '../utils/globals';
+import { prisma, scheduledReminderJobs } from '../utils/globals';
 
 export async function createReminder(
   userId: string,
@@ -79,5 +79,22 @@ export async function updateReminder(
 export async function deleteReminder(id: string) {
   await prisma.reminders.delete({
     where: { id },
+  });
+}
+
+export async function deleteAllRemindersForUser(userId: string) {
+  const toBeDeltedReminders = await prisma.reminders.findMany({
+    where: { userId },
+  });
+
+  toBeDeltedReminders.forEach((reminder) => {
+    if (scheduledReminderJobs.has(reminder.id)) {
+      scheduledReminderJobs.get(reminder.id)!.stop();
+      scheduledReminderJobs.delete(reminder.id);
+    }
+  });
+
+  return await prisma.reminders.deleteMany({
+    where: { userId },
   });
 }

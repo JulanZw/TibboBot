@@ -186,3 +186,15 @@ export async function getBotChannel(
 
   return null;
 }
+export async function removeAllPointgiverRolesForUser(userId: string) {
+  return await prisma.guild.updateMany({
+    where: { pointGiverId: userId },
+    data: { pointGiverId: null },
+  });
+}
+
+export async function deleteGuild(guildId: string) {
+  return await prisma.guild.delete({
+    where: { guildId },
+  });
+}
