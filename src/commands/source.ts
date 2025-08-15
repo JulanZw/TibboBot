@@ -14,7 +14,10 @@ export const sourceCommand = commandBuilder(
   'source',
   'Get a zipped archive of the source code',
   async (interaction, client) => {
-    if (process.env.ENV === 'dev') {
+    if (
+      process.env.ENV === 'dev' &&
+      interaction.user.id !== process.env.OWNER_DISCORD_ID
+    ) {
       return await safeReply(
         interaction,
         'You cannot request the source code right now. Please try again later (watch the bot status).',
@@ -35,7 +38,7 @@ export const sourceCommand = commandBuilder(
 
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-    const rootPath = path.resolve(__dirname, '../');
+    const rootPath = path.resolve(__dirname, '../../');
     const srcFolderPath = path.join(rootPath, 'src');
     const prismaPath = path.join(rootPath, 'prisma');
     const zipPath = path.join(rootPath, 'tmp/source.zip');
