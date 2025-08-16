@@ -1,4 +1,4 @@
-# JZZWutils Discord Bot
+# Tibbo Discord Bot
 
 A custom multipurpose Discord bot built with TypeScript using `discord.js`.  
 Includes features like counting channels, reminders and more.
@@ -58,6 +58,7 @@ discord_bot
 │   │   ├── manage.ts
 │   │   ├── messages.ts
 │   │   ├── ping.ts
+│   │   ├── purge.ts
 │   │   ├── reaction.ts
 │   │   ├── reminders.ts
 │   │   ├── source.ts
@@ -100,6 +101,15 @@ discord_bot
 
 ## Slash Commands
 
+─── PURGE ───\
+All commands related to data removal\
+› user - Removes all your data saved in this bot (birthdays, reminders, etc.).\
+› guild - Removes all the data of the guild.
+
+─── MANAGE ───
+All commands related to managing things for the bot inside the guild
+› channels - A command to manage the game channels
+
 ─── BIRTHDAY ───\
 All commands related to birthdays\
 › set – Set your birthday for this server
@@ -125,6 +135,12 @@ All commands related to today-is\
 › add           – Give today-is points to someone\
 › pointgiver    – Set the servers pointgiver (admin only)
 
+─── ENCODE ───
+Encode or decode text using Base64 or Morse code
+› base64 - Encode or decode Base64
+› morse - Encode or decode Morse code
+› caesar - Encode or decode using Caesar cipher
+
 ─── OTHER ───\
 Other commands\
 › magic           – does some magic (bot owner only)\
@@ -132,7 +148,6 @@ Other commands\
 › ping            – Responds with "pong" to check if the bot is online.\
 › cat             – Sends a random cat picture.\
 › source          – Get a zipped archive of the source code\
-› manage_channels – Manage channels for the guild (admin only)
 
 Implementation can be found in [this file](./src/commands.ts)
 

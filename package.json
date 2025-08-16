@@ -1,10 +1,10 @@
 {
-  "name": "jzzwutils",
+  "name": "tibbobot",
   "version": "3.3.1",
-  "description": "A discord bot for some features I wanted",
+  "description": "Tibbo the toolbox is a discord bot which I gave some features I wanted.",
   "private": true,
   "license": "MIT",
-  "author": "Julan Zwiggelaar",
+  "author": "JulanZw",
   "scripts": {
     "dev": "dotenv -e .env.development -- cross-env ENV=dev ts-node src/index.ts",
     "prod": "cross-env ENV=prod ts-node src/index.ts",
