@@ -106,8 +106,8 @@ All commands related to data removal\
 › user - Removes all your data saved in this bot (birthdays, reminders, etc.).\
 › guild - Removes all the data of the guild.
 
-─── MANAGE ───
-All commands related to managing things for the bot inside the guild
+─── MANAGE ───\
+All commands related to managing things for the bot inside the guild\
 › channels - A command to manage the game channels
 
 ─── BIRTHDAY ───\
@@ -135,10 +135,10 @@ All commands related to today-is\
 › add           – Give today-is points to someone\
 › pointgiver    – Set the servers pointgiver (admin only)
 
-─── ENCODE ───
-Encode or decode text using Base64 or Morse code
-› base64 - Encode or decode Base64
-› morse - Encode or decode Morse code
+─── ENCODE ───\
+Encode or decode text using Base64 or Morse code\
+› base64 - Encode or decode Base64\
+› morse - Encode or decode Morse code\
 › caesar - Encode or decode using Caesar cipher
 
 ─── OTHER ───\
@@ -147,7 +147,7 @@ Other commands\
 › help            – Displays all commands.\
 › ping            – Responds with "pong" to check if the bot is online.\
 › cat             – Sends a random cat picture.\
-› source          – Get a zipped archive of the source code\
+› source          – Get a zipped archive of the source code
 
 Implementation can be found in [this file](./src/commands.ts)
 
