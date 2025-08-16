@@ -1,6 +1,6 @@
 # Tibbo Discord Bot
 
-A custom multipurpose Discord bot built with TypeScript using `discord.js`.  
+Tibbo the toolbox is a multipurpose Discord bot built with TypeScript using `discord.js` and Prisma.  
 Includes features like counting channels, reminders and more.
 
 ---
@@ -10,11 +10,11 @@ Includes features like counting channels, reminders and more.
 *Note:* \
 *Node version 22 or above required*
 
-1. **Clone the repository** (soon?)
+1. **Clone the repository**
 
    ```bash
-   git clone https://soon.git.repo/discord_bot.git
-   cd discord_bot
+   git clone https://github.com/JulanZw/TibboBot.git
+   cd TibboBot
    ```
 
 2. **install dependencies**
@@ -34,13 +34,13 @@ Includes features like counting channels, reminders and more.
 5. **Run the bot**
 
    ```bash
-   npm run dev
+   npm run prod
    ```
 
 ## Project Structure
 
 ```markdown
-discord_bot
+TibboBot
 ├── logs
 │   └── latest.log
 ├── package-lock.json
@@ -153,6 +153,6 @@ Implementation can be found in [this file](./src/commands.ts)
 
 ## License
 
-MIT License © 2025 Julan Zwiggelaar
+MIT License © 2025 JulanZw
 
-See [LICENSE](./LICENSE) for full text.
+See [LICENSE](./LICENSE.txt) for full text.
