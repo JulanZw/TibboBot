@@ -6,7 +6,6 @@ import { Client, TextChannel } from 'discord.js';
 
 import { scheduleReminder } from './utils/general';
 import { formatDateToString, getDaySuffix } from './utils/formatting';
-import { sourceRequestTracker } from './utils/globals';
 import { getAllBirthdaysInGuildForGivenDate } from './database/birthday';
 import { getAllGuilds } from './database/guild';
 import { getRemindersOfToday } from './database/reminders';
@@ -130,9 +129,6 @@ export function setupCronJobs(client: Client): void {
           true,
         );
       }
-
-      // Reset sourceRequestTracker
-      sourceRequestTracker.clear();
     } catch (err: any) {
       logWithTime('Error in daily cron job:' + err, 'error', scope, true);
     }

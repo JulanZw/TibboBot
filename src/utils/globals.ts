@@ -13,11 +13,6 @@ export const STANDARD_COLOR = '#3F48CC';
 export const COMMANDS_PER_PAGE = 5;
 
 /**
- * In memory storage for tracking who requested the source files today
- */
-export const sourceRequestTracker = new Set<string>();
-
-/**
  * In-memory storage for the role react message building proces
  */
 export const pendingReactionRoleSetups = new Map<
