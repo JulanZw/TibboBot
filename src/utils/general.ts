@@ -1,11 +1,19 @@
+import Stream from 'stream';
+
 import {
   ActionRowBuilder,
+  APIAttachment,
+  Attachment,
+  AttachmentBuilder,
+  AttachmentPayload,
+  BufferResolvable,
   ButtonInteraction,
   ChannelSelectMenuInteraction,
   ChatInputCommandInteraction,
   Client,
   EmbedBuilder,
   InteractionReplyOptions,
+  JSONEncodable,
   MessageFlags,
   ModalSubmitInteraction,
   PermissionFlagsBits,
@@ -49,18 +57,45 @@ export async function safeReply(
   ephemeral: boolean = false,
   embeds?: EmbedBuilder[],
   components?: ActionRowBuilder<any>[],
+  files?: (
+    | BufferResolvable
+    | Stream
+    | JSONEncodable<APIAttachment>
+    | Attachment
+    | AttachmentBuilder
+    | AttachmentPayload
+  )[],
 ) {
   const payload: InteractionReplyOptions = {
     ...(content ? { content } : {}),
     ...(ephemeral ? { flags: MessageFlags.Ephemeral } : {}),
     ...(embeds ? { embeds } : {}),
     ...(components ? { components } : {}),
+    ...(files ? { files } : {}),
   };
 
   if (!interaction.replied && !interaction.deferred) {
-    return await interaction.reply(payload);
+    try {
+      return await interaction.reply(payload);
+    } catch {
+      logWithTime(
+        `Failed to reply to interaction: ${interaction.id}`,
+        'error',
+        scope,
+        true,
+      );
+    }
   } else {
-    return await interaction.followUp(payload);
+    try {
+      return await interaction.followUp(payload);
+    } catch {
+      logWithTime(
+        `Failed to reply to interaction: ${interaction.id}`,
+        'error',
+        scope,
+        true,
+      );
+    }
   }
 }
 
@@ -180,7 +215,12 @@ async function safeExecute(
 ) {
   try {
     await fn();
-    logWithTime(`${commandName} command executed`, 'info', scope);
+    const subcommandName = interaction.options.getSubcommand(false);
+    logWithTime(
+      `${commandName} ${subcommandName ? `(${subcommandName}) ` : ``}command executed`,
+      'info',
+      scope,
+    );
   } catch (err: any) {
     logWithTime('An Error occured' + err, 'error', scope, true);
     return await safeReply(interaction, 'An unexpected error occurred.');

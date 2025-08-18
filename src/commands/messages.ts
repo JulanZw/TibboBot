@@ -7,6 +7,8 @@ import {
   getUserCharsAndMessages,
 } from '../database/user';
 import { Subcommand } from '../utils/typesAndInterfaces';
+import { STANDARD_COLOR } from '../utils/globals';
+import { generateLeaderboard } from '../utils/generating';
 
 const scope = 'messages';
 
@@ -53,33 +55,52 @@ export const messageCommands = commandBuilder(
             );
           }
 
-          const fields = await Promise.all(
+          const completeUsers: {
+            username: string;
+            number1: bigint;
+            number2: bigint;
+            avatar: string | null;
+          }[] = await Promise.all(
             users.slice(0, 10).map(async (row, index) => {
               try {
                 const user = await client.users.fetch(row.discordId);
 
                 return {
-                  name: `#${index + 1} - ${user.displayName ?? user.username}`,
-                  value: `Messages: ${row.msg_count}, Characters: ${row.char_count}`,
-                  inline: false,
+                  username: `${index + 1}. ${user.displayName ?? user.username}`,
+                  number1: BigInt(row.msg_count),
+                  number2: row.char_count,
+                  avatar: user.displayAvatarURL({ extension: 'png' }),
                 };
               } catch (err: any) {
                 logWithTime('Error fetching user:' + err, 'error', scope, true);
                 return {
-                  name: `#${index + 1} - Unknown User`,
-                  value: `Messages: ${row.msg_count}, Characters: ${row.char_count}`,
-                  inline: false,
+                  username: `Unknown User`,
+                  number1: BigInt(row.msg_count),
+                  number2: row.char_count,
+                  avatar: null,
                 };
               }
             }),
           );
 
+          const image = await generateLeaderboard(completeUsers, scope);
+
           const leaderboardEmbed = embedBuilder({
             title: 'Leaderboard',
-            fields,
+            description: 'Top 10 users ranked by messages and characters sent',
+            color: STANDARD_COLOR,
+            customize: (embed) =>
+              embed.setImage('attachment://leaderboard.png'),
           });
 
-          await safeReply(interaction, '', false, [leaderboardEmbed]);
+          await safeReply(
+            interaction,
+            '',
+            false,
+            [leaderboardEmbed],
+            undefined,
+            [image],
+          );
         },
         customize: (builder) => {
           return builder.addBooleanOption(

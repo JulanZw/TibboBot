@@ -15,6 +15,8 @@ import {
 } from '../database/user';
 import { Subcommand } from '../utils/typesAndInterfaces';
 import { logWithTime } from '../utils/logging';
+import { generateLeaderboard } from '../utils/generating';
+import { STANDARD_COLOR } from '../utils/globals';
 
 const scope = 'todayis';
 
@@ -60,15 +62,19 @@ export const todayIsCommands = commandBuilder(
             );
           }
 
-          const fields = await Promise.all(
+          const completeUsers: {
+            username: string;
+            number1: bigint;
+            avatar: string | null;
+          }[] = await Promise.all(
             users.slice(0, 10).map(async (row, index) => {
               try {
                 const user = await client.users.fetch(row.discordId);
 
                 return {
-                  name: `#${index + 1}: ${user.displayName ?? user.username}`,
-                  value: `${row.points} points`,
-                  inline: false,
+                  username: `#${index + 1}. ${user.displayName ?? user.username}`,
+                  number1: row.points,
+                  avatar: user.displayAvatarURL({ extension: 'png' }),
                 };
               } catch (err: any) {
                 logWithTime(
@@ -78,20 +84,36 @@ export const todayIsCommands = commandBuilder(
                   true,
                 );
                 return {
-                  name: `#${index + 1}: Unknown User`,
-                  value: `${row.points} points`,
-                  inline: false,
+                  username: `#${index + 1}: Unknown User`,
+                  number1: row.points,
+                  avatar: null,
                 };
               }
             }),
           );
 
+          const image = await generateLeaderboard(
+            completeUsers,
+            scope,
+            'Today Is Leaderboard',
+          );
+
           const pointboardEmbed = embedBuilder({
             title: 'Today Is Leaderboard',
-            fields,
+            description: 'Top 10 users ranked by today-is points',
+            color: STANDARD_COLOR,
+            customize: (embed) =>
+              embed.setImage('attachment://leaderboard.png'),
           });
 
-          await safeReply(interaction, '', false, [pointboardEmbed]);
+          await safeReply(
+            interaction,
+            '',
+            false,
+            [pointboardEmbed],
+            undefined,
+            [image],
+          );
         },
         customize: (builder) => {
           return builder.addBooleanOption(

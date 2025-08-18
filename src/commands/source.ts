@@ -10,7 +10,7 @@ import { STANDARD_COLOR } from '../utils/globals';
 
 export const sourceCommand = commandBuilder(
   'source',
-  'Get a zipped archive of the source code',
+  'Get a link to the source code',
   async (interaction) => {
     const repoUrl = 'https://github.com/JulanZw/TibboBot.git';
 
