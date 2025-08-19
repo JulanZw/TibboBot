@@ -104,18 +104,27 @@ export async function handleInteractionCreation(interaction: Interaction) {
       );
     }
 
-    const newRemindAt = parseDurationOrDateString(editTime);
+  let newRemindAt: Date;
 
-    if (!newRemindAt || newRemindAt < new Date()) {
-      return await safeReply(interaction, 'Invalid or past date.', true);
+  if (editTime) {
+    const parsed = parseDurationOrDateString(editTime);
+
+    if (!parsed || parsed < new Date()) {
+      return await safeReply(interaction, "Invalid or past date.", true);
     }
 
-    const editedReminder = await updateReminder(
-      reminderId,
-      editMessage,
-      newRemindAt,
-      updateRepeat,
-    );
+    newRemindAt = parsed;
+  } else {
+    newRemindAt = reminder.remindAt;
+  }
+
+  const editedReminder = await updateReminder(
+    reminderId,
+    editMessage,
+    newRemindAt,
+    updateRepeat,
+  );
+
 
     scheduleReminder(interaction.user, editedReminder);
 

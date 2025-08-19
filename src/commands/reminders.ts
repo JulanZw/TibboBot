@@ -26,7 +26,7 @@ import {
 const scope = 'reminder';
 
 export const reminderCommands = commandBuilder(
-  'reminders',
+  'reminder',
   'All commands related to your reminders',
   async () => {},
   false,
@@ -230,9 +230,9 @@ export const reminderCommands = commandBuilder(
                     new ActionRowBuilder<TextInputBuilder>().addComponents(
                       new TextInputBuilder()
                         .setCustomId('editTime')
-                        .setLabel('Remind at (e.g. in 2 hours or in 3 days)')
+                        .setLabel('Remind at (e.g. in 2 hours or in 3 days).')
                         .setStyle(TextInputStyle.Short)
-                        .setRequired(true),
+                        .setRequired(false),
                     ),
                     new ActionRowBuilder<TextInputBuilder>().addComponents(
                       new TextInputBuilder()
