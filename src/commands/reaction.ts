@@ -21,14 +21,10 @@ import { Subcommand } from '../utils/typesAndInterfaces';
 
 const scope = 'reaction';
 
-export const reactionCommands = commandBuilder(
-  'reaction',
-  'All commands for creating and updating a reaction message',
-  async () => {},
-  false,
-  'admin',
-  (builder) => builder,
-  new Map<string, Subcommand>([
+export const reactionCommands = commandBuilder({
+  name: 'reaction',
+  description: 'All commands for creating and updating a reaction message',
+  subcommands: new Map<string, Subcommand>([
     [
       'add',
       {
@@ -227,4 +223,4 @@ export const reactionCommands = commandBuilder(
       },
     ],
   ]),
-);
+});

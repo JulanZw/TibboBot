@@ -25,14 +25,10 @@ import {
 
 const scope = 'reminder';
 
-export const reminderCommands = commandBuilder(
-  'reminder',
-  'All commands related to your reminders',
-  async () => {},
-  false,
-  'user',
-  (builder) => builder,
-  new Map<string, Subcommand>([
+export const reminderCommands = commandBuilder({
+  name: 'reminder',
+  description: 'All commands related to your reminders',
+  subcommands: new Map<string, Subcommand>([
     [
       'add',
       {
@@ -278,4 +274,4 @@ export const reminderCommands = commandBuilder(
       },
     ],
   ]),
-);
+});

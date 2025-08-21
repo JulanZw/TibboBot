@@ -20,14 +20,10 @@ import { STANDARD_COLOR } from '../utils/globals';
 
 const scope = 'todayis';
 
-export const todayIsCommands = commandBuilder(
-  'today-is',
-  'All commands for today-is',
-  async () => {},
-  true,
-  'user',
-  (builder) => builder,
-  new Map<string, Subcommand>([
+export const todayIsCommands = commandBuilder({
+  name: 'today-is',
+  description: 'All commands for today-is',
+  subcommands: new Map<string, Subcommand>([
     [
       'leaderboard',
       {
@@ -261,4 +257,4 @@ export const todayIsCommands = commandBuilder(
       },
     ],
   ]),
-);
+});

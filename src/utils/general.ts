@@ -28,10 +28,10 @@ import { parse } from 'mathjs';
 
 import { deleteReminder, updateReminder } from '../database/reminders';
 
-import { PermissionLevel, Subcommand, Command } from './typesAndInterfaces';
+import { PermissionLevel, Command, Registerable } from './typesAndInterfaces';
 import { logWithTime } from './logging';
 import { addDays } from './parsers';
-import { scheduledReminderJobs } from './globals';
+import { ownerId, scheduledReminderJobs } from './globals';
 
 const scope = 'general';
 
@@ -134,79 +134,106 @@ export function getPermissionsForLevel(level: PermissionLevel): bigint | null {
 //#region Command Builder
 
 /**
- * A utility function to easily create a Discord slash command.
+ * A factory function to construct a Discord slash command.
  *
- * Supports optional customization of the command builder, and flags to mark
- * the command as admin-only or guild-only for internal logic.
+ * - If `subcommands` are provided, the command is treated as a **subcommand group**,
+ *   and the returned `execute` will resolve the correct subcommand at runtime.
+ * - Otherwise, the command is treated as a **regular command**, with its own
+ *   `execute` handler and optional customization of the command builder.
  *
- * @param name - The name of the command (used in Discord).
- * @param description - A short description of the command.
- * @param execute - The function to execute when the command is run.
- * @param guildOnly - Whether this command can only be used in a server (used for internal checks).
- * @param permissionLevel - The permission level the user needs to have to use this command.
- * @param customize - Optional callback to customize the SlashCommandBuilder with additional options.
- * @param subcommands - Subcommands of the command
+ * @param cmd - A `Command` definition, describing either a regular command
+ *              (with `execute`, `guildOnly`, etc.) or a subcommand group
+ *              (with a `subcommands` map).
  *
- * @returns The constructed `Command` object.
+ * @returns A `Registerable` object that can be passed to Discord.js for registration
+ *          and executed when a slash command interaction occurs.
  */
-export function commandBuilder(
-  name: string,
-  description: string,
-  execute: (
-    interaction: ChatInputCommandInteraction,
-    client: Client,
-  ) => Promise<any>,
-  guildOnly: boolean,
-  permissionLevel: PermissionLevel,
-  customize: (builder: SlashCommandBuilder) => SlashCommandBuilder = (b) => b,
-  subcommands?: Map<string, Subcommand>,
-): Command {
+export function commandBuilder(cmd: Command): Registerable {
   const builder = new SlashCommandBuilder()
-    .setName(name)
-    .setDescription(description)
-    .setDefaultMemberPermissions(getPermissionsForLevel(permissionLevel));
+    .setName(cmd.name)
+    .setDescription(cmd.description);
 
-  if (subcommands && subcommands.size > 0) {
-    for (const [name, sub] of subcommands) {
+  if ('subcommands' in cmd) {
+    for (const [name, sub] of cmd.subcommands) {
       builder.addSubcommand((sc) =>
         (sub.customize ?? ((b) => b))(
           sc.setName(name).setDescription(sub.description),
         ),
       );
     }
-  } else {
-    customize(builder);
-  }
-
-  return {
-    data: builder,
-    name,
-    description,
-    permissionLevel,
-    guildOnly,
-    execute: async (interaction: ChatInputCommandInteraction, client: Client) =>
-      safeExecute(name, interaction, async () => {
-        const subcommandName = interaction.options.getSubcommand(false);
-
-        if (subcommandName && subcommands) {
-          const sub = subcommands.get(subcommandName);
-          if (sub) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            return await sub.execute(interaction, client);
-          } else {
-            return await interaction.reply({
-              content: `Unknown subcommand: ${subcommandName}`,
-              ephemeral: true,
-            });
-          }
+    return {
+      name: cmd.name,
+      description: cmd.description,
+      subcommands: cmd.subcommands,
+      data: builder,
+      execute: async (interaction: ChatInputCommandInteraction, client: Client) => {
+        const subcommandName = interaction.options.getSubcommand();
+        const subcommand = cmd.subcommands.get(subcommandName);
+        
+        if (!subcommand) {
+          throw new Error(`Unknown subcommand: ${subcommandName}`);
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return await execute(interaction, client);
-      }),
-    subcommands,
-  };
+        safeExecute(subcommand.name, interaction, () =>
+          subcommand.execute(interaction, client),
+        );
+      },
+    };
+  } else {
+    builder.setDefaultMemberPermissions(
+      getPermissionsForLevel(cmd.permissionLevel),
+    );
+    if (cmd.customize) cmd.customize(builder);
+
+    return {
+      name: cmd.name,
+      description: cmd.description,
+      guildOnly: cmd.guildOnly,
+      permissionLevel: cmd.permissionLevel,
+      customize: cmd.customize,
+      data: builder,
+      execute: async (interaction: ChatInputCommandInteraction, client: Client) =>
+        await safeExecute(cmd.name, interaction, () => cmd.execute(interaction, client)),
+    };
+  }
 }
+
+/**
+ * Utility function to check if the command can run or not
+ * 
+ * @param guildOnly - if the command can only be ran in a guild
+ * @param permissionLevel - the permission level required to run the command
+ * @param interaction - the interaction that ran the command 
+ * @returns A promise with as result a boolean
+ */
+export async function checkPermission(
+  guildOnly: boolean, permissionLevel: PermissionLevel, interaction: ChatInputCommandInteraction
+): Promise<boolean> {
+  if(guildOnly && !interaction.guild) {
+    await safeReply(
+      interaction,
+      'This command can only be used in a server.',
+      true,
+    );
+    return false;
+  } else if (permissionLevel === 'admin' && !interaction.memberPermissions?.has('Administrator')){
+    await safeReply(
+      interaction,
+      'You do not have permission to use this command.',
+      true,
+    );
+    return false;
+  } else if (permissionLevel === 'owner' && (!ownerId || interaction.user.id !== ownerId)){
+    await safeReply(
+      interaction, 
+      'You didn’t say the magic word...',
+      true
+    );
+    return false;
+  }
+  return true;
+}
+
 
 async function safeExecute(
   commandName: string,

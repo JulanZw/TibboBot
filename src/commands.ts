@@ -11,7 +11,7 @@ import { reactionCommands } from './commands/reaction';
 import { reminderCommands } from './commands/reminders';
 import { sourceCommand } from './commands/source';
 import { todayIsCommands } from './commands/todayIs';
-import { Command } from './utils/typesAndInterfaces';
+import { Registerable } from './utils/typesAndInterfaces';
 import { COMMANDS_PER_PAGE } from './utils/globals';
 import { encodeCommands } from './commands/encode';
 import { purgeCommand } from './commands/purge';
@@ -31,7 +31,7 @@ import { howToCommands } from './commands/howto';
  * @property execute - The function that runs when the command is used.
  */
 
-export const commands: Command[] = [
+export const commands: Registerable[] = [
   wolCommand,
   helpCommand,
   pingCommand,
@@ -54,7 +54,7 @@ export const commandNamesAndDescriptions: { name: string; value: string }[][] =
     const otherCommands: { name: string; value: string }[] = [];
 
     for (const command of commands) {
-      if (command.subcommands?.size) {
+      if ('subcommands' in command) {
         const page = [
           {
             name: `─── ${command.name.toUpperCase()} ───`,
@@ -89,4 +89,9 @@ export const commandNamesAndDescriptions: { name: string; value: string }[][] =
   })();
 
 export const commandsToRegister: RESTPostAPIChatInputApplicationCommandsJSONBody[] =
-  commands.map((command) => command.data.toJSON());
+  commands.map((command) =>{ 
+    if(process.env.ENV === 'dev'){
+      console.log(`Registering: ${command.name}`);
+    } 
+    return command.data.toJSON()
+  });

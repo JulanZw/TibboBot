@@ -11,14 +11,10 @@ import { Subcommand } from '../utils/typesAndInterfaces';
 
 const scope = 'birthday';
 
-export const birthdayCommands = commandBuilder(
-  'birthday',
-  'All commands related to birthdays',
-  async () => {},
-  false,
-  'user',
-  (builder) => builder,
-  new Map<string, Subcommand>([
+export const birthdayCommands = commandBuilder({
+  name: 'birthday',
+  description: 'All commands related to birthdays',
+  subcommands: new Map<string, Subcommand>([
     [
       'set',
       {
@@ -219,4 +215,4 @@ export const birthdayCommands = commandBuilder(
       },
     ],
   ]),
-);
+});

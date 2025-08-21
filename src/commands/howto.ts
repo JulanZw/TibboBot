@@ -8,14 +8,10 @@ const eatGifLinks: string[] = [
   'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYm1uajB1eTJjN2p1cGs1MjB6aDZjbWNqcGxibGIyYXQyeDh4OGhkbSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/ef61oIGVyckY8/giphy.gif'
 ];
 
-export const howToCommands = commandBuilder(
-  'howto',
-  'All howto commands',
-  async () => {},
-  false,
-  'user',
-  (builder) => builder,
-  new Map<string, Subcommand>(
+export const howToCommands = commandBuilder({
+  name: 'howto',
+  description: 'All howto commands',
+  subcommands: new Map<string, Subcommand>(
     [
       [
         'breath',
@@ -52,4 +48,4 @@ export const howToCommands = commandBuilder(
       ]
     ]
   )
-);
+});

@@ -16,14 +16,10 @@ import { BotChannel, Subcommand } from '../utils/typesAndInterfaces';
 
 const scope = 'manage';
 
-export const manageChannelsCommand = commandBuilder(
-  'manage',
-  'All commands related to managing things for the bot inside the guild',
-  async () => {},
-  true,
-  'admin',
-  (builder) => builder,
-  new Map<string, Subcommand>([
+export const manageChannelsCommand = commandBuilder({
+  name: 'manage',
+  description: 'All commands related to managing things for the bot inside the guild',
+  subcommands: new Map<string, Subcommand>([
     [
       'channels',
       {
@@ -231,4 +227,4 @@ export const manageChannelsCommand = commandBuilder(
       },
     ],
   ]),
-);
+});

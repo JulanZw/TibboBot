@@ -3,9 +3,8 @@ import { $Enums } from '@prisma/client';
 
 import { client } from '..';
 import { commands } from '../commands';
-import { safeReply, scheduleReminder } from '../utils/general';
+import { checkPermission, safeReply, scheduleReminder } from '../utils/general';
 import { parseDurationOrDateString } from '../utils/parsers';
-import { ownerId } from '../utils/globals';
 import { ensureGuildExistance } from '../database/guild';
 import { getReminderById, updateReminder } from '../database/reminders';
 import { logWithTime } from '../utils/logging';
@@ -29,39 +28,20 @@ export async function handleInteractionCreation(interaction: Interaction) {
       );
     }
 
-    if (
-      (command.guildOnly ||
-        (command.subcommands &&
-          command.subcommands.get(interaction.options.getSubcommand())
-            ?.guildOnly)) &&
-      (!interaction.guildId || !interaction.guild)
-    ) {
-      return await safeReply(
-        interaction,
-        'This command can only be used in a server.',
-        true,
-      );
-    }
-
-    if (
-      (command.permissionLevel === 'admin' ||
-        (command.subcommands &&
-          command.subcommands.get(interaction.options.getSubcommand())
-            ?.permissionLevel === 'admin')) &&
-      !interaction.memberPermissions?.has('Administrator')
-    ) {
-      return safeReply(
-        interaction,
-        'You do not have permission to use this command.',
-        true,
-      );
-    }
-
-    if (
-      command.permissionLevel === 'owner' &&
-      (!process.env.OWNER_DISCORD_ID || interaction.user.id !== ownerId)
-    ) {
-      return await safeReply(interaction, 'You didn’t say the magic word...');
+    if('subcommands' in command) {
+      const subCommand = command.subcommands.get(interaction.options.getSubcommand());
+      if(!subCommand){
+        return safeReply(
+          interaction,
+          `Unknown subcommand: ${interaction.options.getSubcommand()}`,
+          true,
+        );
+      }
+      const canRun = await checkPermission(subCommand?.guildOnly,subCommand?.permissionLevel,interaction);
+      if(!canRun) return;
+    } else { // Regular command
+      const canRun = await checkPermission(command.guildOnly,command.permissionLevel,interaction);
+      if(!canRun) return;
     }
 
     try {

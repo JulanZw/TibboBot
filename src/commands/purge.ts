@@ -12,14 +12,10 @@ import { Subcommand } from '../utils/typesAndInterfaces';
 
 const scope = 'purge';
 
-export const purgeCommand = commandBuilder(
-  'purge',
-  'All commands related to data removal',
-  async () => {},
-  false,
-  'user',
-  (builder) => builder,
-  new Map<string, Subcommand>([
+export const purgeCommand = commandBuilder({
+  name: 'purge',
+  description: 'All commands related to data removal',
+  subcommands: new Map<string, Subcommand>([
     [
       'user',
       {
@@ -98,4 +94,4 @@ export const purgeCommand = commandBuilder(
       },
     ],
   ]),
-);
+});

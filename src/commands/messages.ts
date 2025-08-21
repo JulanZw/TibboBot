@@ -12,14 +12,10 @@ import { generateLeaderboard } from '../utils/generating';
 
 const scope = 'messages';
 
-export const messageCommands = commandBuilder(
-  'messages',
-  'All commands related to messages',
-  async () => {},
-  false,
-  'user',
-  (builder) => builder,
-  new Map<string, Subcommand>([
+export const messageCommands = commandBuilder({
+  name: 'messages',
+  description: 'All commands related to messages',
+  subcommands: new Map<string, Subcommand>([
     [
       'leaderboard',
       {
@@ -150,4 +146,4 @@ export const messageCommands = commandBuilder(
       },
     ],
   ]),
-);
+});

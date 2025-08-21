@@ -28,14 +28,6 @@ function builderEncodeDecodeCommand(name: string, desc: string) {
     );
 }
 
-function base64Encode(text: string) {
-  return Buffer.from(text, 'utf-8').toString('base64');
-}
-
-function base64Decode(base64: string) {
-  return Buffer.from(base64, 'base64').toString('utf-8');
-}
-
 const morseMap: Record<string, string> = {
   A: '.-',
   B: '-...',
@@ -118,14 +110,10 @@ function caesarDecode(text: string, shift: number) {
   return caesarEncode(text, (26 - shift) % 26);
 }
 
-export const encodeCommands = commandBuilder(
-  'encode',
-  'Encode or decode text using Base64 or Morse code',
-  async () => {},
-  false,
-  'user',
-  (builder) => builder,
-  new Map<string, Subcommand>([
+export const encodeCommands = commandBuilder({
+  name: 'encode',
+  description: 'Encode or decode text using Base64 or Morse code',
+  subcommands: new Map<string, Subcommand>([
     [
       'base64',
       {
@@ -138,9 +126,9 @@ export const encodeCommands = commandBuilder(
           try {
             let result: string;
             if (mode === 'encode') {
-              result = base64Encode(text);
+              result = Buffer.from(text, 'utf-8').toString('base64');
             } else {
-              result = base64Decode(text);
+              result = Buffer.from(text, 'base64').toString('utf-8');
             }
 
             await safeReply(interaction, `\`\`\`\n${result}\n\`\`\``, true);
@@ -182,7 +170,7 @@ export const encodeCommands = commandBuilder(
         },
         customize: () => {
           return builderEncodeDecodeCommand(
-            'morese',
+            'morse',
             'Encode or decode Morse code',
           );
         },
@@ -229,4 +217,4 @@ export const encodeCommands = commandBuilder(
       },
     ],
   ]),
-);
+});

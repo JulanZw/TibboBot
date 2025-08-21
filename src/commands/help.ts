@@ -1,13 +1,13 @@
-import { ComponentType } from 'discord.js';
+import { ChatInputCommandInteraction, ComponentType } from 'discord.js';
 
 import { commandBuilder, safeReply } from '../utils/general';
 import { embedBuilder, createButtonsRow } from '../utils/embeds';
 import { commandNamesAndDescriptions } from '../commands';
 
-export const helpCommand = commandBuilder(
-  'help',
-  'Displays all commands.',
-  async (interaction) => {
+export const helpCommand = commandBuilder({
+  name: 'help',
+  description: 'Displays all commands.',
+  execute: async (interaction: ChatInputCommandInteraction) => {
     let index = 0;
     const totalPages = commandNamesAndDescriptions.length;
 
@@ -76,6 +76,6 @@ export const helpCommand = commandBuilder(
       }
     });
   },
-  false,
-  'user',
-);
+  guildOnly: false,
+  permissionLevel: 'user',
+});

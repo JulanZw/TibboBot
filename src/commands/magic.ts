@@ -2,13 +2,14 @@ import wol from 'wol';
 
 import { commandBuilder, safeReply } from '../utils/general';
 import { logWithTime } from '../utils/logging';
+import { ChatInputCommandInteraction } from 'discord.js';
 
 const scope = 'magic';
 
-export const wolCommand = commandBuilder(
-  'magic',
-  'does some magic (bot owner only)',
-  async (interaction) => {
+export const wolCommand = commandBuilder({
+  name: 'magic',
+  description: 'does some magic (bot owner only)',
+  execute: async (interaction: ChatInputCommandInteraction) => {
     if (!process.env.WOL_MAC || !process.env.WOL_IP) {
       logWithTime(
         'Cannot execute WOL because MAC or IP is not set',
@@ -28,6 +29,6 @@ export const wolCommand = commandBuilder(
       succes ? 'magic...' : 'magic failed... :(',
     );
   },
-  false,
-  'owner',
-);
+  guildOnly: false,
+  permissionLevel: 'owner',
+});
