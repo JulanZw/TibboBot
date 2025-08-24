@@ -48,7 +48,7 @@ interface RegisterableCommand {
   data: SlashCommandBuilder;
   execute: (
     interaction: ChatInputCommandInteraction,
-    client: Client
+    client: Client,
   ) => Promise<any>;
 }
 
@@ -65,7 +65,7 @@ export type Registerable =
   | (RegisterableCommand & RegularCommand)
   | (RegisterableCommand & CommandWithSubcommands);
 
-  /**
+/**
  * Represents a single subcommand that belongs to a parent command.
  *
  * A `Subcommand` is similar to a regular command but exists only within the
@@ -75,7 +75,7 @@ export type Registerable =
  * @property name - The subcommand name.
  * @property description - A short description of what the subcommand does.
  * @property execute - The function that will run when the subcommand is invoked.
- * @property customize - (Optional) A function to further configure the 
+ * @property customize - (Optional) A function to further configure the
  *          `SlashCommandSubcommandBuilder`, by for example adding arguments or options.
  * @property permissionLevel - The required permission level to use this subcommand.
  * @property guildOnly - Whether this subcommand can only be used inside a guild.

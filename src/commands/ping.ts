@@ -1,4 +1,5 @@
 import { ChatInputCommandInteraction } from 'discord.js';
+
 import { commandBuilder, safeReply } from '../utils/general';
 
 export const pingCommand = commandBuilder({

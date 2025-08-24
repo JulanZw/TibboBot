@@ -166,15 +166,18 @@ export function commandBuilder(cmd: Command): Registerable {
       description: cmd.description,
       subcommands: cmd.subcommands,
       data: builder,
-      execute: async (interaction: ChatInputCommandInteraction, client: Client) => {
+      execute: async (
+        interaction: ChatInputCommandInteraction,
+        client: Client,
+      ) => {
         const subcommandName = interaction.options.getSubcommand();
         const subcommand = cmd.subcommands.get(subcommandName);
-        
+
         if (!subcommand) {
           throw new Error(`Unknown subcommand: ${subcommandName}`);
         }
 
-        safeExecute(subcommand.name, interaction, () =>
+        await safeExecute(subcommand.name, interaction, () =>
           subcommand.execute(interaction, client),
         );
       },
@@ -192,48 +195,56 @@ export function commandBuilder(cmd: Command): Registerable {
       permissionLevel: cmd.permissionLevel,
       customize: cmd.customize,
       data: builder,
-      execute: async (interaction: ChatInputCommandInteraction, client: Client) =>
-        await safeExecute(cmd.name, interaction, () => cmd.execute(interaction, client)),
+      execute: async (
+        interaction: ChatInputCommandInteraction,
+        client: Client,
+      ) =>
+        await safeExecute(cmd.name, interaction, () =>
+          cmd.execute(interaction, client),
+        ),
     };
   }
 }
 
 /**
  * Utility function to check if the command can run or not
- * 
+ *
  * @param guildOnly - if the command can only be ran in a guild
  * @param permissionLevel - the permission level required to run the command
- * @param interaction - the interaction that ran the command 
+ * @param interaction - the interaction that ran the command
  * @returns A promise with as result a boolean
  */
 export async function checkPermission(
-  guildOnly: boolean, permissionLevel: PermissionLevel, interaction: ChatInputCommandInteraction
+  guildOnly: boolean,
+  permissionLevel: PermissionLevel,
+  interaction: ChatInputCommandInteraction,
 ): Promise<boolean> {
-  if(guildOnly && !interaction.guild) {
+  if (guildOnly && !interaction.guild) {
     await safeReply(
       interaction,
       'This command can only be used in a server.',
       true,
     );
     return false;
-  } else if (permissionLevel === 'admin' && !interaction.memberPermissions?.has('Administrator')){
+  } else if (
+    permissionLevel === 'admin' &&
+    !interaction.memberPermissions?.has('Administrator')
+  ) {
     await safeReply(
       interaction,
       'You do not have permission to use this command.',
       true,
     );
     return false;
-  } else if (permissionLevel === 'owner' && (!ownerId || interaction.user.id !== ownerId)){
-    await safeReply(
-      interaction, 
-      'You didn’t say the magic word...',
-      true
-    );
+  } else if (
+    permissionLevel === 'owner' &&
+    (!ownerId || interaction.user.id !== ownerId)
+  ) {
+    await safeReply(interaction, 'You didn’t say the magic word...', true);
     return false;
   }
   return true;
 }
-
 
 async function safeExecute(
   commandName: string,

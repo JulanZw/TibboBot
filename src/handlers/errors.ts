@@ -1,43 +1,48 @@
-import { PrismaClient } from "@prisma/client";
-import { Client } from "discord.js";
-import { logWithTime } from "../utils/logging";
+import { PrismaClient } from '@prisma/client';
+import { Client } from 'discord.js';
+
+import { logWithTime } from '../utils/logging';
 
 export function setupErrorHandlers(client: Client, prisma: PrismaClient) {
-
   async function gracefulShutdown(signal: string) {
-    const scope = 'shutdown'
-    logWithTime(`${signal} received. Cleaning up...`,'info',scope);
+    const scope = 'shutdown';
+    logWithTime(`${signal} received. Cleaning up...`, 'info', scope);
 
     try {
       if (client.isReady()) {
-        logWithTime(`Destroying Discord client...`,'info',scope);
+        logWithTime(`Destroying Discord client...`, 'info', scope);
         await client.destroy();
       }
-    } catch (err) {
-      logWithTime(`Failed to destroy Discord client: ${err}`,'error',scope,true);
+    } catch (err: any) {
+      logWithTime(
+        `Failed to destroy Discord client: ${err}`,
+        'error',
+        scope,
+        true,
+      );
     }
 
     try {
-      logWithTime(`Disconnecting Prisma...`,'info',scope);
+      logWithTime(`Disconnecting Prisma...`, 'info', scope);
       await prisma.$disconnect();
-    } catch (err) {
-      logWithTime(`Failed to disconnect Prisma: ${err}`,'error',scope,true);
+    } catch (err: any) {
+      logWithTime(`Failed to disconnect Prisma: ${err}`, 'error', scope, true);
     }
 
     process.exit(0);
   }
 
-  process.on("uncaughtException", (err) => {
-    logWithTime(`Uncaught Exception: ${err}`,'error','errorhandler',true);
+  process.on('uncaughtException', (err: any) => {
+    logWithTime(`Uncaught Exception: ${err}`, 'error', 'errorhandler', true);
     process.exit(1);
   });
 
-  process.on("unhandledRejection", (reason) => {
-    logWithTime(`Unhandled Rejection: ${reason}`,'warn','errorhandler');
+  process.on('unhandledRejection', (reason: any) => {
+    logWithTime(`Unhandled Rejection: ${reason}`, 'warn', 'errorhandler');
   });
 
-  process.on("SIGINT", () => gracefulShutdown("SIGINT"));
-  process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+  process.on('SIGINT', () => void gracefulShutdown('SIGINT'));
+  process.on('SIGTERM', () => void gracefulShutdown('SIGTERM'));
 
-  logWithTime('Error handlers set up.','info','startup');
+  logWithTime('Error handlers set up.', 'info', 'startup');
 }

@@ -41,10 +41,10 @@ export const client = new Client({
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 client.once('ready', async (client) => {
   setupCronJobs(client);
-  setupErrorHandlers(client,prisma);
+  setupErrorHandlers(client, prisma);
 
   if (!token || !process.env.DATABASE_URL) {
-    logWithTime('Token or database url not set.','error',scope,true);
+    logWithTime('Token or database url not set.', 'error', scope, true);
     process.exit(1);
   }
 

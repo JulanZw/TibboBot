@@ -18,7 +18,8 @@ const scope = 'manage';
 
 export const manageChannelsCommand = commandBuilder({
   name: 'manage',
-  description: 'All commands related to managing things for the bot inside the guild',
+  description:
+    'All commands related to managing things for the bot inside the guild',
   subcommands: new Map<string, Subcommand>([
     [
       'channels',

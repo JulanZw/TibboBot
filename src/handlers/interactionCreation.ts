@@ -28,20 +28,31 @@ export async function handleInteractionCreation(interaction: Interaction) {
       );
     }
 
-    if('subcommands' in command) {
-      const subCommand = command.subcommands.get(interaction.options.getSubcommand());
-      if(!subCommand){
+    if ('subcommands' in command) {
+      const subCommand = command.subcommands.get(
+        interaction.options.getSubcommand(),
+      );
+      if (!subCommand) {
         return safeReply(
           interaction,
           `Unknown subcommand: ${interaction.options.getSubcommand()}`,
           true,
         );
       }
-      const canRun = await checkPermission(subCommand?.guildOnly,subCommand?.permissionLevel,interaction);
-      if(!canRun) return;
-    } else { // Regular command
-      const canRun = await checkPermission(command.guildOnly,command.permissionLevel,interaction);
-      if(!canRun) return;
+      const canRun = await checkPermission(
+        subCommand?.guildOnly,
+        subCommand?.permissionLevel,
+        interaction,
+      );
+      if (!canRun) return;
+    } else {
+      // Regular command
+      const canRun = await checkPermission(
+        command.guildOnly,
+        command.permissionLevel,
+        interaction,
+      );
+      if (!canRun) return;
     }
 
     try {
@@ -84,27 +95,26 @@ export async function handleInteractionCreation(interaction: Interaction) {
       );
     }
 
-  let newRemindAt: Date;
+    let newRemindAt: Date;
 
-  if (editTime) {
-    const parsed = parseDurationOrDateString(editTime);
+    if (editTime) {
+      const parsed = parseDurationOrDateString(editTime);
 
-    if (!parsed || parsed < new Date()) {
-      return await safeReply(interaction, "Invalid or past date.", true);
+      if (!parsed || parsed < new Date()) {
+        return await safeReply(interaction, 'Invalid or past date.', true);
+      }
+
+      newRemindAt = parsed;
+    } else {
+      newRemindAt = reminder.remindAt;
     }
 
-    newRemindAt = parsed;
-  } else {
-    newRemindAt = reminder.remindAt;
-  }
-
-  const editedReminder = await updateReminder(
-    reminderId,
-    editMessage,
-    newRemindAt,
-    updateRepeat,
-  );
-
+    const editedReminder = await updateReminder(
+      reminderId,
+      editMessage,
+      newRemindAt,
+      updateRepeat,
+    );
 
     scheduleReminder(interaction.user, editedReminder);
 

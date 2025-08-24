@@ -47,7 +47,7 @@ export const commands: Registerable[] = [
   reactionCommands,
   todayIsCommands,
   encodeCommands,
-  howToCommands
+  howToCommands,
 ];
 
 export const commandNamesAndDescriptions: { name: string; value: string }[][] =
@@ -91,9 +91,9 @@ export const commandNamesAndDescriptions: { name: string; value: string }[][] =
   })();
 
 export const commandsToRegister: RESTPostAPIChatInputApplicationCommandsJSONBody[] =
-  commands.map((command) =>{ 
-    if(process.env.ENV === 'dev'){
+  commands.map((command) => {
+    if (process.env.ENV === 'dev') {
       console.log(`Registering: ${command.name}`);
-    } 
-    return command.data.toJSON()
+    }
+    return command.data.toJSON();
   });
