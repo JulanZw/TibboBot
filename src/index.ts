@@ -13,7 +13,7 @@ import {
 import { setupCronJobs } from './cronJobs';
 import { scheduleReminder } from './utils/general';
 import { commandsToRegister } from './commands';
-import { ownerId, token } from './utils/globals';
+import { ownerId, prisma, token } from './utils/globals';
 import { handleInteractionCreation } from './handlers/interactionCreation';
 import { handleReactionAdded } from './handlers/reactionAdded';
 import { handleReactionRemoval } from './handlers/reactionRemoved';
@@ -21,6 +21,7 @@ import { handleMessageDeletion } from './handlers/messageDeletion';
 import { getRemindersOfToday } from './database/reminders';
 import { handleMessageCreation } from './handlers/messageCreation';
 import { logWithTime } from './utils/logging';
+import { setupErrorHandlers } from './handlers/errors';
 
 const scope = 'startup';
 
@@ -40,9 +41,10 @@ export const client = new Client({
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 client.once('ready', async (client) => {
   setupCronJobs(client);
+  setupErrorHandlers(client,prisma);
 
   if (!token || !process.env.DATABASE_URL) {
-    console.error('Token or database url not set.');
+    logWithTime('Token or database url not set.','error',scope,true);
     process.exit(1);
   }
 
@@ -131,7 +133,7 @@ client
   .login(process.env.DISCORD_TOKEN)
   .then(() =>
     logWithTime(
-      `logged in as ${client.user ? `${client.user.username}#${client.user.discriminator}` : 'ERROR'}`,
+      `Logged in as ${client.user ? `${client.user.username}#${client.user.discriminator}` : 'ERROR'}`,
       'info',
       scope,
     ),
