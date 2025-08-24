@@ -16,6 +16,7 @@ import { COMMANDS_PER_PAGE } from './utils/globals';
 import { encodeCommands } from './commands/encode';
 import { purgeCommand } from './commands/purge';
 import { howToCommands } from './commands/howto';
+import { rngCommand } from './commands/rng';
 
 /**
  * Represents a Discord slash command definition.
@@ -35,6 +36,7 @@ export const commands: Registerable[] = [
   wolCommand,
   helpCommand,
   pingCommand,
+  rngCommand,
   catCommand,
   sourceCommand,
   purgeCommand,

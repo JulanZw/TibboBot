@@ -14,10 +14,10 @@ export const howToCommands = commandBuilder({
   subcommands: new Map<string, Subcommand>(
     [
       [
-        'breath',
+        'breathe',
         {
-          name: 'breath',
-          description: 'How does one breath',
+          name: 'breathe',
+          description: 'How does one breathe',
           async execute(interaction) {
             await safeReply(interaction, 'inhale, exhale ez😎');
           },
