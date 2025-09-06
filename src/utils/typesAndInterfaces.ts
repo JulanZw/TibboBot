@@ -7,6 +7,11 @@ import {
   ChannelType,
 } from 'discord.js';
 
+export type BotAction =
+  | { type: 'skip'; answer: string }
+  | { type: 'funny'; answer: string }
+  | { type: 'correct' };
+
 export type BotChannel = 'count' | 'today-is' | 'birthday';
 
 export type ButtonType = 'prev' | 'next' | 'edit' | 'delete';

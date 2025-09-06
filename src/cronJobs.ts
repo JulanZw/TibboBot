@@ -7,16 +7,19 @@ import { Client, TextChannel } from 'discord.js';
 import { scheduleReminder } from './utils/general';
 import { formatDateToString, getDaySuffix } from './utils/formatting';
 import { getAllBirthdaysInGuildForGivenDate } from './database/birthday';
-import { getAllGuilds } from './database/guild';
+import { getAllGuilds, updateDumbScore } from './database/guild';
 import { getRemindersOfToday } from './database/reminders';
 import { logWithTime } from './utils/logging';
+import { todayWinners } from './utils/globals';
+import { getBotAction } from './utils/todayis';
 
 export function setupCronJobs(client: Client): void {
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   cron.schedule('0 0 * * *', async () => {
     const scope = 'cron_DAILY';
     try {
-      const randomDelay = Math.floor(Math.random() * 2801) + 200; // 0–3000 ms
+      Object.keys(todayWinners).forEach((key) => delete todayWinners[key]);
+      const randomDelay = Math.floor(Math.random() * 2801) + 200; // 200–3000 ms
 
       await new Promise((resolve) =>
         setTimeout(resolve, randomDelay < 0 ? 1500 : randomDelay),
@@ -41,14 +44,46 @@ export function setupCronJobs(client: Client): void {
               return;
             }
 
-            await channel.send(
-              `Today is ${formattedDate}, waited for ${randomDelay} ms`,
-            );
-            logWithTime(
-              `Message sent in ${guild.guildId}: "Today is ${formattedDate}"`,
-              'info',
-              scope,
-            );
+            if (todayWinners[guild.guildId]) {
+              await channel.send(`Today is-`);
+              logWithTime(
+                `Message sent in ${guild.guildId}: "Today is ${formattedDate}"`,
+                'info',
+                scope,
+              );
+              return;
+            } else {
+              todayWinners[guild.guildId] = 'bot';
+              await updateDumbScore(guild.guildId, false);
+            }
+
+            const botAction = getBotAction(guild.dumbScore);
+            if (botAction.type === 'skip') {
+              await channel.send(botAction.answer);
+              logWithTime(
+                `Skipping 'Today is' message in guild ${guild.guildId}: ${botAction.answer}`,
+                'info',
+                scope,
+              );
+              return;
+            } else if (botAction.type === 'funny') {
+              await channel.send(botAction.answer);
+              logWithTime(
+                `Sending funny 'Today is' message in guild ${guild.guildId}: ${botAction.answer}`,
+                'info',
+                scope,
+              );
+              return;
+            } else {
+              await channel.send(
+                `Today is ${formattedDate}, waited for ${randomDelay} ms`,
+              );
+              logWithTime(
+                `Message sent in ${guild.guildId}: "Today is ${formattedDate}"`,
+                'info',
+                scope,
+              );
+            }
           } catch (err: any) {
             logWithTime(
               `Failed to send 'today is' message in guild ${guild.guildId}: ${err}`,

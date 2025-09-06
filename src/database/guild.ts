@@ -198,3 +198,18 @@ export async function deleteGuild(guildId: string) {
     where: { guildId },
   });
 }
+
+export async function updateDumbScore(guildId: string, humanWon: boolean) {
+  const guild = await getGuild(guildId);
+  if (humanWon && guild && guild.dumbScore > 0) {
+    return await prisma.guild.update({
+      where: { guildId },
+      data: { dumbScore: { decrement: 1 } },
+    });
+  } else if (guild && guild.dumbScore < 10) {
+    return await prisma.guild.update({
+      where: { guildId },
+      data: { dumbScore: { increment: 1 } },
+    });
+  }
+}

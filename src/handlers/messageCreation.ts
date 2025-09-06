@@ -1,7 +1,7 @@
 import { Message, MessageFlags, TextChannel } from 'discord.js';
 import { evaluate } from 'mathjs';
 
-import { pendingReactionRoleSetups } from '../utils/globals';
+import { pendingReactionRoleSetups, todayWinners } from '../utils/globals';
 import { embedBuilder } from '../utils/embeds';
 import { logWithTime } from '../utils/logging';
 import { preprocessNumerics } from '../utils/preproccessors';
@@ -12,10 +12,12 @@ import {
   getLastCountUserAndHighestNumber,
   resetCount,
   setLastCountUser,
+  updateDumbScore,
 } from '../database/guild';
 import { addReactionRole } from '../database/reactionRoles';
 import { updateCountsForUser } from '../database/user';
 import { looksLikeMathExpression } from '../utils/general';
+import { formatDateToString } from '../utils/formatting';
 
 const scope = 'handler_MESSAGECREATION';
 
@@ -36,7 +38,7 @@ export async function handleMessageCreation(message: Message) {
             const success = await checkAndUpdateCount(guild.guildId, number);
             const lastCountUser = await getLastCountUserAndHighestNumber(
               guild.guildId,
-            ); // ? maybe make a cache for this
+            );
 
             if (!success) {
               await message.react('❌');
@@ -72,6 +74,19 @@ export async function handleMessageCreation(message: Message) {
             'warn',
             scope,
           );
+        }
+      }
+    } else if (guild.todayIsChannelId === message.channelId) {
+      const now = new Date();
+      if (now.getHours() === 0 && now.getMinutes() < 1) {
+        const today = formatDateToString(now);
+        const expected = `Today is ${today}`;
+        if (!message.content.toLowerCase().includes(expected.toLowerCase())) {
+          return;
+        }
+        if (!todayWinners[guild.guildId]) {
+          todayWinners[guild.guildId] = 'human';
+          await updateDumbScore(guild.guildId, true);
         }
       }
     }
