@@ -11,7 +11,7 @@ import { getAllGuilds, updateDumbScore } from './database/guild';
 import { getRemindersOfToday } from './database/reminders';
 import { logWithTime } from './utils/logging';
 import { todayWinners } from './utils/globals';
-import { getBotAction } from './utils/todayis';
+import { getBotAction, getDefeatedMessage } from './utils/todayis';
 
 export function setupCronJobs(client: Client): void {
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -45,9 +45,10 @@ export function setupCronJobs(client: Client): void {
             }
 
             if (todayWinners[guild.guildId]) {
-              await channel.send(`Today is-`);
+              const message = getDefeatedMessage(guild.dumbScore);
+              await channel.send(message);
               logWithTime(
-                `Message sent in ${guild.guildId}: "Today is ${formattedDate}"`,
+                `Message sent in ${guild.guildId}: "${message}"`,
                 'info',
                 scope,
               );
