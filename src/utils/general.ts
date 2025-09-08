@@ -177,7 +177,7 @@ export function commandBuilder(cmd: Command): Registerable {
           throw new Error(`Unknown subcommand: ${subcommandName}`);
         }
 
-        await safeExecute(subcommand.name, interaction, () =>
+        await safeExecute(cmd.name, interaction, () =>
           subcommand.execute(interaction, client),
         );
       },

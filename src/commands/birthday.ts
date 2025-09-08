@@ -205,9 +205,7 @@ export const birthdayCommands = commandBuilder({
 
           // eslint-disable-next-line @typescript-eslint/no-misused-promises
           collector.on('end', async () => {
-            if (msg.editable) {
-              await msg.edit({ components: [] });
-            }
+            await interaction.editReply({ components: [] });
           });
         },
         permissionLevel: 'user',

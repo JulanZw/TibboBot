@@ -84,7 +84,6 @@ export const reminderCommands = commandBuilder({
           await safeReply(
             interaction,
             `Reminder set for <t:${Math.floor(targetTime.getTime() / 1000)}:F>, make sure you have direct messages turned on for this server!`,
-            true,
           );
           logWithTime(
             `Created reminder for ${interaction.user.id} on ${targetTime.toISOString()}`,
@@ -121,7 +120,7 @@ export const reminderCommands = commandBuilder({
         name: 'list',
         description: 'List and manage your reminders',
         async execute(interaction: ChatInputCommandInteraction) {
-          let deletedAll = false;
+          let noCleanUpNeeded = false;
           const reminders = await getUserReminders(interaction.user.id);
           if (!reminders.length) {
             return await safeReply(interaction, 'You have no reminders.', true);
@@ -196,7 +195,7 @@ export const reminderCommands = commandBuilder({
                 reminders.splice(index, 1);
 
                 if (!reminders.length) {
-                  deletedAll = true;
+                  noCleanUpNeeded = true;
                   collector.stop();
                   return await btnInteraction.update({
                     content: 'All reminders deleted.',
@@ -239,7 +238,6 @@ export const reminderCommands = commandBuilder({
                         .setValue(capitalizeFirst(reminder.remindInterval)),
                     ),
                   );
-
                 return await btnInteraction.showModal(modal);
               }
 
@@ -255,10 +253,9 @@ export const reminderCommands = commandBuilder({
 
           // eslint-disable-next-line @typescript-eslint/no-misused-promises
           collector.on('end', async () => {
-            if (deletedAll) return;
-            if (msg.editable) {
+            if (!noCleanUpNeeded) {
               try {
-                await msg.edit({ components: [] });
+                await interaction.editReply({ components: [] });
               } catch (err: any) {
                 logWithTime(
                   `Could not edit message after collector ended: ${err}`,
