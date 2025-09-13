@@ -1,0 +1,149 @@
+/* File upload button wrapper */
+.file-upload {
+  display: inline-block;
+  position: relative;
+}
+
+/* Actual file input hidden */
+.file-upload input[type="file"] {
+  display: none;
+}
+
+/* Styled label as the button */
+.file-upload label {
+  display: inline-block;
+  background: #5865f2;
+  color: #ffffff;
+  padding: 8px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s ease;
+  user-select: none;
+}
+
+.file-upload label:hover {
+  background: #4752c4;
+}
+
+.file-upload label:active {
+  background: #3c45a5;
+}
+
+/* File name preview next to button */
+.file-upload span {
+  margin-left: 10px;
+  font-size: 14px;
+  color: #b9bbbe;
+}
+
+/* General elements*/
+body {
+  font-family: "Segoe UI", sans-serif;
+  background: #2c2f33;
+  color: #fff;
+  margin: 0;
+  padding: 20px;
+}
+
+.author {
+  font-weight: bold;
+  color: #7289da;
+  text-decoration: underline;
+}
+
+a {
+  margin: 4px 0;
+  color: #0062f4;
+}
+
+a:hover {
+  margin: 4px 0;
+  color: #2c80ff;
+}
+
+a:active {
+  margin: 4px 0;
+  color: #5b9dff;
+}
+
+.timestamp {
+  font-size: 0.8em;
+  color: #bbb;
+  margin-left: 6px;
+}
+
+.message {
+  padding: 8px 12px;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #dcddde;
+}
+
+.embed {
+  border-left: 4px solid #5865f2;
+  background: #2f3136;
+  padding: 8px 12px;
+  margin: 8px 0;
+  border-radius: 4px;
+}
+
+.embed-title {
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 4px;
+  color: #ffffff;
+}
+
+.embed-footer {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #b9bbbe;
+}
+
+/* Markdown elements */
+p {
+  margin: 4px 0;
+}
+
+strong {
+  font-weight: 600;
+}
+
+em {
+  font-style: italic;
+}
+
+u {
+  text-decoration: underline;
+}
+
+s {
+  text-decoration: line-through;
+}
+
+/* Inline code */
+code {
+  background: #1e1f22;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: Consolas, monospace;
+  font-size: 0.9em;
+}
+
+/* Code blocks */
+pre {
+  background: #1e1f22;
+  padding: 8px;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+pre code {
+  background: none; /* avoid double background */
+  padding: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}

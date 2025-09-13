@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Discord Backup Viewer</title>
+  <link rel="stylesheet" href="view.css">
+</head>
+<body>
+  <h1>Discord Backup Viewer</h1>
+
+  <div class="file-upload">
+    <input type="file" id="fileInput">
+    <label for="fileInput">Upload File</label>
+    <span id="fileName">No file selected</span>
+  </div>
+
+  <div id="messages"></div>
+
+  <!-- markdown rendering library -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const fileName = document.getElementById('fileName');
+
+    fileInput.addEventListener('change', () => {
+      fileName.textContent = fileInput.files.length > 0
+        ? fileInput.files[0].name
+        : 'No file selected';
+    });
+
+    document.getElementById('fileInput').addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const messages = JSON.parse(e.target.result);
+        renderMessages(messages);
+      };
+      reader.readAsText(file);
+    });
+
+    function intToHexColor(int) {
+      return `#${int.toString(16).padStart(6, '0')}`;
+    }
+
+    function renderMarkdown(md) {
+      if (typeof marked !== "undefined") {
+        return marked.parse(md ?? "", { breaks: true });
+      }
+      // fallback if md render doesnt work
+      return (md ?? "")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function renderMessages(messages) {
+      const container = document.getElementById('messages');
+      container.innerHTML = '';
+      messages.reverse().forEach(msg => {
+        const div = document.createElement('div');
+        div.className = 'message';
+
+        const header = document.createElement('div');
+        header.innerHTML = `<span class="author">${msg.author.username}</span><span class="timestamp">${new Date(msg.createdAt).toLocaleString()}</span>`;
+        div.appendChild(header);
+
+        if (msg.content) {
+          const content = document.createElement('div');
+          content.className = 'content';
+          content.innerHTML = renderMarkdown(msg.content);
+          div.appendChild(content);
+        }
+
+        if (msg.attachments.length > 0) {
+          msg.attachments.forEach(att => {
+            const link = document.createElement('a');
+            link.href = att.url;
+            link.textContent = `📎 ${att.name} (${Math.round(att.size/1024)} KB)`;
+            link.className = 'attachment';
+            link.target = '_blank';
+            div.appendChild(link);
+          });
+        }
+
+        if (msg.embeds.length > 0) {
+          msg.embeds.forEach(e => {
+            const embed = document.createElement('div');
+            embed.className = 'embed';
+
+            if (e.color) {
+              embed.style.borderLeft = `4px solid ${intToHexColor(e.color)}`;
+            }
+
+            if (e.title) {
+              const title = document.createElement('div');
+              title.className = 'embed-title';
+              title.innerHTML = renderMarkdown(e.title);
+              embed.appendChild(title);
+            }
+
+            if (e.description) {
+              const desc = document.createElement('div');
+              desc.innerHTML = renderMarkdown(e.description);
+              embed.appendChild(desc);
+            }
+
+            if (e.fields) {
+              e.fields.forEach(f => {
+                const field = document.createElement('div');
+                field.className = 'embed-field';
+                field.innerHTML = `<strong>${f.name}</strong>`;
+                const value = document.createElement('div');
+                value.className = 'embed-field-value';
+                value.innerHTML = renderMarkdown(f.value);
+                embed.appendChild(field);
+                embed.appendChild(value);
+              });
+            }
+
+            if (e.footer) {
+              const footer = document.createElement('div');
+              footer.className = 'embed-footer';
+              footer.innerHTML = renderMarkdown(e.footer.text);
+              embed.appendChild(footer);
+            }
+
+            div.appendChild(embed);
+          });
+        }
+
+        container.appendChild(div);
+      });
+    }
+  </script>
+</body>
+</html>
