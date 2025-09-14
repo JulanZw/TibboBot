@@ -8,38 +8,24 @@
 <body>
   <h1>Discord Backup Viewer</h1>
 
-  <div class="file-upload">
-    <input type="file" id="fileInput">
-    <label for="fileInput">Upload File</label>
-    <span id="fileName">No file selected</span>
-  </div>
-
+  <div id="metadata" class="metadata"></div>
   <div id="messages"></div>
+
 
   <!-- markdown rendering library -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
   <script>
-    const fileInput = document.getElementById('fileInput');
-    const fileName = document.getElementById('fileName');
-
-    fileInput.addEventListener('change', () => {
-      fileName.textContent = fileInput.files.length > 0
-        ? fileInput.files[0].name
-        : 'No file selected';
-    });
-
-    document.getElementById('fileInput').addEventListener('change', function(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const messages = JSON.parse(e.target.result);
-        renderMessages(messages);
-      };
-      reader.readAsText(file);
-    });
+    async function loadJSON(file) {
+      try {
+        const res = await fetch(file);
+        if (!res.ok) throw new Error(`${file} not found`);
+        return await res.json();
+      } catch (e) {
+        console.warn(e.message);
+        return null;
+      }
+    }
 
     function intToHexColor(int) {
       return `#${int.toString(16).padStart(6, '0')}`;
@@ -53,6 +39,21 @@
       return (md ?? "")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
+    }
+
+    
+    function renderMetadata(meta) {
+      if (!meta) return;
+      const container = document.getElementById('metadata');
+      container.innerHTML = `
+        <div class="meta-box">
+          <p><strong>Server:</strong> ${meta.serverName} (${meta.serverId})</p>
+          <p><strong>Channel:</strong> #${meta.channelName} (${meta.channelId})</p>
+          <p><strong>Backup created:</strong> ${new Date(meta.backupCreatedAt).toLocaleString()}</p>
+          <p><strong>Messages:</strong> ${meta.messageCount}</p>
+          <p><strong>Includes attachments:</strong> ${meta.includesAttachments ? "Yes" : "No"}</p>
+        </div>
+      `;
     }
 
     function renderMessages(messages) {
@@ -75,12 +76,23 @@
 
         if (msg.attachments.length > 0) {
           msg.attachments.forEach(att => {
-            const link = document.createElement('a');
-            link.href = att.url;
-            link.textContent = `📎 ${att.name} (${Math.round(att.size/1024)} KB)`;
-            link.className = 'attachment';
-            link.target = '_blank';
-            div.appendChild(link);
+            const isHttp = att.url.startsWith("http");
+            const isImage = /\.(png|jpe?g|gif|webp)$/i.test(att.url);
+
+            if (!isHttp && isImage) {
+              const img = document.createElement("img");
+              img.src = att.url;
+              img.alt = att.name;
+              img.className = "attachment-img";
+              div.appendChild(img);
+            } else {
+              const link = document.createElement("a");
+              link.href = att.url;
+              link.textContent = `📎 ${att.name} (${Math.round(att.size / 1024)} KB)`;
+              link.className = "attachment";
+              link.target = "_blank";
+              div.appendChild(link);
+            }
           });
         }
 
@@ -133,6 +145,14 @@
         container.appendChild(div);
       });
     }
+
+    (async () => {
+      const meta = await loadJSON('metadata.json');
+      renderMetadata(meta);
+
+      const messages = await loadJSON('messages.json');
+      if (messages) renderMessages(messages);
+    })();
   </script>
 </body>
 </html>
