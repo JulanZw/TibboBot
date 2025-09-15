@@ -53,3 +53,10 @@ export const prisma = new PrismaClient();
  * Resets at midnight every day.
  */
 export const todayWinners: Record<string, 'bot' | 'human' | null> = {};
+
+export enum COOLDOWN_TIMES_MILISECONDS {
+  MINUTE = 60000,
+  TEN_MINUTES = 600000,
+  HOUR = 6000000,
+  DAY = 14400000,
+}

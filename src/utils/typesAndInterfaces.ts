@@ -21,6 +21,7 @@ export type LogLevel = 'info' | 'warn' | 'error';
 type BaseCommand = {
   name: string;
   description: string;
+  cooldown?: number;
 };
 
 type RegularCommand = BaseCommand & {
@@ -106,9 +107,7 @@ export type Registerable =
  * };
  * ```
  */
-export type Subcommand = {
-  name: string;
-  description: string;
+export type Subcommand = BaseCommand & {
   execute: (
     interaction: ChatInputCommandInteraction,
     client: Client,

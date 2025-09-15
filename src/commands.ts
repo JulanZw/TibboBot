@@ -17,7 +17,7 @@ import { encodeCommands } from './commands/encode';
 import { purgeCommand } from './commands/purge';
 import { howToCommands } from './commands/howto';
 import { rngCommand } from './commands/rng';
-import { backupCommand } from './commands/backup';
+import { backupCommands } from './commands/backup';
 
 /**
  * Represents a Discord slash command definition.
@@ -39,7 +39,7 @@ export const commands: Registerable[] = [
   pingCommand,
   rngCommand,
   catCommand,
-  backupCommand,
+  backupCommands,
   sourceCommand,
   purgeCommand,
   manageChannelsCommand,

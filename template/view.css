@@ -48,7 +48,7 @@ body {
   color: #b9bbbe;
 }
 
-.attachment {
+a {
   display: block;
   margin: 4px 0;
   color: #4a90e2;
@@ -57,7 +57,7 @@ body {
   word-break: break-all;
 }
 
-.attachment:hover {
+a:hover {
   text-decoration: underline;
 }
 

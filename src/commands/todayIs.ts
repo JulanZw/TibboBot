@@ -16,7 +16,7 @@ import {
 import { Subcommand } from '../utils/typesAndInterfaces';
 import { logWithTime } from '../utils/logging';
 import { generateLeaderboard } from '../utils/generating';
-import { STANDARD_COLOR } from '../utils/globals';
+import { COOLDOWN_TIMES_MILISECONDS, STANDARD_COLOR } from '../utils/globals';
 
 const scope = 'todayis';
 
@@ -29,6 +29,7 @@ export const todayIsCommands = commandBuilder({
       {
         name: 'leaderboard',
         description: 'Show the leaderboard for the today-is points',
+        cooldown: COOLDOWN_TIMES_MILISECONDS.MINUTE,
         async execute(interaction, client) {
           const guildOnlyFilter = interaction.options.getBoolean('guild_only');
 

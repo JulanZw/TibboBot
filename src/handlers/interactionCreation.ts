@@ -9,6 +9,7 @@ import { ensureGuildExistance } from '../database/guild';
 import { getReminderById, updateReminder } from '../database/reminders';
 import { logWithTime } from '../utils/logging';
 import { capitalizeFirst } from '../utils/formatting';
+import { checkCooldown, formatDuration } from '../utils/cooldownManager';
 
 const scope = 'handler_INTERACTIONCREATION';
 
@@ -45,6 +46,16 @@ export async function handleInteractionCreation(interaction: Interaction) {
         interaction,
       );
       if (!canRun) return;
+
+      const onCooldown = checkCooldown(subCommand, interaction.user.id);
+
+      if (!onCooldown.allowed) {
+        return await safeReply(
+          interaction,
+          `You need to wait ${formatDuration(onCooldown.remaining!)} before using this command again.`,
+          true,
+        );
+      }
     } else {
       // Regular command
       const canRun = await checkPermission(
@@ -53,6 +64,16 @@ export async function handleInteractionCreation(interaction: Interaction) {
         interaction,
       );
       if (!canRun) return;
+
+      const onCooldown = checkCooldown(command, interaction.user.id);
+
+      if (!onCooldown.allowed) {
+        return await safeReply(
+          interaction,
+          `You need to wait ${formatDuration(onCooldown.remaining!)} before using this command again.`,
+          true,
+        );
+      }
     }
 
     try {
