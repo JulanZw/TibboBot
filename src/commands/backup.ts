@@ -11,7 +11,7 @@ import { booleanOption, channelOption } from '../utils/slashCommandOptions';
 
 export const backupCommand = commandBuilder({
   name: 'backup',
-  description: 'Makes a backup of the current channel.',
+  description: 'Makes a backup of a channel.',
   execute: async (interaction: ChatInputCommandInteraction) => {
     const channel =
       interaction.options.getChannel('backupChannel', false) ??

@@ -16,16 +16,18 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
   <script>
-    async function loadJSON(file) {
-      try {
-        const res = await fetch(file);
-        if (!res.ok) throw new Error(`${file} not found`);
-        return await res.json();
-      } catch (e) {
-        console.warn(e.message);
-        return null;
-      }
-    }
+    const metadata = __METADATA__;
+    const messages = __MESSAGES__;
+
+    document.getElementById("metadata").innerHTML =
+    `
+    <p><strong>Backup Requester:</strong> ${metadata.backupRequester} (${metadata.backupRequesterId})</p>
+    <p><strong>Server:</strong> ${metadata.serverName} (${metadata.serverId})</p>
+    <p><strong>Channel:</strong> ${metadata.channelName} (${metadata.channelId})</p>
+    <p><strong>Backup Time:</strong> ${new Date(metadata.backupCreatedAt).toLocaleString()}</p>
+    <p><strong>Messages:</strong> ${metadata.messageCount}</p>
+    <p><strong>Attachments:</strong> ${metadata.includesAttachments ? 'Yes' : 'No'}</p>
+    `;
 
     function intToHexColor(int) {
       return `#${int.toString(16).padStart(6, '0')}`;
@@ -39,21 +41,6 @@
       return (md ?? "")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
-    }
-
-    
-    function renderMetadata(meta) {
-      if (!meta) return;
-      const container = document.getElementById('metadata');
-      container.innerHTML = `
-        <div class="meta-box">
-          <p><strong>Server:</strong> ${meta.serverName} (${meta.serverId})</p>
-          <p><strong>Channel:</strong> #${meta.channelName} (${meta.channelId})</p>
-          <p><strong>Backup created:</strong> ${new Date(meta.backupCreatedAt).toLocaleString()}</p>
-          <p><strong>Messages:</strong> ${meta.messageCount}</p>
-          <p><strong>Includes attachments:</strong> ${meta.includesAttachments ? "Yes" : "No"}</p>
-        </div>
-      `;
     }
 
     function renderMessages(messages) {
@@ -146,13 +133,7 @@
       });
     }
 
-    (async () => {
-      const meta = await loadJSON('metadata.json');
-      renderMetadata(meta);
-
-      const messages = await loadJSON('messages.json');
-      if (messages) renderMessages(messages);
-    })();
+    renderMessages(messages);
   </script>
 </body>
 </html>

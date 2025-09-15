@@ -3,10 +3,15 @@ import fs from 'fs';
 import path from 'path';
 import { pipeline } from 'stream/promises';
 
+import archiver from 'archiver';
 import fetch from 'node-fetch';
-import { TextChannel, ChatInputCommandInteraction, Guild } from 'discord.js';
+import { TextChannel, ChatInputCommandInteraction } from 'discord.js';
+
+import { logWithTime } from './logging';
+import { safeEdit, safeReply } from './general';
 
 const backupQueue: ChatInputCommandInteraction[] = [];
+const scope = 'backup_queue';
 let isWorking = false;
 
 /**
@@ -29,8 +34,8 @@ async function processQueue() {
   isWorking = true;
   try {
     await work(nextJob);
-  } catch (err) {
-    console.error('Backup job failed:', err);
+  } catch (err: any) {
+    logWithTime(`Backup job failed: ${err}`, 'error', scope);
   } finally {
     isWorking = false;
     await processQueue();
@@ -38,28 +43,34 @@ async function processQueue() {
 }
 
 async function work(interaction: ChatInputCommandInteraction) {
+  await safeEdit(interaction, 'Backup is being worked on...');
   const channel = (interaction.options.getChannel('backup_channel', false) ??
     interaction.channel) as TextChannel;
 
   const download =
     interaction.options.getBoolean('download_attachments', false) ?? false;
 
+  logWithTime(
+    `Started backup for user: ${interaction.user.globalName} (${interaction.user.id}) for channel: ${channel.id}`,
+    'info',
+    scope,
+  );
+
   const backupDir = download
     ? `./backups/${channel.id}_attachments`
     : `./backups/${channel.id}`;
-  const filePath = path.join(backupDir, 'messages.json');
+  const zipPath = `${backupDir}.zip`;
   const attachmentsDir = path.join(backupDir, 'attachments');
 
   // ensure folder(s) exists
   fs.mkdirSync(backupDir, { recursive: true });
   if (download) fs.mkdirSync(attachmentsDir, { recursive: true });
 
-  const stream = fs.createWriteStream(filePath, { flags: 'w' });
-  stream.write('[\n');
+  await copyTemplateFiles('./template', backupDir);
 
+  const messages: any[] = [];
   let lastId: string | undefined;
   let hasMore = true;
-  let isFirst = true;
   let totalMessages = 0;
 
   while (hasMore) {
@@ -77,7 +88,7 @@ async function work(interaction: ChatInputCommandInteraction) {
       totalMessages++;
       const attachments = msg.attachments.map((att) => {
         return {
-          url: download ? `./attachments/${att.name}` : att.url,
+          url: download ? `./attachments/${att.id + att.name}` : att.url,
           name: att.name,
           size: att.size,
         };
@@ -86,14 +97,18 @@ async function work(interaction: ChatInputCommandInteraction) {
       if (download && msg.attachments.size > 0) {
         for (const att of msg.attachments.values()) {
           try {
-            await downloadAttachment(att.url, attachmentsDir, att.name);
+            await downloadAttachment(
+              att.url,
+              attachmentsDir,
+              att.id + att.name,
+            );
           } catch (err) {
             console.warn(`Failed to download ${att.url}:`, err);
           }
         }
       }
 
-      const entry = {
+      messages.push({
         id: msg.id,
         content: msg.content,
         createdAt: msg.createdAt,
@@ -109,33 +124,78 @@ async function work(interaction: ChatInputCommandInteraction) {
           footer: e.footer ? { text: e.footer.text } : null,
           color: e.color,
         })),
-      };
-
-      if (!isFirst) stream.write(',\n');
-      stream.write(JSON.stringify(entry, null, 2));
-      isFirst = false;
+      });
     }
 
     lastId = fetched.last()?.id;
     await new Promise((r) => setTimeout(r, 1000)); // rate limit
   }
 
-  stream.write('\n]\n');
-  stream.end();
+  const metadata = {
+    backupRequester: interaction.user.globalName,
+    backupRequesterId: interaction.user.id,
+    serverId: channel.guild.id,
+    serverName: channel.guild.name,
+    channelId: channel.id,
+    channelName: channel.name,
+    backupCreatedAt: new Date().toISOString(),
+    messageCount: totalMessages,
+    includesAttachments: download,
+  };
 
-  await copyTemplateFiles('./template', backupDir);
+  const viewFile = path.join(backupDir, 'view.html');
+  let html = await fsAsync.readFile(viewFile, 'utf-8');
+  html = html
+    .replace('__METADATA__', JSON.stringify(metadata, null, 2))
+    .replace('__MESSAGES__', JSON.stringify(messages, null, 2));
 
-  await writeMetadata(
-    channel.guild,
-    channel,
-    backupDir,
-    totalMessages,
-    download,
-  );
+  const outFile = path.join(backupDir, 'view.html');
+  await fsAsync.writeFile(outFile, html, 'utf-8');
 
-  await interaction.editReply({
-    content: `Backup complete: \`${filePath}\``,
-  });
+  await zipBackup(backupDir, zipPath);
+
+  try {
+    await safeEdit(interaction, `Backup complete for: <#${channel.id}>`);
+    const stats = await fs.promises.stat(zipPath);
+    const maxSize = 8 * 1024 * 1024;
+
+    const dm = await interaction.user.createDM();
+
+    if (stats.size > maxSize) {
+      await dm.send({
+        content: `Backup for <#${channel.id}> is too large to send via Discord (size: ${(stats.size / 1024 / 1024).toFixed(2)} MB).`,
+      });
+    } else {
+      await dm.send({
+        content: `Backup for <#${channel.id}>`,
+        files: [zipPath],
+      });
+    }
+
+    logWithTime(
+      `Completed backup for user: ${interaction.user.globalName} (${interaction.user.id}) for channel: ${channel.id}`,
+      'info',
+      scope,
+    );
+  } catch (err: any) {
+    logWithTime(`Could not send backup via DM: ${err}`, 'error', scope, true);
+    await safeReply(
+      interaction,
+      'Could not send you the backup file via DM. This is likely due to the bot not being able to DM you.',
+      true,
+    );
+  } finally {
+    try {
+      await fsAsync.unlink(zipPath);
+    } catch (err: any) {
+      logWithTime(
+        `Failed to remove temporary zip: ${err}`,
+        'error',
+        scope,
+        true,
+      );
+    }
+  }
 }
 
 /**
@@ -189,25 +249,18 @@ async function copyTemplateFiles(srcDir: string, destDir: string) {
 }
 
 /**
- * Writes a metadata.json file to the given backup folder
+ * Zips the provided dir to the output path
  */
-async function writeMetadata(
-  guild: Guild,
-  channel: TextChannel,
-  backupDir: string,
-  messageCount: number,
-  includesAttachments: boolean,
-) {
-  const metadata = {
-    serverId: guild.id,
-    serverName: guild.name,
-    channelId: channel.id,
-    channelName: channel.name,
-    backupCreatedAt: new Date().toISOString(),
-    messageCount,
-    includesAttachments,
-  };
+async function zipBackup(sourceDir: string, outPath: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const output = fs.createWriteStream(outPath);
+    const archive = archiver('zip', { zlib: { level: 9 } });
 
-  const filePath = path.join(backupDir, 'metadata.json');
-  await fsAsync.writeFile(filePath, JSON.stringify(metadata, null, 2), 'utf-8');
+    output.on('close', () => resolve());
+    archive.on('error', (err) => reject(err));
+
+    archive.pipe(output);
+    archive.directory(sourceDir, false);
+    void archive.finalize();
+  });
 }

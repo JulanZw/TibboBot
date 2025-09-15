@@ -12,6 +12,7 @@ import {
   ChatInputCommandInteraction,
   Client,
   EmbedBuilder,
+  InteractionEditReplyOptions,
   InteractionReplyOptions,
   JSONEncodable,
   MessageFlags,
@@ -76,6 +77,18 @@ export async function safeReply(
 
   if (!interaction.replied && !interaction.deferred) {
     try {
+      const now = Date.now();
+      const threeMinutes = 3 * 60 * 1000;
+
+      if (now - interaction.createdTimestamp > threeMinutes) {
+        logWithTime(
+          'This interaction is older than 3 minutes.',
+          'error',
+          scope,
+          true,
+        );
+        return;
+      }
       return await interaction.reply(payload);
     } catch {
       logWithTime(
@@ -96,6 +109,59 @@ export async function safeReply(
         true,
       );
     }
+  }
+}
+
+//#endregion
+
+//#region SafeEdit
+
+/**
+ * Utility function so edits don't fail
+ *
+ * @param interaction - The interaction that should be replied to
+ * @param content - The content of the reply
+ * @param embeds - Embeds that should be replied with
+ * @param components - Components that should be replied with
+ */
+export async function safeEdit(
+  interaction:
+    | ChatInputCommandInteraction
+    | ButtonInteraction
+    | ModalSubmitInteraction
+    | ChannelSelectMenuInteraction
+    | StringSelectMenuInteraction,
+  content: string,
+  embeds?: EmbedBuilder[],
+  components?: ActionRowBuilder<any>[],
+) {
+  const editPayload: InteractionEditReplyOptions = {
+    ...(content ? { content } : {}),
+    ...(embeds ? { embeds } : {}),
+    ...(components ? { components } : {}),
+  };
+
+  try {
+    const now = Date.now();
+    const threeMinutes = 3 * 60 * 1000;
+
+    if (now - interaction.createdTimestamp > threeMinutes) {
+      logWithTime(
+        'This interaction is older than 3 minutes.',
+        'error',
+        scope,
+        true,
+      );
+      return;
+    }
+    return await interaction.editReply(editPayload);
+  } catch {
+    logWithTime(
+      `Failed to edit interaction: ${interaction.id}`,
+      'error',
+      scope,
+      true,
+    );
   }
 }
 
