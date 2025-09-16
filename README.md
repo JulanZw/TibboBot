@@ -1,7 +1,7 @@
 # Tibbo Discord Bot
 
 Tibbo the toolbox is a multipurpose Discord bot built with TypeScript using `discord.js` and Prisma.  
-Includes features like counting channels, reminders and more.
+Includes features like mini games, reminders, backups and more.
 
 ---
 
@@ -50,45 +50,16 @@ TibboBot
 │   └── schema.prisma
 ├── src
 │   ├── commands
-│   │   ├── birthday.ts
-│   │   ├── cat.ts
-│   │   ├── encode.ts
-│   │   ├── help.ts
-│   │   ├── magic.ts
-│   │   ├── manage.ts
-│   │   ├── messages.ts
-│   │   ├── ping.ts
-│   │   ├── purge.ts
-│   │   ├── reaction.ts
-│   │   ├── reminders.ts
-│   │   ├── source.ts
-│   │   └── todayIs.ts
+│   │   └── All commands...
 │   ├── database
-│   │   ├── birthday.ts
-│   │   ├── guild.ts
-│   │   ├── reactionRoles.ts
-│   │   ├── reminders.ts
-│   │   └── user.ts
+│   │   └── All db functions...
 │   ├── handlers
-│   │   ├── interactionCreation.ts
-│   │   ├── messageCreation.ts
-│   │   ├── messageDeletion.ts
-│   │   ├── reactionAdded.ts
-│   │   └── reactionRemoved.ts
+│   │   └── All handlers...
 │   ├── utils
-│   │   ├── embeds.ts
-│   │   ├── formatting.ts
-│   │   ├── general.ts
-│   │   ├── globals.ts
-│   │   ├── logging.ts
-│   │   ├── parsers.ts
-│   │   ├── preproccessors.ts
-│   │   ├── slashCommandOptions.ts
-│   │   └── typesAndInterfaces.ts
+│   │   └── All util functions...
 │   ├── commands.ts
 │   ├── cronJobs.ts
 │   └── index.ts
-├── tmp/
 ├── README.md
 ├── .env
 ├── .example.env

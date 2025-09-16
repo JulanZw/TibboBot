@@ -54,7 +54,7 @@ export const prisma = new PrismaClient();
  */
 export const todayWinners: Record<string, 'bot' | 'human' | null> = {};
 
-export enum COOLDOWN_TIMES_MILISECONDS {
+export enum TIMES_MILISECONDS {
   MINUTE = 60000,
   TEN_MINUTES = 600000,
   HOUR = 6000000,

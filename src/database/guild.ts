@@ -213,3 +213,21 @@ export async function updateDumbScore(guildId: string, humanWon: boolean) {
     });
   }
 }
+
+export async function getAllowBackup(guildId: string) {
+  const guild = await getGuild(guildId);
+  if (guild) {
+    return guild.allowBackups;
+  } else {
+    throw new Error('Guild not found, but should exist');
+  }
+}
+
+export async function toggleAllowBackup(guildId: string) {
+  const result = await getAllowBackup(guildId);
+
+  return await prisma.guild.update({
+    where: { guildId },
+    data: { allowBackups: !result },
+  });
+}

@@ -16,6 +16,7 @@ model Guild {
   todayIsChannelId  String?
   birthdayChannelId String?
   dumbScore         Int      @default(0)
+  allowBackups      Boolean  @default(true)
 
   pointGiverId      String?
   pointGiver        User?    @relation(fields: [pointGiverId], references: [discordId])

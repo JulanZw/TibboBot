@@ -57,6 +57,7 @@ export function embedBuilder({
  * @param actionId - The base action ID for the button
  * @param disabled - Whether the button should be disabled, defaults to false
  * @param label - Optional label for the button, defaults to type-based label
+ * @param style - Optional style for the button, defaults to secondary
  *
  * @return A ButtonBuilder instance configured with the specified properties
  */
@@ -98,7 +99,6 @@ function createButton({
 /**
  * Creates one action row of standard buttons with optional auto-disable logic.
  *
- * @param actionId - The base action ID for the buttons
  * @param index - The current index of the item being paginated
  * @param total - The total number of pages
  * @param types - The types of buttons to include, defaults to all

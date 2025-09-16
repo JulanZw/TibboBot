@@ -3,6 +3,7 @@ import { ChatInputCommandInteraction, ComponentType } from 'discord.js';
 import { commandBuilder, safeReply } from '../utils/general';
 import { embedBuilder, createButtonsRow } from '../utils/embeds';
 import { commandNamesAndDescriptions } from '../commands';
+import { TIMES_MILISECONDS } from '../utils/globals';
 
 export const helpCommand = commandBuilder({
   name: 'help',
@@ -26,7 +27,7 @@ export const helpCommand = commandBuilder({
 
     const collector = msg.createMessageComponentCollector({
       componentType: ComponentType.Button,
-      time: 120000, // 2 mins
+      time: TIMES_MILISECONDS.MINUTE * 2,
     });
 
     // eslint-disable-next-line @typescript-eslint/no-misused-promises

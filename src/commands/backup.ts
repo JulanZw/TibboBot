@@ -9,7 +9,8 @@ import { commandBuilder, safeReply } from '../utils/general';
 import { enqueue } from '../utils/backupQueue';
 import { booleanOption, channelOption } from '../utils/slashCommandOptions';
 import { Subcommand } from '../utils/typesAndInterfaces';
-import { COOLDOWN_TIMES_MILISECONDS } from '../utils/globals';
+import { TIMES_MILISECONDS } from '../utils/globals';
+import { getAllowBackup } from '../database/guild';
 
 export const backupCommands = commandBuilder({
   name: 'backup',
@@ -20,8 +21,23 @@ export const backupCommands = commandBuilder({
       {
         name: 'create',
         description: 'Makes a backup of a channel.',
-        cooldown: COOLDOWN_TIMES_MILISECONDS.HOUR,
+        cooldown: TIMES_MILISECONDS.HOUR,
         execute: async (interaction: ChatInputCommandInteraction) => {
+          if (!interaction.guildId) {
+            return await safeReply(
+              interaction,
+              `Uhhh... Well this is akward... You arent supposed to see this message... Please contact the bot owner`,
+            );
+          }
+
+          if (!(await getAllowBackup(interaction.guildId))) {
+            return await safeReply(
+              interaction,
+              'This guild has backups turned off.',
+              true,
+            );
+          }
+
           const channel =
             interaction.options.getChannel('backupChannel', false) ??
             interaction.channel;

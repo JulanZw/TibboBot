@@ -22,6 +22,7 @@ import {
   deleteReminder,
   getUserReminders,
 } from '../database/reminders';
+import { TIMES_MILISECONDS } from '../utils/globals';
 
 const scope = 'reminder';
 
@@ -166,7 +167,7 @@ export const reminderCommands = commandBuilder({
 
           const collector = msg.createMessageComponentCollector({
             componentType: ComponentType.Button,
-            time: 120000,
+            time: TIMES_MILISECONDS.MINUTE * 2,
           });
 
           // eslint-disable-next-line @typescript-eslint/no-misused-promises

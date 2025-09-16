@@ -8,6 +8,7 @@ import { formatDateToString } from '../utils/formatting';
 import { parseBirthdayDate } from '../utils/parsers';
 import { setBirthday, getAllBirthdaysInGuild } from '../database/birthday';
 import { Subcommand } from '../utils/typesAndInterfaces';
+import { TIMES_MILISECONDS } from '../utils/globals';
 
 const scope = 'birthday';
 
@@ -156,7 +157,7 @@ export const birthdayCommands = commandBuilder({
 
           const collector = msg.createMessageComponentCollector({
             componentType: ComponentType.Button,
-            time: 120000, // 2 mins
+            time: TIMES_MILISECONDS.MINUTE * 2,
           });
 
           // eslint-disable-next-line @typescript-eslint/no-misused-promises

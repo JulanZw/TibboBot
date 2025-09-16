@@ -7,7 +7,7 @@ import {
   getUserCharsAndMessages,
 } from '../database/user';
 import { Subcommand } from '../utils/typesAndInterfaces';
-import { COOLDOWN_TIMES_MILISECONDS, STANDARD_COLOR } from '../utils/globals';
+import { TIMES_MILISECONDS, STANDARD_COLOR } from '../utils/globals';
 import { generateLeaderboard } from '../utils/generating';
 
 const scope = 'messages';
@@ -22,7 +22,7 @@ export const messageCommands = commandBuilder({
         name: 'leaderboard',
         description:
           'Show the leaderboard for all characters and messages sent',
-        cooldown: COOLDOWN_TIMES_MILISECONDS.MINUTE,
+        cooldown: TIMES_MILISECONDS.MINUTE,
         async execute(interaction, client) {
           const guildOnlyFilter = interaction.options.getBoolean('guild_only');
 

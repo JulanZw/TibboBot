@@ -11,8 +11,14 @@ import {
 
 import { commandBuilder, safeReply } from '../utils/general';
 import { logWithTime } from '../utils/logging';
-import { getBotChannel, updateBotChannel } from '../database/guild';
+import {
+  getAllowBackup,
+  getBotChannel,
+  toggleAllowBackup,
+  updateBotChannel,
+} from '../database/guild';
 import { BotChannel, Subcommand } from '../utils/typesAndInterfaces';
+import { TIMES_MILISECONDS } from '../utils/globals';
 
 const scope = 'manage';
 
@@ -152,7 +158,7 @@ export const manageChannelsCommand = commandBuilder({
                       i.user.id === interaction.user.id &&
                       i.customId === `choose_${selected}`,
                     componentType: ComponentType.ChannelSelect,
-                    time: 60000,
+                    time: TIMES_MILISECONDS.MINUTE,
                   });
 
                 // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -222,6 +228,91 @@ export const manageChannelsCommand = commandBuilder({
         },
         customize: (builder) => {
           return builder;
+        },
+        permissionLevel: 'admin',
+        guildOnly: true,
+      },
+    ],
+    [
+      'backups',
+      {
+        name: 'backups',
+        description: 'Change if backups are allowed or not',
+        execute: async (interaction) => {
+          if (!interaction.guildId) {
+            return await safeReply(
+              interaction,
+              `Uhhh... Well this is akward... You arent supposed to see this message... Please contact the bot owner`,
+            );
+          }
+
+          const currentStatus = await getAllowBackup(interaction.guildId);
+
+          const buttonRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+              .setCustomId(`toggle`)
+              .setLabel('Toggle')
+              .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
+              .setCustomId(`cancel`)
+              .setLabel('Cancel')
+              .setStyle(ButtonStyle.Secondary),
+          );
+
+          await safeReply(
+            interaction,
+            `Currently backups in the server are: \`${currentStatus ? 'on' : 'off'}\``,
+            false,
+            [],
+            [buttonRow],
+          );
+
+          const msg = await interaction.fetchReply();
+
+          const collector = msg.createMessageComponentCollector({
+            componentType: ComponentType.Button,
+            time: TIMES_MILISECONDS.MINUTE,
+          });
+
+          // eslint-disable-next-line @typescript-eslint/no-misused-promises
+          collector.on('collect', async (buttonInteraction) => {
+            if (buttonInteraction.user.id !== interaction.user.id) {
+              return await safeReply(
+                buttonInteraction,
+                'You cannot use this button.',
+                true,
+              );
+            }
+
+            const action = buttonInteraction.customId;
+
+            switch (action) {
+              case 'toggle':
+                await toggleAllowBackup(interaction.guildId as string);
+                await buttonInteraction.update({
+                  content: `Backups in the server are now turned: \`${!currentStatus ? 'on' : 'off'}\``,
+                  components: [],
+                });
+                return collector.stop();
+              case 'cancel':
+                await buttonInteraction.update({
+                  content: 'Action cancelled.',
+                  components: [],
+                });
+                return collector.stop();
+              default:
+                return await safeReply(
+                  buttonInteraction,
+                  'Invalid action.',
+                  true,
+                );
+            }
+          });
+
+          // eslint-disable-next-line @typescript-eslint/no-misused-promises
+          collector.on('end', async () => {
+            await interaction.editReply({ components: [] });
+          });
         },
         permissionLevel: 'admin',
         guildOnly: true,
