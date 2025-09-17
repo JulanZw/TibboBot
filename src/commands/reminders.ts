@@ -14,7 +14,12 @@ import { stringOption } from '../utils/slashCommandOptions';
 import { commandBuilder, safeReply, scheduleReminder } from '../utils/general';
 import { logWithTime } from '../utils/logging';
 import { parseDurationOrDateString } from '../utils/parsers';
-import { embedBuilder, createButtonsRow } from '../utils/embeds';
+import {
+  embedBuilder,
+  createButtonsRow,
+  createButton,
+  createPaginationButtons,
+} from '../utils/embeds';
 import { capitalizeFirst, formatDateToDDMMYYYY } from '../utils/formatting';
 import { Subcommand } from '../utils/typesAndInterfaces';
 import {
@@ -121,7 +126,6 @@ export const reminderCommands = commandBuilder({
         name: 'list',
         description: 'List and manage your reminders',
         async execute(interaction: ChatInputCommandInteraction) {
-          let noCleanUpNeeded = false;
           const reminders = await getUserReminders(interaction.user.id);
           if (!reminders.length) {
             return await safeReply(interaction, 'You have no reminders.', true);
@@ -130,7 +134,7 @@ export const reminderCommands = commandBuilder({
           let index = 0;
           const userId = interaction.user.id;
 
-          const buildEmbed = (reminder: Reminders, index: number) =>
+          const buildEmbed = (reminder: Reminders, index: number) => [
             embedBuilder({
               title: `Reminder ${index + 1} of ${reminders.length}`,
               fields: [
@@ -149,18 +153,31 @@ export const reminderCommands = commandBuilder({
                     ]),
               ],
               footer: `Created: ${formatDateToDDMMYYYY(reminder.createdAt)}`,
-            });
-
-          const buildComponents = () => [
-            createButtonsRow(index, reminders.length),
+            }),
           ];
+
+          const buildButtons = (length: number, index: number) => {
+            const normalButtons = [
+              createButton({ type: 'edit' }),
+              createButton({ type: 'delete' }),
+            ];
+
+            const paginationButtons = createPaginationButtons(index, length);
+
+            return [
+              createButtonsRow(normalButtons, {
+                buttons: paginationButtons,
+                location: 'embrace',
+              }),
+            ];
+          };
 
           await safeReply(
             interaction,
             '',
-            true,
-            [buildEmbed(reminders[index], index)],
-            buildComponents(),
+            false,
+            buildEmbed(reminders[index], index),
+            buildButtons(reminders.length, index),
           );
 
           const msg = await interaction.fetchReply();
@@ -196,12 +213,10 @@ export const reminderCommands = commandBuilder({
                 reminders.splice(index, 1);
 
                 if (!reminders.length) {
-                  noCleanUpNeeded = true;
                   collector.stop();
                   return await btnInteraction.update({
                     content: 'All reminders deleted.',
                     embeds: [],
-                    components: [],
                   });
                 }
 
@@ -247,23 +262,21 @@ export const reminderCommands = commandBuilder({
             }
 
             await btnInteraction.update({
-              embeds: [buildEmbed(reminders[index], index)],
-              components: buildComponents(),
+              embeds: buildEmbed(reminders[index], index),
+              components: buildButtons(reminders.length, index),
             });
           });
 
           // eslint-disable-next-line @typescript-eslint/no-misused-promises
           collector.on('end', async () => {
-            if (!noCleanUpNeeded) {
-              try {
-                await interaction.editReply({ components: [] });
-              } catch (err: any) {
-                logWithTime(
-                  `Could not edit message after collector ended: ${err}`,
-                  'warn',
-                  scope,
-                );
-              }
+            try {
+              await interaction.editReply({ components: [] });
+            } catch (err: any) {
+              logWithTime(
+                `Could not edit message after collector ended: ${err}`,
+                'warn',
+                scope,
+              );
             }
           });
         },

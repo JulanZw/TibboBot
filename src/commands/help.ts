@@ -1,7 +1,11 @@
 import { ChatInputCommandInteraction, ComponentType } from 'discord.js';
 
 import { commandBuilder, safeReply } from '../utils/general';
-import { embedBuilder, createButtonsRow } from '../utils/embeds';
+import {
+  embedBuilder,
+  createButtonsRow,
+  createPaginationButtons,
+} from '../utils/embeds';
 import { commandNamesAndDescriptions } from '../commands';
 import { TIMES_MILISECONDS } from '../utils/globals';
 
@@ -12,16 +16,21 @@ export const helpCommand = commandBuilder({
     let index = 0;
     const totalPages = commandNamesAndDescriptions.length;
 
-    const embed = embedBuilder({
-      title: 'List of Available Commands',
-      description: 'Here are the commands you can use:',
-      fields: commandNamesAndDescriptions[index],
-      footer: `Page ${index + 1} of ${totalPages}`,
-    });
+    const buildEmbed = () => [
+      embedBuilder({
+        title: 'List of Available Commands',
+        description: 'Here are the commands you can use:',
+        fields: commandNamesAndDescriptions[index],
+        footer: `Page ${index + 1} of ${totalPages}`,
+      }),
+    ];
 
-    const components = [createButtonsRow(index, totalPages, ['prev', 'next'])];
+    const buildButtons = () => {
+      const buttons = createPaginationButtons(index, totalPages); //although they are pagination buttons, there are no other buttons so this works fine
+      return [createButtonsRow(buttons)];
+    };
 
-    await safeReply(interaction, '', false, [embed], components);
+    await safeReply(interaction, '', false, buildEmbed(), buildButtons());
 
     const msg = await interaction.fetchReply();
 
@@ -53,20 +62,9 @@ export const helpCommand = commandBuilder({
           return await safeReply(buttonInteraction, 'Invalid action.', true);
       }
 
-      const newEmbed = embedBuilder({
-        title: 'List of Available Commands',
-        description: 'Here are the commands you can use:',
-        fields: commandNamesAndDescriptions[index],
-        footer: `Page ${index + 1} of ${totalPages}`,
-      });
-
-      const newComponents = [
-        createButtonsRow(index, totalPages, ['prev', 'next']),
-      ];
-
       await buttonInteraction.update({
-        embeds: [newEmbed],
-        components: newComponents,
+        embeds: buildEmbed(),
+        components: buildButtons(),
       });
     });
 

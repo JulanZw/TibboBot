@@ -8,7 +8,7 @@ import {
 } from 'discord.js';
 
 import { STANDARD_COLOR } from './globals';
-import { ButtonType } from './typesAndInterfaces';
+import { PaginationButtonLocation } from './typesAndInterfaces';
 
 /**
  * Util function for building an embed
@@ -53,7 +53,7 @@ export function embedBuilder({
 /**
  * Creates a single button based on its type and config.
  *
- * @param type - The `ButtonType` of the button (prev, next, edit, delete)
+ * @param type - The button type of the button (prev, next, edit, delete, etc)
  * @param actionId - The base action ID for the button
  * @param disabled - Whether the button should be disabled, defaults to false
  * @param label - Optional label for the button, defaults to type-based label
@@ -61,14 +61,14 @@ export function embedBuilder({
  *
  * @return A ButtonBuilder instance configured with the specified properties
  */
-function createButton({
+export function createButton({
   type,
   disabled = false,
   label,
   style,
   customId,
 }: {
-  type: ButtonType;
+  type: string;
   disabled?: boolean;
   label?: string;
   style?: ButtonStyle;
@@ -97,27 +97,57 @@ function createButton({
 }
 
 /**
- * Creates one action row of standard buttons with optional auto-disable logic.
+ * Creates an `ButtonBuilder[]` with a prev and next button (in that order).
  *
  * @param index - The current index of the item being paginated
  * @param total - The total number of pages
- * @param types - The types of buttons to include, defaults to all
  *
- * @returns An ActionRowBuilder containing the buttons
+ * @returns An `ButtonBuilder[]` containing the buttons
  */
-export function createButtonsRow(
+export function createPaginationButtons(
   index: number,
   total: number,
-  types: ButtonType[] = ['prev', 'edit', 'delete', 'next'],
-): ActionRowBuilder<ButtonBuilder> {
-  const buttons = types.map((type) =>
+): ButtonBuilder[] {
+  const buttons = [
     createButton({
-      type,
-      disabled:
-        (type === 'prev' && index === 0) ||
-        (type === 'next' && index === total - 1),
+      type: 'prev',
+      disabled: index === 0,
     }),
-  );
+    createButton({
+      type: 'next',
+      disabled: index === total - 1,
+    }),
+  ];
 
-  return new ActionRowBuilder<ButtonBuilder>().addComponents(...buttons);
+  return buttons;
+}
+
+export function createButtonsRow(
+  normalButtons: ButtonBuilder[],
+  pagination?: { buttons: ButtonBuilder[]; location: PaginationButtonLocation },
+) {
+  if (pagination && pagination.buttons.length === 2) {
+    switch (pagination.location) {
+      case 'embrace':
+        return new ActionRowBuilder<ButtonBuilder>().addComponents(
+          pagination.buttons[0],
+          ...normalButtons,
+          pagination.buttons[1],
+        );
+      case 'start':
+        return new ActionRowBuilder<ButtonBuilder>().addComponents(
+          ...pagination.buttons,
+          ...normalButtons,
+        );
+      case 'end':
+        return new ActionRowBuilder<ButtonBuilder>().addComponents(
+          ...normalButtons,
+          ...pagination.buttons,
+        );
+    }
+  } else {
+    return new ActionRowBuilder<ButtonBuilder>().addComponents(
+      ...normalButtons,
+    );
+  }
 }

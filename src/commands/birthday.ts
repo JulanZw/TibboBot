@@ -1,9 +1,13 @@
-import { ComponentType } from 'discord.js';
+import { ChatInputCommandInteraction, ComponentType } from 'discord.js';
 
 import { stringOption } from '../utils/slashCommandOptions';
 import { commandBuilder, safeReply } from '../utils/general';
 import { logWithTime } from '../utils/logging';
-import { embedBuilder, createButtonsRow } from '../utils/embeds';
+import {
+  embedBuilder,
+  createButtonsRow,
+  createPaginationButtons,
+} from '../utils/embeds';
 import { formatDateToString } from '../utils/formatting';
 import { parseBirthdayDate } from '../utils/parsers';
 import { setBirthday, getAllBirthdaysInGuild } from '../database/birthday';
@@ -84,7 +88,7 @@ export const birthdayCommands = commandBuilder({
       {
         name: 'calender',
         description: 'Get all the birthdays in this server',
-        async execute(interaction) {
+        async execute(interaction: ChatInputCommandInteraction) {
           if (!interaction.guildId) {
             return await safeReply(
               interaction,
@@ -140,18 +144,21 @@ export const birthdayCommands = commandBuilder({
           let index = 0;
           const totalPages = birthdayPages.size;
 
-          const embed = embedBuilder({
-            title: 'Calender',
-            description: `The birthdays for: **${months[index]}**`,
-            fields: birthdayPages.get(months[index]) ?? [],
-            footer: `Page ${index + 1} of ${totalPages}`,
-          });
-
-          const components = [
-            createButtonsRow(index, totalPages, ['prev', 'next']),
+          const buildEmbed = () => [
+            embedBuilder({
+              title: 'Calender',
+              description: `The birthdays for: **${months[index]}**`,
+              fields: birthdayPages.get(months[index]) ?? [],
+              footer: `Page ${index + 1} of ${totalPages}`,
+            }),
           ];
 
-          await safeReply(interaction, '', false, [embed], components);
+          const buildButtons = () => {
+            const buttons = createPaginationButtons(index, totalPages);
+            return [createButtonsRow(buttons)];
+          };
+
+          await safeReply(interaction, '', false, buildEmbed(), buildButtons());
 
           const msg = await interaction.fetchReply();
 
@@ -187,20 +194,9 @@ export const birthdayCommands = commandBuilder({
                 );
             }
 
-            const newEmbed = embedBuilder({
-              title: 'Calender',
-              description: `The birthdays for: **${months[index]}**`,
-              fields: birthdayPages.get(months[index]),
-              footer: `Page ${index + 1} of ${totalPages}`,
-            });
-
-            const newComponents = [
-              createButtonsRow(index, totalPages, ['prev', 'next']),
-            ];
-
             await buttonInteraction.update({
-              embeds: [newEmbed],
-              components: newComponents,
+              embeds: buildEmbed(),
+              components: buildButtons(),
             });
           });
 

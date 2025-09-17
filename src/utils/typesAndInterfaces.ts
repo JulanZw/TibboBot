@@ -18,6 +18,8 @@ export type ButtonType = 'prev' | 'next' | 'edit' | 'delete';
 
 export type LogLevel = 'info' | 'warn' | 'error';
 
+export type PaginationButtonLocation = 'embrace' | 'start' | 'end';
+
 type BaseCommand = {
   name: string;
   description: string;
