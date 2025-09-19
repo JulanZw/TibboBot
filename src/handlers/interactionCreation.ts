@@ -3,7 +3,7 @@ import { Interaction } from 'discord.js';
 import { ensureGuildExistance } from '../database/guild';
 
 import { executeCommand } from './commandExecution';
-import { handleModal } from './modals';
+import { handleModal } from './modalSubmission';
 
 export async function handleInteractionCreation(interaction: Interaction) {
   if (interaction.guildId) {

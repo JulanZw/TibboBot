@@ -14,7 +14,7 @@ import { todayIsCommands } from './commands/todayIs';
 import { Registerable } from './utils/typesAndInterfaces';
 import { COMMANDS_PER_PAGE } from './utils/globals';
 import { encodeCommands } from './commands/encode';
-import { purgeCommand } from './commands/purge';
+import { optoutCommand } from './commands/opt';
 import { howToCommands } from './commands/howto';
 import { rngCommand } from './commands/rng';
 import { backupCommands } from './commands/backup';
@@ -41,7 +41,7 @@ export const commands: Registerable[] = [
   catCommand,
   backupCommands,
   sourceCommand,
-  purgeCommand,
+  optoutCommand,
   manageChannelsCommand,
   birthdayCommands,
   messageCommands,

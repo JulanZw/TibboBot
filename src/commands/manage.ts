@@ -2,7 +2,6 @@ import {
   ActionRowBuilder,
   StringSelectMenuBuilder,
   ComponentType,
-  ButtonBuilder,
   ButtonStyle,
   ChannelSelectMenuBuilder,
   ChannelType,
@@ -14,11 +13,14 @@ import { logWithTime } from '../utils/logging';
 import {
   getAllowBackup,
   getBotChannel,
+  getGuild,
   toggleAllowBackup,
   updateBotChannel,
 } from '../database/guild';
 import { BotChannel, Subcommand } from '../utils/typesAndInterfaces';
 import { TIMES_MILISECONDS } from '../utils/globals';
+import { showConfirmModal } from '../utils/confirmation';
+import { createButton, createButtonsRow } from '../utils/embeds';
 
 const scope = 'manage';
 
@@ -76,21 +78,25 @@ export const manageChannelsCommand = commandBuilder({
           menuCollector.on('collect', async (menuInteraction) => {
             const selected = menuInteraction.values[0];
 
-            const buttonRow =
-              new ActionRowBuilder<ButtonBuilder>().addComponents(
-                new ButtonBuilder()
-                  .setCustomId(`set_${selected}`)
-                  .setLabel('Set')
-                  .setStyle(ButtonStyle.Primary),
-                new ButtonBuilder()
-                  .setCustomId(`reset_${selected}`)
-                  .setLabel('Reset')
-                  .setStyle(ButtonStyle.Danger),
-                new ButtonBuilder()
-                  .setCustomId(`cancel`)
-                  .setLabel('Cancel')
-                  .setStyle(ButtonStyle.Secondary),
-              );
+            const buttons = [
+              createButton({
+                type: 'set',
+                label: 'Set',
+                style: ButtonStyle.Primary,
+                customId: `set_${selected}`,
+              }),
+              createButton({
+                type: 'reset',
+                label: 'Reset',
+                style: ButtonStyle.Danger,
+                customId: `reset_${selected}`,
+              }),
+              createButton({
+                type: 'cancel',
+                label: 'Cancel',
+                style: ButtonStyle.Secondary,
+              }),
+            ];
 
             const existingBotChannel = await getBotChannel(
               guildId,
@@ -101,7 +107,7 @@ export const manageChannelsCommand = commandBuilder({
               content: existingBotChannel
                 ? `You selected: **${selected}**.\nCurrent channel: <#${existingBotChannel}>\nChoose an action:`
                 : `You selected: **${selected}**.\nCurrent channel: [not set]\nChoose an action:`,
-              components: [buttonRow],
+              components: [createButtonsRow(buttons)],
             });
 
             menuCollector.stop();
@@ -248,23 +254,25 @@ export const manageChannelsCommand = commandBuilder({
 
           const currentStatus = await getAllowBackup(interaction.guildId);
 
-          const buttonRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-            new ButtonBuilder()
-              .setCustomId(`toggle`)
-              .setLabel('Toggle')
-              .setStyle(ButtonStyle.Primary),
-            new ButtonBuilder()
-              .setCustomId(`cancel`)
-              .setLabel('Cancel')
-              .setStyle(ButtonStyle.Secondary),
-          );
+          const buttons = [
+            createButton({
+              type: 'toggle',
+              label: 'Toggle',
+              style: ButtonStyle.Primary,
+            }),
+            createButton({
+              type: 'cancel',
+              label: 'Cancel',
+              style: ButtonStyle.Secondary,
+            }),
+          ];
 
           await safeReply(
             interaction,
             `Currently backups in the server are: \`${currentStatus ? 'on' : 'off'}\``,
             false,
             [],
-            [buttonRow],
+            [createButtonsRow(buttons)],
           );
 
           const msg = await interaction.fetchReply();
@@ -314,6 +322,28 @@ export const manageChannelsCommand = commandBuilder({
             await interaction.editReply({ components: [] });
           });
         },
+        permissionLevel: 'admin',
+        guildOnly: true,
+      },
+    ],
+    [
+      'data',
+      {
+        name: 'data',
+        description: 'Removes all the data of the guild.',
+        async execute(interaction) {
+          const guild = await getGuild(interaction.guild!.id);
+          if (!guild) {
+            return await safeReply(
+              interaction,
+              'Guild is not in the database.',
+              true,
+            );
+          }
+
+          await showConfirmModal(interaction, 'purge_guild_confirm_modal');
+        },
+        customize: (builder) => builder,
         permissionLevel: 'admin',
         guildOnly: true,
       },

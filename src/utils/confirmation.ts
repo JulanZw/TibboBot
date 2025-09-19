@@ -5,6 +5,7 @@ import {
   TextInputStyle,
   ActionRowBuilder,
   ModalSubmitInteraction,
+  ButtonInteraction,
 } from 'discord.js';
 
 import { safeReply } from './general';
@@ -15,7 +16,7 @@ import { safeReply } from './general';
  * @param customId Unique customId for the modal.
  */
 export async function showConfirmModal(
-  interaction: CommandInteraction,
+  interaction: CommandInteraction | ButtonInteraction,
   customId: string,
 ) {
   const modal = new ModalBuilder()

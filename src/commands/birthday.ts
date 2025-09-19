@@ -13,6 +13,7 @@ import { parseBirthdayDate } from '../utils/parsers';
 import { setBirthday, getAllBirthdaysInGuild } from '../database/birthday';
 import { Subcommand } from '../utils/typesAndInterfaces';
 import { TIMES_MILISECONDS } from '../utils/globals';
+import { hasOptedOut } from '../utils/optInOut';
 
 const scope = 'birthday';
 
@@ -26,6 +27,12 @@ export const birthdayCommands = commandBuilder({
         name: 'set',
         description: 'Set your birthday for this server',
         async execute(interaction) {
+          if (hasOptedOut(interaction.user.id)) {
+            return await safeReply(
+              interaction,
+              'You have opted out of data collection, so you cannot set your birthday.',
+            );
+          }
           if (!interaction.guildId) {
             return await safeReply(
               interaction,

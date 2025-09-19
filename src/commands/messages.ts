@@ -9,6 +9,7 @@ import {
 import { Subcommand } from '../utils/typesAndInterfaces';
 import { TIMES_MILISECONDS, STANDARD_COLOR } from '../utils/globals';
 import { generateLeaderboard } from '../utils/generating';
+import { hasOptedOut } from '../utils/optInOut';
 
 const scope = 'messages';
 
@@ -122,6 +123,13 @@ export const messageCommands = commandBuilder({
 
           if (!targetUser) {
             return await safeReply(interaction, 'No target user was provided.');
+          }
+
+          if (hasOptedOut(targetUser.id)) {
+            return await safeReply(
+              interaction,
+              'This user has opted out of data collection.',
+            );
           }
 
           const user = await getUserCharsAndMessages(targetUser.id);

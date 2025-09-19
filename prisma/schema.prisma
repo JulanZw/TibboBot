@@ -29,6 +29,7 @@ model User {
   points      BigInt
   char_count  BigInt
   msg_count   Int
+  optedout    Boolean    @default(false)
 
   pointGiverIn Guild[]
 

@@ -28,6 +28,7 @@ import {
   getUserReminders,
 } from '../database/reminders';
 import { TIMES_MILISECONDS } from '../utils/globals';
+import { hasOptedOut } from '../utils/optInOut';
 
 const scope = 'reminder';
 
@@ -41,6 +42,12 @@ export const reminderCommands = commandBuilder({
         name: 'add',
         description: 'Set a new reminder',
         async execute(interaction: ChatInputCommandInteraction) {
+          if (hasOptedOut(interaction.user.id)) {
+            return await safeReply(
+              interaction,
+              'You have opted out of data collection, so you cannot create a reminder.',
+            );
+          }
           const when = interaction.options.getString('when', true);
           const message = interaction.options.getString('message', true);
           const repeat = interaction.options.getString('repeat', false);

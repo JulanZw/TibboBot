@@ -17,6 +17,7 @@ import { Subcommand } from '../utils/typesAndInterfaces';
 import { logWithTime } from '../utils/logging';
 import { generateLeaderboard } from '../utils/generating';
 import { TIMES_MILISECONDS, STANDARD_COLOR } from '../utils/globals';
+import { hasOptedOut } from '../utils/optInOut';
 
 const scope = 'todayis';
 
@@ -169,6 +170,13 @@ export const todayIsCommands = commandBuilder({
             return await safeReply(
               interaction,
               `Could not add ${amount} points for <@${targetUser.id}> as negative values are not accepted.`,
+            );
+          }
+
+          if (hasOptedOut(targetUser.id)) {
+            return await safeReply(
+              interaction,
+              'This user has opted out of data collection.',
             );
           }
 

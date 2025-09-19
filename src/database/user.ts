@@ -2,6 +2,7 @@ import { User } from 'discord.js';
 
 import { logWithTime } from '../utils/logging';
 import { prisma } from '../utils/globals';
+import { hasOptedOut } from '../utils/optInOut';
 
 const scope = 'database_USER';
 
@@ -21,13 +22,15 @@ export async function insertUserData(
   charCount: bigint,
   msgCount: number,
   points: bigint = BigInt(0),
+  optedout?: boolean,
 ) {
   const newUser = await prisma.user.create({
     data: {
       discordId,
       char_count: charCount,
       msg_count: msgCount,
-      points: points,
+      points,
+      optedout,
     },
   });
   return newUser;
@@ -39,6 +42,7 @@ export async function getAllUsersCharsAndMessages(userdIds?: string[]) {
       char_count: { gt: BigInt(0) },
       msg_count: { gt: 0 },
       ...(userdIds ? { discordId: { in: userdIds } } : {}),
+      optedout: false,
     },
     orderBy: { char_count: 'desc' },
     select: {
@@ -65,6 +69,7 @@ export async function getAllUsersDataTodayIs(userdIds?: string[]) {
     where: {
       points: { gt: BigInt(0) },
       ...(userdIds ? { discordId: { in: userdIds } } : {}),
+      optedout: false,
     },
     orderBy: { points: 'desc' },
     take: 10,
@@ -111,6 +116,7 @@ export async function setPointGiverOfGuild(
 
 export async function updateCountsForUser(author: User, content: string) {
   const userId = author.id;
+  if (hasOptedOut(userId)) return;
   const messageLength = content.length;
 
   const user = await getUserCharsAndMessages(userId);
@@ -143,5 +149,18 @@ export async function deleteUser(discordId: string) {
 export async function getUser(discordId: string) {
   return await prisma.user.findUnique({
     where: { discordId },
+  });
+}
+
+export async function updateOptOutChoice(discordId: string, choice: boolean) {
+  return await prisma.user.update({
+    where: { discordId },
+    data: { optedout: choice },
+  });
+}
+
+export async function getOptedOutUsers() {
+  return await prisma.user.findMany({
+    where: { optedout: true },
   });
 }
