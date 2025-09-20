@@ -52,10 +52,11 @@ export const backupCommands = commandBuilder({
           await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
           const position = enqueue(interaction);
-
-          await interaction.editReply({
-            content: `Backup is ${position === 0 ? 'being worked on...' : `#${position} in queue`}`,
-          });
+          if (position !== 0) {
+            await interaction.editReply({
+              content: `Your backup is #${position} in the queue`,
+            });
+          }
         },
         customize: (builder) => {
           builder.addChannelOption(
@@ -66,10 +67,17 @@ export const backupCommands = commandBuilder({
               ChannelType.GuildText,
             ),
           );
+          // builder.addBooleanOption(
+          //   booleanOption(
+          //     'download_attachments',
+          //     'Should the attachments be downloaded, defaults to false',
+          //     false,
+          //   ),
+          // );
           builder.addBooleanOption(
             booleanOption(
-              'download_attachments',
-              'Should the attachments be downloaded, defaults to false',
+              'password',
+              'If the zip should be password protected, defaults to false',
               false,
             ),
           );

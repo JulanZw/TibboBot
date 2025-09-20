@@ -2,13 +2,17 @@ import fsAsync from 'fs/promises';
 import fs from 'fs';
 import path from 'path';
 import { pipeline } from 'stream/promises';
+import crypto from 'crypto';
 
-import archiver from 'archiver';
+import archiver, { ArchiverOptions } from 'archiver';
 import fetch from 'node-fetch';
 import { TextChannel, ChatInputCommandInteraction } from 'discord.js';
 
 import { logWithTime } from './logging';
 import { safeEdit, safeReply } from './general';
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-require-imports
+archiver.registerFormat('zip-encrypted', require('archiver-zip-encrypted')); // ? using a workaround I found here: https://github.com/artem-karpenko/archiver-zip-encrypted/issues/31#issuecomment-2404607515 since it doesnt have a type package
 
 const backupQueue: ChatInputCommandInteraction[] = [];
 const scope = 'backup_queue';
@@ -47,8 +51,10 @@ async function work(interaction: ChatInputCommandInteraction) {
   const channel = (interaction.options.getChannel('backup_channel', false) ??
     interaction.channel) as TextChannel;
 
-  const download =
-    interaction.options.getBoolean('download_attachments', false) ?? false;
+  const download = false;
+  //interaction.options.getBoolean('download_attachments', false) ?? false; // ? will temporarily be off until I can find a proper file host solution
+
+  const protect = interaction.options.getBoolean('password', false) ?? false;
 
   logWithTime(
     `Started backup for user: ${interaction.user.globalName} (${interaction.user.id}) for channel: ${channel.id}`,
@@ -152,7 +158,17 @@ async function work(interaction: ChatInputCommandInteraction) {
   const outFile = path.join(backupDir, 'view.html');
   await fsAsync.writeFile(outFile, html, 'utf-8');
 
-  await zipBackup(backupDir, zipPath);
+  let password = 'How are you seeing this?';
+
+  if (protect) {
+    password = generatePassword();
+    if (process.env.ENV === 'dev') {
+      console.log('zip password:\n ' + password);
+    }
+    await zipBackup(backupDir, zipPath, password);
+  } else {
+    await zipBackup(backupDir, zipPath);
+  }
 
   try {
     await safeEdit(interaction, `Backup complete for: <#${channel.id}>`);
@@ -167,13 +183,13 @@ async function work(interaction: ChatInputCommandInteraction) {
       });
     } else {
       await dm.send({
-        content: `Backup for <#${channel.id}>`,
+        content: `Backup for <#${channel.id}>${protect ? `\nYou can unlock the zip with: ||\`${password}\`||` : ''} `,
         files: [zipPath],
       });
     }
 
     logWithTime(
-      `Completed backup for user: ${interaction.user.globalName} (${interaction.user.id}) for channel: ${channel.id}`,
+      `Completed backup for user: ${interaction.user.globalName} (${interaction.user.id}) for channel: ${channel.id}${protect ? `, protected with password: '${password}'` : ''}`,
       'info',
       scope,
     );
@@ -186,7 +202,9 @@ async function work(interaction: ChatInputCommandInteraction) {
     );
   } finally {
     try {
-      await fsAsync.unlink(zipPath);
+      if (process.env.ENV !== 'dev') {
+        await fsAsync.unlink(zipPath);
+      }
     } catch (err: any) {
       logWithTime(
         `Failed to remove temporary zip: ${err}`,
@@ -249,18 +267,49 @@ async function copyTemplateFiles(srcDir: string, destDir: string) {
 }
 
 /**
- * Zips the provided dir to the output path
+ * Zips the provided dir to the output path, with an optional password
  */
-async function zipBackup(sourceDir: string, outPath: string): Promise<void> {
+async function zipBackup(
+  sourceDir: string,
+  outPath: string,
+  password?: string,
+): Promise<void> {
   return new Promise((resolve, reject) => {
     const output = fs.createWriteStream(outPath);
-    const archive = archiver('zip', { zlib: { level: 9 } });
+
+    const compressionLevel = 9;
+    const encryptionMethod = 'aes256';
+    let archive: archiver.Archiver;
+
+    if (!password) {
+      archive = archiver.create('zip', { zlib: { level: compressionLevel } });
+    } else {
+      archive = archiver.create('zip-encrypted', {
+        zlib: { level: compressionLevel },
+        encryptionMethod,
+        password,
+      } as unknown as ArchiverOptions);
+    }
 
     output.on('close', () => resolve());
-    archive.on('error', (err) => reject(err));
+    archive.on('error', (err: Error) => reject(err));
 
     archive.pipe(output);
     archive.directory(sourceDir, false);
     void archive.finalize();
   });
+}
+
+/**
+ * Generates a strong password
+ *
+ * @param length length of the password
+ * @returns a secure password
+ */
+function generatePassword(length = 24): string {
+  const charset =
+    'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=';
+  return Array.from(crypto.randomFillSync(new Uint32Array(length)))
+    .map((x) => charset[x % charset.length])
+    .join('');
 }

@@ -37,14 +37,16 @@ export async function executeCommand(interaction: ChatInputCommandInteraction) {
     );
     if (!canRun) return;
 
-    const onCooldown = checkCooldown(subCommand, interaction.user.id);
+    if (process.env.ENV !== 'dev') {
+      const onCooldown = checkCooldown(subCommand, interaction.user.id);
 
-    if (!onCooldown.allowed) {
-      return await safeReply(
-        interaction,
-        `You need to wait ${formatDuration(onCooldown.remaining as number)} before using this command again.`, // idk why ts whines about it nog existing when its not allowed, but it does
-        true,
-      );
+      if (!onCooldown.allowed) {
+        return await safeReply(
+          interaction,
+          `You need to wait ${formatDuration(onCooldown.remaining as number)} before using this command again.`, // idk why ts whines about it nog existing when its not allowed, but it does
+          true,
+        );
+      }
     }
   } else {
     // Regular command
@@ -55,14 +57,16 @@ export async function executeCommand(interaction: ChatInputCommandInteraction) {
     );
     if (!canRun) return;
 
-    const onCooldown = checkCooldown(command, interaction.user.id);
+    if (process.env.ENV !== 'dev') {
+      const onCooldown = checkCooldown(command, interaction.user.id);
 
-    if (!onCooldown.allowed) {
-      return await safeReply(
-        interaction,
-        `You need to wait ${formatDuration(onCooldown.remaining as number)} before using this command again.`, // idk why ts whines about it nog existing when its not allowed, but it does
-        true,
-      );
+      if (!onCooldown.allowed) {
+        return await safeReply(
+          interaction,
+          `You need to wait ${formatDuration(onCooldown.remaining as number)} before using this command again.`, // idk why ts whines about it nog existing when its not allowed, but it does
+          true,
+        );
+      }
     }
   }
 
