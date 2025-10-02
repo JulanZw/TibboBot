@@ -1,12 +1,12 @@
 import { ChatInputCommandInteraction } from 'discord.js';
 
-import { embedBuilder } from '../utils/embeds';
-import { commandBuilder, safeReply } from '../utils/general';
-import { logWithTime } from '../utils/logging';
+import { embedBuilder } from '../utils/embeds.ts';
+import { commandBuilder, safeReply } from '../utils/general.ts';
+import { logWithTime } from '../utils/logging.ts';
 
 const scope = 'cat';
 
-export const catCommand = commandBuilder({
+const catCommand = commandBuilder({
   name: 'cat',
   description: 'Sends a random cat picture.',
   execute: async (interaction: ChatInputCommandInteraction) => {
@@ -37,3 +37,5 @@ export const catCommand = commandBuilder({
   guildOnly: false,
   permissionLevel: 'user',
 });
+
+export default catCommand;

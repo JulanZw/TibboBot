@@ -1,12 +1,12 @@
 import wol from 'wol';
 import { ChatInputCommandInteraction } from 'discord.js';
 
-import { commandBuilder, safeReply } from '../utils/general';
-import { logWithTime } from '../utils/logging';
+import { commandBuilder, safeReply } from '../utils/general.ts';
+import { logWithTime } from '../utils/logging.ts';
 
 const scope = 'magic';
 
-export const wolCommand = commandBuilder({
+const wolCommand = commandBuilder({
   name: 'magic',
   description: 'does some magic (bot owner only)',
   execute: async (interaction: ChatInputCommandInteraction) => {
@@ -32,3 +32,5 @@ export const wolCommand = commandBuilder({
   guildOnly: false,
   permissionLevel: 'owner',
 });
+
+export default wolCommand;

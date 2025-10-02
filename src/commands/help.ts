@@ -1,21 +1,20 @@
 import { ChatInputCommandInteraction, ComponentType } from 'discord.js';
 
-import { commandBuilder, safeReply } from '../utils/general';
+import { commandBuilder, safeReply } from '../utils/general.ts';
 import {
   embedBuilder,
   createButtonsRow,
   createPaginationButtons,
-} from '../utils/embeds';
-import { commandNamesAndDescriptions } from '../commands';
-import { TIMES_MILISECONDS } from '../utils/globals';
+} from '../utils/embeds.ts';
+import { commandNamesAndDescriptions } from '../commands.ts';
+import { TIMES_MILISECONDS } from '../utils/globals.ts';
 
-export const helpCommand = commandBuilder({
+const helpCommand = commandBuilder({
   name: 'help',
   description: 'Displays all commands.',
   execute: async (interaction: ChatInputCommandInteraction) => {
     let index = 0;
     const totalPages = commandNamesAndDescriptions.length;
-
     const buildEmbed = () => [
       embedBuilder({
         title: 'List of Available Commands',
@@ -26,7 +25,7 @@ export const helpCommand = commandBuilder({
     ];
 
     const buildButtons = () => {
-      const buttons = createPaginationButtons(index, totalPages); //although they are pagination buttons, there are no other buttons so this works fine
+      const buttons = createPaginationButtons(index, 0); //although they are pagination buttons, there are no other buttons so this works fine
       return [createButtonsRow(buttons)];
     };
 
@@ -76,3 +75,5 @@ export const helpCommand = commandBuilder({
   guildOnly: false,
   permissionLevel: 'user',
 });
+
+export default helpCommand;

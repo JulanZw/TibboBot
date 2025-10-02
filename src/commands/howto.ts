@@ -1,6 +1,6 @@
-import { embedBuilder } from '../utils/embeds';
-import { commandBuilder, safeReply } from '../utils/general';
-import { Subcommand } from '../utils/typesAndInterfaces';
+import { embedBuilder } from '../utils/embeds.ts';
+import { commandBuilder, safeReply } from '../utils/general.ts';
+import { Subcommand } from '../utils/typesAndInterfaces.ts';
 
 const eatGifLinks: string[] = [
   'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExemhjdXlwcXE5eWt3dzIzODFneGVrdmhheGdwZ3Jia2xuaXZraTN6dyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/d2ItDZZumUI6Y/giphy.gif',
@@ -8,7 +8,7 @@ const eatGifLinks: string[] = [
   'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYm1uajB1eTJjN2p1cGs1MjB6aDZjbWNqcGxibGIyYXQyeDh4OGhkbSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/ef61oIGVyckY8/giphy.gif',
 ];
 
-export const howToCommands = commandBuilder({
+const howToCommands = commandBuilder({
   name: 'howto',
   description: 'All howto commands',
   subcommands: new Map<string, Subcommand>([
@@ -44,3 +44,5 @@ export const howToCommands = commandBuilder({
     ],
   ]),
 });
+
+export default howToCommands;

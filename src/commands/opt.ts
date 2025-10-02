@@ -1,12 +1,12 @@
 import { ButtonStyle, ComponentType } from 'discord.js';
 
-import { getUser, insertUserData } from '../database/user';
-import { showConfirmModal } from '../utils/confirmation';
-import { createButton, createButtonsRow } from '../utils/embeds';
-import { commandBuilder, safeReply } from '../utils/general';
-import { TIMES_MILISECONDS } from '../utils/globals';
-import { optIn, optOut } from '../utils/optInOut';
-import { Subcommand } from '../utils/typesAndInterfaces';
+import { getUser, insertUserData } from '../database/user.ts';
+import { showConfirmModal } from '../utils/confirmation.ts';
+import { createButton, createButtonsRow } from '../utils/embeds.ts';
+import { commandBuilder, safeReply } from '../utils/general.ts';
+import { TIMES_MILISECONDS } from '../utils/globals.ts';
+import { optIn, optOut } from '../utils/optInOut.ts';
+import { Subcommand } from '../utils/typesAndInterfaces.ts';
 
 export const optoutCommand = commandBuilder({
   name: 'opt',
@@ -213,3 +213,5 @@ export const optoutCommand = commandBuilder({
     ],
   ]),
 });
+
+export default optoutCommand;

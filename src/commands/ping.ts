@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction } from 'discord.js';
 
-import { commandBuilder, safeReply } from '../utils/general';
+import { commandBuilder, safeReply } from '../utils/general.ts';
 
 export const pingCommand = commandBuilder({
   name: 'ping',
@@ -11,3 +11,5 @@ export const pingCommand = commandBuilder({
   guildOnly: false,
   permissionLevel: 'user',
 });
+
+export default pingCommand;

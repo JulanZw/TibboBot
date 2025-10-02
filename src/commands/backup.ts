@@ -5,14 +5,14 @@ import {
   TextChannel,
 } from 'discord.js';
 
-import { commandBuilder, safeReply } from '../utils/general';
-import { enqueue } from '../utils/backupQueue';
-import { booleanOption, channelOption } from '../utils/slashCommandOptions';
-import { Subcommand } from '../utils/typesAndInterfaces';
-import { TIMES_MILISECONDS } from '../utils/globals';
-import { getAllowBackup } from '../database/guild';
+import { commandBuilder, safeReply } from '../utils/general.ts';
+import { enqueue } from '../utils/backupQueue.ts';
+import { booleanOption, channelOption } from '../utils/slashCommandOptions.ts';
+import { Subcommand } from '../utils/typesAndInterfaces.ts';
+import { TIMES_MILISECONDS } from '../utils/globals.ts';
+import { getAllowBackup } from '../database/guild.ts';
 
-export const backupCommands = commandBuilder({
+const backupCommands = commandBuilder({
   name: 'backup',
   description: 'All commands related to backups.',
   subcommands: new Map<string, Subcommand>([
@@ -89,3 +89,5 @@ export const backupCommands = commandBuilder({
     ],
   ]),
 });
+
+export default backupCommands;

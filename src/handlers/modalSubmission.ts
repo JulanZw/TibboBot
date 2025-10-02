@@ -5,19 +5,19 @@ import {
   deleteAllRemindersForUser,
   getReminderById,
   updateReminder,
-} from '../database/reminders';
-import { capitalizeFirst } from '../utils/formatting';
-import { safeReply, scheduleReminder } from '../utils/general';
-import { parseDurationOrDateString } from '../utils/parsers';
-import { deleteAllBirthdaysForUser } from '../database/birthday';
+} from '../database/reminders.ts';
+import { capitalizeFirst } from '../utils/formatting.ts';
+import { safeReply, scheduleReminder } from '../utils/general.ts';
+import { parseDurationOrDateString } from '../utils/parsers.ts';
+import { deleteAllBirthdaysForUser } from '../database/birthday.ts';
 import {
   removeAllPointgiverRolesForUser,
   getGuild,
   deleteGuild,
-} from '../database/guild';
-import { deleteUser } from '../database/user';
-import { handleConfirmModal } from '../utils/confirmation';
-import { logWithTime } from '../utils/logging';
+} from '../database/guild.ts';
+import { deleteUser } from '../database/user.ts';
+import { handleConfirmModal } from '../utils/confirmation.ts';
+import { logWithTime } from '../utils/logging.ts';
 
 const scope = 'handler_INTERACTIONCREATION_MODALS';
 

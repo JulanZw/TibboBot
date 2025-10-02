@@ -1,6 +1,6 @@
 import { $Enums } from '@prisma/client';
 
-import { prisma, scheduledReminderJobs } from '../utils/globals';
+import { prisma, scheduledReminderJobs } from '../utils/globals.ts';
 
 export async function createReminder(
   userId: string,

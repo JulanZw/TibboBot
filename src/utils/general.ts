@@ -27,12 +27,16 @@ import cron from 'node-cron';
 import { Reminders, $Enums } from '@prisma/client';
 import { parse } from 'mathjs';
 
-import { deleteReminder, updateReminder } from '../database/reminders';
+import { deleteReminder, updateReminder } from '../database/reminders.ts';
 
-import { PermissionLevel, Command, Registerable } from './typesAndInterfaces';
-import { logWithTime } from './logging';
-import { addDays } from './parsers';
-import { ownerId, scheduledReminderJobs } from './globals';
+import {
+  PermissionLevel,
+  Command,
+  Registerable,
+} from './typesAndInterfaces.ts';
+import { logWithTime } from './logging.ts';
+import { addDays } from './parsers.ts';
+import { ownerId, scheduledReminderJobs } from './globals.ts';
 
 const scope = 'general';
 

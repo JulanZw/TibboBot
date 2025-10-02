@@ -8,7 +8,7 @@ import {
   SlashCommandUserOption,
 } from 'discord.js';
 
-import { AllowedChannelTypeChannelOption } from './typesAndInterfaces';
+import { AllowedChannelTypeChannelOption } from './typesAndInterfaces.ts';
 
 export const userOption =
   (name: string, desc: string, required = true) =>

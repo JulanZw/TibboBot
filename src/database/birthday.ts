@@ -1,4 +1,4 @@
-import { prisma } from '../utils/globals';
+import { prisma } from '../utils/globals.ts';
 
 export async function setBirthday(
   guildId: string,

@@ -8,11 +8,11 @@ import archiver, { ArchiverOptions } from 'archiver';
 import fetch from 'node-fetch';
 import { TextChannel, ChatInputCommandInteraction } from 'discord.js';
 
-import { logWithTime } from './logging';
-import { safeEdit, safeReply } from './general';
+import { logWithTime } from './logging.ts';
+import { safeEdit, safeReply } from './general.ts';
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-require-imports
-archiver.registerFormat('zip-encrypted', require('archiver-zip-encrypted')); // ? using a workaround I found here: https://github.com/artem-karpenko/archiver-zip-encrypted/issues/31#issuecomment-2404607515 since it doesnt have a type package
+// // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-require-imports
+// archiver.registerFormat('zip-encrypted', require('archiver-zip-encrypted')); // ? using a workaround I found here: https://github.com/artem-karpenko/archiver-zip-encrypted/issues/31#issuecomment-2404607515 since it doesnt have a type package
 
 const backupQueue: ChatInputCommandInteraction[] = [];
 const scope = 'backup_queue';

@@ -23,7 +23,8 @@ export default tseslint.config(
       globals: {
         ...globals.node,
       },
-      sourceType: 'commonjs',
+      sourceType: 'module',
+      ecmaVersion: 2020,
       parserOptions: {
         projectService: true,
         tsconfigRootDir: import.meta.dirname,

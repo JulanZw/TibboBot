@@ -10,25 +10,29 @@ import {
 } from 'discord.js';
 import { $Enums, Reminders } from '@prisma/client';
 
-import { stringOption } from '../utils/slashCommandOptions';
-import { commandBuilder, safeReply, scheduleReminder } from '../utils/general';
-import { logWithTime } from '../utils/logging';
-import { parseDurationOrDateString } from '../utils/parsers';
+import { stringOption } from '../utils/slashCommandOptions.ts';
+import {
+  commandBuilder,
+  safeReply,
+  scheduleReminder,
+} from '../utils/general.ts';
+import { logWithTime } from '../utils/logging.ts';
+import { parseDurationOrDateString } from '../utils/parsers.ts';
 import {
   embedBuilder,
   createButtonsRow,
   createButton,
   createPaginationButtons,
-} from '../utils/embeds';
-import { capitalizeFirst, formatDateToDDMMYYYY } from '../utils/formatting';
-import { Subcommand } from '../utils/typesAndInterfaces';
+} from '../utils/embeds.ts';
+import { capitalizeFirst, formatDateToDDMMYYYY } from '../utils/formatting.ts';
+import { Subcommand } from '../utils/typesAndInterfaces.ts';
 import {
   createReminder,
   deleteReminder,
   getUserReminders,
-} from '../database/reminders';
-import { TIMES_MILISECONDS } from '../utils/globals';
-import { hasOptedOut } from '../utils/optInOut';
+} from '../database/reminders.ts';
+import { TIMES_MILISECONDS } from '../utils/globals.ts';
+import { hasOptedOut } from '../utils/optInOut.ts';
 
 const scope = 'reminder';
 
@@ -293,3 +297,5 @@ export const reminderCommands = commandBuilder({
     ],
   ]),
 });
+
+export default reminderCommands;

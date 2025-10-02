@@ -1,10 +1,14 @@
-import path from 'path';
+import path, { dirname } from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 
-import { LogLevel } from './typesAndInterfaces';
-import { formatDateToYYYYMMDDHHMMSS } from './formatting';
+import { LogLevel } from './typesAndInterfaces.ts';
+import { formatDateToYYYYMMDDHHMMSS } from './formatting.ts';
 
-const logDir = path.resolve(__dirname, '../../logs');
+const logDir = path.resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  '../../logs',
+);
 
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });

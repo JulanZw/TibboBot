@@ -1,4 +1,4 @@
-import { Command, Subcommand } from './typesAndInterfaces';
+import { Command, Subcommand } from './typesAndInterfaces.ts';
 
 /**
  * A tracker with the command name as key and a map as value.

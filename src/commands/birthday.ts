@@ -1,23 +1,23 @@
 import { ChatInputCommandInteraction, ComponentType } from 'discord.js';
 
-import { stringOption } from '../utils/slashCommandOptions';
-import { commandBuilder, safeReply } from '../utils/general';
-import { logWithTime } from '../utils/logging';
+import { stringOption } from '../utils/slashCommandOptions.ts';
+import { commandBuilder, safeReply } from '../utils/general.ts';
+import { logWithTime } from '../utils/logging.ts';
 import {
   embedBuilder,
   createButtonsRow,
   createPaginationButtons,
-} from '../utils/embeds';
-import { formatDateToString } from '../utils/formatting';
-import { parseBirthdayDate } from '../utils/parsers';
-import { setBirthday, getAllBirthdaysInGuild } from '../database/birthday';
-import { Subcommand } from '../utils/typesAndInterfaces';
-import { TIMES_MILISECONDS } from '../utils/globals';
-import { hasOptedOut } from '../utils/optInOut';
+} from '../utils/embeds.ts';
+import { formatDateToString } from '../utils/formatting.ts';
+import { parseBirthdayDate } from '../utils/parsers.ts';
+import { setBirthday, getAllBirthdaysInGuild } from '../database/birthday.ts';
+import { Subcommand } from '../utils/typesAndInterfaces.ts';
+import { TIMES_MILISECONDS } from '../utils/globals.ts';
+import { hasOptedOut } from '../utils/optInOut.ts';
 
 const scope = 'birthday';
 
-export const birthdayCommands = commandBuilder({
+const birthdayCommands = commandBuilder({
   name: 'birthday',
   description: 'All commands related to birthdays',
   subcommands: new Map<string, Subcommand>([
@@ -218,3 +218,5 @@ export const birthdayCommands = commandBuilder({
     ],
   ]),
 });
+
+export default birthdayCommands;

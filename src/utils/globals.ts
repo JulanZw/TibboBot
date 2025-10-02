@@ -49,7 +49,11 @@ export const prisma = new PrismaClient();
 
 /**
  * Tracks who sent the "Today is" message in each guild today.
- * Key: guildId, Value: 'bot' | 'human' | null
+ *
+ * Key: `guildId`
+ *
+ * Values: `'bot' | 'human' | null`
+ *
  * Resets at midnight every day.
  */
 export const todayWinners: Record<string, 'bot' | 'human' | null> = {};

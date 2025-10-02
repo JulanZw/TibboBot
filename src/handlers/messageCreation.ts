@@ -1,11 +1,11 @@
 import { Message, MessageFlags, TextChannel } from 'discord.js';
 import { evaluate } from 'mathjs';
 
-import { pendingReactionRoleSetups, todayWinners } from '../utils/globals';
-import { embedBuilder } from '../utils/embeds';
-import { logWithTime } from '../utils/logging';
-import { preprocessNumerics } from '../utils/preproccessors';
-import { client } from '../index';
+import { pendingReactionRoleSetups, todayWinners } from '../utils/globals.ts';
+import { embedBuilder } from '../utils/embeds.ts';
+import { logWithTime } from '../utils/logging.ts';
+import { preprocessNumerics } from '../utils/preproccessors.ts';
+import { client } from '../index.ts';
 import {
   checkAndUpdateCount,
   ensureGuildExistance,
@@ -13,11 +13,11 @@ import {
   resetCount,
   setLastCountUser,
   updateDumbScore,
-} from '../database/guild';
-import { addReactionRole } from '../database/reactionRoles';
-import { updateCountsForUser } from '../database/user';
-import { looksLikeMathExpression } from '../utils/general';
-import { formatDateToString } from '../utils/formatting';
+} from '../database/guild.ts';
+import { addReactionRole } from '../database/reactionRoles.ts';
+import { updateCountsForUser } from '../database/user.ts';
+import { looksLikeMathExpression } from '../utils/general.ts';
+import { formatDateToString } from '../utils/formatting.ts';
 
 const scope = 'handler_MESSAGECREATION';
 

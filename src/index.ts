@@ -10,18 +10,18 @@ import {
   Routes,
 } from 'discord.js';
 
-import { setupCronJobs } from './cronJobs';
-import { scheduleReminder } from './utils/general';
-import { commandsToRegister } from './commands';
-import { ownerId, prisma, token } from './utils/globals';
-import { handleInteractionCreation } from './handlers/interactionCreation';
-import { handleReactionAdded } from './handlers/reactionAdded';
-import { handleReactionRemoval } from './handlers/reactionRemoved';
-import { handleMessageDeletion } from './handlers/messageDeletion';
-import { getRemindersOfToday } from './database/reminders';
-import { handleMessageCreation } from './handlers/messageCreation';
-import { logWithTime } from './utils/logging';
-import { setupErrorHandlers } from './handlers/errors';
+import { setupCronJobs } from './cronJobs.ts';
+import { scheduleReminder } from './utils/general.ts';
+import { commandsToRegister } from './commands.ts';
+import { ownerId, prisma, token } from './utils/globals.ts';
+import { handleInteractionCreation } from './handlers/interactionCreation.ts';
+import { handleReactionAdded } from './handlers/reactionAdded.ts';
+import { handleReactionRemoval } from './handlers/reactionRemoved.ts';
+import { handleMessageDeletion } from './handlers/messageDeletion.ts';
+import { getRemindersOfToday } from './database/reminders.ts';
+import { handleMessageCreation } from './handlers/messageCreation.ts';
+import { logWithTime } from './utils/logging.ts';
+import { setupErrorHandlers } from './handlers/errors.ts';
 
 const scope = 'startup';
 

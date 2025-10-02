@@ -1,10 +1,10 @@
 import { Message, OmitPartialGroupDMChannel, PartialMessage } from 'discord.js';
 
-import { logWithTime } from '../utils/logging';
+import { logWithTime } from '../utils/logging.ts';
 import {
   getReactionRolesByMessage,
   removeReactionRolesByMessageId,
-} from '../database/reactionRoles';
+} from '../database/reactionRoles.ts';
 
 const scope = 'handler_MESSAGEDELETION';
 

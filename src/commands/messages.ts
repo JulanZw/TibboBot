@@ -1,15 +1,15 @@
-import { booleanOption, userOption } from '../utils/slashCommandOptions';
-import { embedBuilder } from '../utils/embeds';
-import { commandBuilder, safeReply } from '../utils/general';
-import { logWithTime } from '../utils/logging';
+import { booleanOption, userOption } from '../utils/slashCommandOptions.ts';
+import { embedBuilder } from '../utils/embeds.ts';
+import { commandBuilder, safeReply } from '../utils/general.ts';
+import { logWithTime } from '../utils/logging.ts';
 import {
   getAllUsersCharsAndMessages,
   getUserCharsAndMessages,
-} from '../database/user';
-import { Subcommand } from '../utils/typesAndInterfaces';
-import { TIMES_MILISECONDS, STANDARD_COLOR } from '../utils/globals';
-import { generateLeaderboard } from '../utils/generating';
-import { hasOptedOut } from '../utils/optInOut';
+} from '../database/user.ts';
+import { Subcommand } from '../utils/typesAndInterfaces.ts';
+import { TIMES_MILISECONDS, STANDARD_COLOR } from '../utils/globals.ts';
+import { generateLeaderboard } from '../utils/generating.ts';
+import { hasOptedOut } from '../utils/optInOut.ts';
 
 const scope = 'messages';
 
@@ -156,3 +156,5 @@ export const messageCommands = commandBuilder({
     ],
   ]),
 });
+
+export default messageCommands;

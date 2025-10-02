@@ -6,8 +6,8 @@ import {
   EmbedBuilder,
 } from 'discord.js';
 
-import { commandBuilder } from '../utils/general';
-import { STANDARD_COLOR } from '../utils/globals';
+import { commandBuilder } from '../utils/general.ts';
+import { STANDARD_COLOR } from '../utils/globals.ts';
 
 export const sourceCommand = commandBuilder({
   name: 'source',
@@ -37,3 +37,5 @@ export const sourceCommand = commandBuilder({
   guildOnly: false,
   permissionLevel: 'user',
 });
+
+export default sourceCommand;

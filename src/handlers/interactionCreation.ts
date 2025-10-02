@@ -1,9 +1,9 @@
 import { Interaction } from 'discord.js';
 
-import { ensureGuildExistance } from '../database/guild';
+import { ensureGuildExistance } from '../database/guild.ts';
 
-import { executeCommand } from './commandExecution';
-import { handleModal } from './modalSubmission';
+import { executeCommand } from './commandExecution.ts';
+import { handleModal } from './modalSubmission.ts';
 
 export async function handleInteractionCreation(interaction: Interaction) {
   if (interaction.guildId) {

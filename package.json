@@ -1,12 +1,13 @@
 {
   "name": "tibbobot",
-  "version": "3.12.1",
+  "version": "3.12.2",
   "description": "Tibbo the toolbox is a discord bot which I gave some features I wanted.",
   "private": true,
   "license": "MIT",
   "author": "JulanZw",
+  "type": "module",
   "scripts": {
-    "dev": "dotenv -e .env.development -- cross-env ENV=dev ts-node src/index.ts",
+    "dev": "dotenv -e .env.development -- cross-env ENV=dev node --trace-warnings --trace-deprecation --loader ts-node/esm src/index.ts",
     "prod": "cross-env ENV=prod ts-node src/index.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix"
   },

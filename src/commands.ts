@@ -1,23 +1,23 @@
 import { RESTPostAPIChatInputApplicationCommandsJSONBody } from 'discord.js';
 
-import { birthdayCommands } from './commands/birthday';
-import { catCommand } from './commands/cat';
-import { helpCommand } from './commands/help';
-import { wolCommand } from './commands/magic';
-import { manageChannelsCommand } from './commands/manage';
-import { messageCommands } from './commands/messages';
-import { pingCommand } from './commands/ping';
-import { reactionCommands } from './commands/reaction';
-import { reminderCommands } from './commands/reminders';
-import { sourceCommand } from './commands/source';
-import { todayIsCommands } from './commands/todayIs';
-import { Registerable } from './utils/typesAndInterfaces';
-import { COMMANDS_PER_PAGE } from './utils/globals';
-import { encodeCommands } from './commands/encode';
-import { optoutCommand } from './commands/opt';
-import { howToCommands } from './commands/howto';
-import { rngCommand } from './commands/rng';
-import { backupCommands } from './commands/backup';
+import birthdayCommands from './commands/birthday.ts';
+import catCommand from './commands/cat.ts';
+import helpCommand from './commands/help.ts';
+import wolCommand from './commands/magic.ts';
+import manageChannelsCommand from './commands/manage.ts';
+import messageCommands from './commands/messages.ts';
+import pingCommand from './commands/ping.ts';
+import reactionCommands from './commands/reaction.ts';
+import reminderCommands from './commands/reminders.ts';
+import sourceCommand from './commands/source.ts';
+import todayIsCommands from './commands/todayIs.ts';
+import { Registerable } from './utils/typesAndInterfaces.ts';
+import { COMMANDS_PER_PAGE } from './utils/globals.ts';
+import encodeCommands from './commands/encode.ts';
+import optoutCommand from './commands/opt.ts';
+import howToCommands from './commands/howto.ts';
+import rngCommand from './commands/rng.ts';
+import backupCommands from './commands/backup.ts';
 
 /**
  * Represents a Discord slash command definition.

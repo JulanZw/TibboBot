@@ -3,8 +3,8 @@ import {
   SlashCommandSubcommandBuilder,
 } from 'discord.js';
 
-import { commandBuilder, safeReply } from '../utils/general';
-import { Subcommand } from '../utils/typesAndInterfaces';
+import { commandBuilder, safeReply } from '../utils/general.ts';
+import { Subcommand } from '../utils/typesAndInterfaces.ts';
 
 function builderEncodeDecodeCommand(name: string, desc: string) {
   return new SlashCommandSubcommandBuilder()
@@ -110,7 +110,7 @@ function caesarDecode(text: string, shift: number) {
   return caesarEncode(text, (26 - shift) % 26);
 }
 
-export const encodeCommands = commandBuilder({
+const encodeCommands = commandBuilder({
   name: 'encode',
   description: 'Encode or decode text using Base64 or Morse code',
   subcommands: new Map<string, Subcommand>([
@@ -218,3 +218,5 @@ export const encodeCommands = commandBuilder({
     ],
   ]),
 });
+
+export default encodeCommands;

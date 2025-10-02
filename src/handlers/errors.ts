@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { Client } from 'discord.js';
 
-import { logWithTime } from '../utils/logging';
+import { logWithTime } from '../utils/logging.ts';
 
 export function setupErrorHandlers(client: Client, prisma: PrismaClient) {
   async function gracefulShutdown(signal: string) {

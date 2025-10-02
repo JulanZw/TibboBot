@@ -1,4 +1,4 @@
-import { getOptedOutUsers, updateOptOutChoice } from '../database/user';
+import { getOptedOutUsers, updateOptOutChoice } from '../database/user.ts';
 
 const optedOutUsers = new Set<string>();
 

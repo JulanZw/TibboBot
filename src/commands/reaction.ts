@@ -8,16 +8,16 @@ import {
   stringOption,
   roleOption,
   channelOption,
-} from '../utils/slashCommandOptions';
-import { commandBuilder, safeReply } from '../utils/general';
-import { logWithTime } from '../utils/logging';
-import { pendingReactionRoleSetups } from '../utils/globals';
-import { embedBuilder } from '../utils/embeds';
+} from '../utils/slashCommandOptions.ts';
+import { commandBuilder, safeReply } from '../utils/general.ts';
+import { logWithTime } from '../utils/logging.ts';
+import { pendingReactionRoleSetups } from '../utils/globals.ts';
+import { embedBuilder } from '../utils/embeds.ts';
 import {
   getReactionRolesByMessage,
   addReactionRole,
-} from '../database/reactionRoles';
-import { Subcommand } from '../utils/typesAndInterfaces';
+} from '../database/reactionRoles.ts';
+import { Subcommand } from '../utils/typesAndInterfaces.ts';
 
 const scope = 'reaction';
 
@@ -224,3 +224,5 @@ export const reactionCommands = commandBuilder({
     ],
   ]),
 });
+
+export default reactionCommands;

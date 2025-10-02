@@ -8,19 +8,19 @@ import {
   MessageFlags,
 } from 'discord.js';
 
-import { commandBuilder, safeReply } from '../utils/general';
-import { logWithTime } from '../utils/logging';
+import { commandBuilder, safeReply } from '../utils/general.ts';
+import { logWithTime } from '../utils/logging.ts';
 import {
   getAllowBackup,
   getBotChannel,
   getGuild,
   toggleAllowBackup,
   updateBotChannel,
-} from '../database/guild';
-import { BotChannel, Subcommand } from '../utils/typesAndInterfaces';
-import { TIMES_MILISECONDS } from '../utils/globals';
-import { showConfirmModal } from '../utils/confirmation';
-import { createButton, createButtonsRow } from '../utils/embeds';
+} from '../database/guild.ts';
+import { BotChannel, Subcommand } from '../utils/typesAndInterfaces.ts';
+import { TIMES_MILISECONDS } from '../utils/globals.ts';
+import { showConfirmModal } from '../utils/confirmation.ts';
+import { createButton, createButtonsRow } from '../utils/embeds.ts';
 
 const scope = 'manage';
 
@@ -350,3 +350,5 @@ export const manageChannelsCommand = commandBuilder({
     ],
   ]),
 });
+
+export default manageChannelsCommand;

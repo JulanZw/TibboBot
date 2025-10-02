@@ -8,7 +8,7 @@ import {
   ButtonInteraction,
 } from 'discord.js';
 
-import { safeReply } from './general';
+import { safeReply } from './general.ts';
 
 /**
  * Sends a modal asking the user to type "confirm" before proceeding.

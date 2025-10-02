@@ -2,22 +2,22 @@ import {
   booleanOption,
   userOption,
   integerOption,
-} from '../utils/slashCommandOptions';
-import { embedBuilder } from '../utils/embeds';
-import { commandBuilder, safeReply } from '../utils/general';
-import { getPointGiverIdOfGuild, getGuild } from '../database/guild';
+} from '../utils/slashCommandOptions.ts';
+import { embedBuilder } from '../utils/embeds.ts';
+import { commandBuilder, safeReply } from '../utils/general.ts';
+import { getPointGiverIdOfGuild, getGuild } from '../database/guild.ts';
 import {
   getAllUsersDataTodayIs,
   getUserPoints,
   insertUserData,
   updateUserPoints,
   setPointGiverOfGuild,
-} from '../database/user';
-import { Subcommand } from '../utils/typesAndInterfaces';
-import { logWithTime } from '../utils/logging';
-import { generateLeaderboard } from '../utils/generating';
-import { TIMES_MILISECONDS, STANDARD_COLOR } from '../utils/globals';
-import { hasOptedOut } from '../utils/optInOut';
+} from '../database/user.ts';
+import { Subcommand } from '../utils/typesAndInterfaces.ts';
+import { logWithTime } from '../utils/logging.ts';
+import { generateLeaderboard } from '../utils/generating.ts';
+import { TIMES_MILISECONDS, STANDARD_COLOR } from '../utils/globals.ts';
+import { hasOptedOut } from '../utils/optInOut.ts';
 
 const scope = 'todayis';
 
@@ -267,3 +267,5 @@ export const todayIsCommands = commandBuilder({
     ],
   ]),
 });
+
+export default todayIsCommands;

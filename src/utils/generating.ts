@@ -1,7 +1,7 @@
 import { createCanvas, loadImage } from 'canvas';
 import { AttachmentBuilder } from 'discord.js';
 
-import { logWithTime } from './logging';
+import { logWithTime } from './logging.ts';
 
 export async function generateLeaderboard(
   users: {
