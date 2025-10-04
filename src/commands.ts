@@ -11,13 +11,13 @@ import reactionCommands from './commands/reaction.ts';
 import reminderCommands from './commands/reminders.ts';
 import sourceCommand from './commands/source.ts';
 import todayIsCommands from './commands/todayIs.ts';
-import { RegisterableCommand } from './utils/typesAndInterfaces.ts';
 import { COMMANDS_PER_PAGE } from './utils/globals.ts';
 import encodeCommands from './commands/encode.ts';
 import optoutCommand from './commands/opt.ts';
 import howToCommands from './commands/howto.ts';
 import rngCommand from './commands/rng.ts';
 import backupCommands from './commands/backup.ts';
+import { RegisterableCommand } from './types/commands.ts';
 
 /**
  * Represents a Discord slash command definition.

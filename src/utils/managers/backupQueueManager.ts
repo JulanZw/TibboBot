@@ -9,8 +9,8 @@ import archiver, { ArchiverOptions } from 'archiver';
 import fetch from 'node-fetch';
 import { TextChannel, ChatInputCommandInteraction } from 'discord.js';
 
-import { logWithTime } from './logging.ts';
-import { safeEdit, safeReply } from './general.ts';
+import { logWithTime } from '../logging.ts';
+import { safeEdit, safeReply } from '../discord/editAndReply.ts';
 
 const require = createRequire(import.meta.url); // have to do this because 'archiver-zip-encrypted' is not an ES module
 

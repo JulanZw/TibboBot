@@ -1,6 +1,6 @@
 import { ActionRowBuilder, TextInputBuilder, ModalBuilder } from 'discord.js';
 
-import { Modal } from './typesAndInterfaces.ts';
+import { Modal } from '../../types/modal.ts';
 
 const modalRegister = new Map<string, Modal>();
 

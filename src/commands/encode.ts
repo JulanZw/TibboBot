@@ -1,114 +1,15 @@
+import { ChatInputCommandInteraction } from 'discord.js';
+
+import { safeReply } from '../utils/discord/editAndReply.ts';
+import { Subcommand } from '../types/commands.ts';
+import { commandBuilder } from '../utils/discord/commandBuilder.ts';
 import {
-  ChatInputCommandInteraction,
-  SlashCommandSubcommandBuilder,
-} from 'discord.js';
-
-import { commandBuilder, safeReply } from '../utils/general.ts';
-import { Subcommand } from '../utils/typesAndInterfaces.ts';
-
-function builderEncodeDecodeCommand(name: string, desc: string) {
-  return new SlashCommandSubcommandBuilder()
-    .setName(name)
-    .setDescription(desc)
-    .addStringOption((option) =>
-      option
-        .setName('mode')
-        .setDescription('Encode or decode')
-        .setRequired(true)
-        .addChoices(
-          { name: 'Encode', value: 'encode' },
-          { name: 'Decode', value: 'decode' },
-        ),
-    )
-    .addStringOption((option) =>
-      option
-        .setName('text')
-        .setDescription('The text to process')
-        .setRequired(true),
-    );
-}
-
-const morseMap: Record<string, string> = {
-  A: '.-',
-  B: '-...',
-  C: '-.-.',
-  D: '-..',
-  E: '.',
-  F: '..-.',
-  G: '--.',
-  H: '....',
-  I: '..',
-  J: '.---',
-  K: '-.-',
-  L: '.-..',
-  M: '--',
-  N: '-.',
-  O: '---',
-  P: '.--.',
-  Q: '--.-',
-  R: '.-.',
-  S: '...',
-  T: '-',
-  U: '..-',
-  V: '...-',
-  W: '.--',
-  X: '-..-',
-  Y: '-.--',
-  Z: '--..',
-  '0': '-----',
-  '1': '.----',
-  '2': '..---',
-  '3': '...--',
-  '4': '....-',
-  '5': '.....',
-  '6': '-....',
-  '7': '--...',
-  '8': '---..',
-  '9': '----.',
-  ' ': '/',
-};
-
-const morseMapReverse = Object.fromEntries(
-  Object.entries(morseMap).map(([k, v]) => [v, k]),
-);
-
-function morseEncode(text: string) {
-  return text
-    .toUpperCase()
-    .split('')
-    .map((char) => morseMap[char] || '')
-    .join(' ');
-}
-
-function morseDecode(morse: string) {
-  return morse
-    .split(' ')
-    .map((code) => morseMapReverse[code] || '')
-    .join('');
-}
-
-function caesarEncode(text: string, shift: number) {
-  return text
-    .split('')
-    .map((char) => {
-      if (/[a-z]/.test(char)) {
-        return String.fromCharCode(
-          ((char.charCodeAt(0) - 97 + shift) % 26) + 97,
-        );
-      }
-      if (/[A-Z]/.test(char)) {
-        return String.fromCharCode(
-          ((char.charCodeAt(0) - 65 + shift) % 26) + 65,
-        );
-      }
-      return char;
-    })
-    .join('');
-}
-
-function caesarDecode(text: string, shift: number) {
-  return caesarEncode(text, (26 - shift) % 26);
-}
+  builderEncodeDecodeCommand,
+  morseEncode,
+  morseDecode,
+  caesarDecode,
+  caesarEncode,
+} from '../utils/encodeDecode.ts';
 
 const encodeCommands = commandBuilder({
   name: 'encode',

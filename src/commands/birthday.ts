@@ -1,19 +1,20 @@
 import { ChatInputCommandInteraction, ComponentType } from 'discord.js';
 
-import { stringOption } from '../utils/slashCommandOptions.ts';
-import { commandBuilder, safeReply } from '../utils/general.ts';
+import { stringOption } from '../utils/discord/slashCommandOptions.ts';
+import { safeReply } from '../utils/discord/editAndReply.ts';
 import { logWithTime } from '../utils/logging.ts';
 import {
   embedBuilder,
   createButtonsRow,
   createPaginationButtons,
-} from '../utils/embeds.ts';
+} from '../utils/discord/embeds.ts';
 import { formatDateToString } from '../utils/formatting.ts';
 import { parseBirthdayDate } from '../utils/parsers.ts';
 import { setBirthday, getAllBirthdaysInGuild } from '../database/birthday.ts';
-import { Subcommand } from '../utils/typesAndInterfaces.ts';
 import { TIMES_MILISECONDS } from '../utils/globals.ts';
-import { hasOptedOut } from '../utils/optInOut.ts';
+import { hasOptedOut } from '../utils/managers/optInOutManager.ts';
+import { Subcommand } from '../types/commands.ts';
+import { commandBuilder } from '../utils/discord/commandBuilder.ts';
 
 const scope = 'birthday';
 

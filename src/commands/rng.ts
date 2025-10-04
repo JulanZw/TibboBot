@@ -1,7 +1,8 @@
 import { ChatInputCommandInteraction } from 'discord.js';
 
-import { commandBuilder, safeReply } from '../utils/general.ts';
-import { integerOption } from '../utils/slashCommandOptions.ts';
+import { safeReply } from '../utils/discord/editAndReply.ts';
+import { commandBuilder } from '../utils/discord/commandBuilder.ts';
+import { integerOption } from '../utils/discord/slashCommandOptions.ts';
 
 const rngCommand = commandBuilder({
   name: 'rng',

@@ -9,7 +9,8 @@ import {
   ModalSubmitInteraction,
 } from 'discord.js';
 
-import { commandBuilder, safeReply } from '../utils/general.ts';
+import { safeReply } from '../utils/discord/editAndReply.ts';
+import { commandBuilder } from '../utils/discord/commandBuilder.ts';
 import { logWithTime } from '../utils/logging.ts';
 import {
   deleteGuild,
@@ -19,10 +20,14 @@ import {
   toggleAllowBackup,
   updateBotChannel,
 } from '../database/guild.ts';
-import { BotChannel, Subcommand } from '../utils/typesAndInterfaces.ts';
 import { TIMES_MILISECONDS } from '../utils/globals.ts';
-import { handleConfirmModal, showConfirmModal } from '../utils/confirmation.ts';
-import { createButton, createButtonsRow } from '../utils/embeds.ts';
+import {
+  handleConfirmModal,
+  showConfirmModal,
+} from '../utils/discord/confirmation.ts';
+import { createButton, createButtonsRow } from '../utils/discord/embeds.ts';
+import { BotChannel } from '../types/channel.ts';
+import { Subcommand } from '../types/commands.ts';
 
 const scope = 'manage';
 

@@ -6,7 +6,7 @@ import {
   EmbedBuilder,
 } from 'discord.js';
 
-import { commandBuilder } from '../utils/general.ts';
+import { commandBuilder } from '../utils/discord/commandBuilder.ts';
 import { STANDARD_COLOR } from '../utils/globals.ts';
 
 const sourceCommand = commandBuilder({

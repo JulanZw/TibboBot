@@ -1,6 +1,5 @@
 import { PrismaClient } from '@prisma/client';
 import { ChatInputCommandInteraction } from 'discord.js';
-import { ScheduledTask } from 'node-cron';
 
 /**
  * Standard color for embeds
@@ -28,11 +27,6 @@ export const pendingReactionRoleSetups = new Map<
 >();
 
 /**
- * All scheduled reminders
- */
-export const scheduledReminderJobs = new Map<string, ScheduledTask>();
-
-/**
  * The token required to login
  */
 export const token = process.env.DISCORD_TOKEN;
@@ -58,6 +52,9 @@ export const prisma = new PrismaClient();
  */
 export const todayWinners: Record<string, 'bot' | 'human' | null> = {};
 
+/**
+ * Common time durations in milliseconds.
+ */
 export enum TIMES_MILISECONDS {
   MINUTE = 60000,
   TEN_MINUTES = 600000,

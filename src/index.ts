@@ -11,7 +11,6 @@ import {
 } from 'discord.js';
 
 import { setupCronJobs } from './cronJobs.ts';
-import { scheduleReminder } from './utils/general.ts';
 import { commandsToRegister } from './commands.ts';
 import { ownerId, prisma, token } from './utils/globals.ts';
 import { handleInteractionCreation } from './handlers/interactionCreation.ts';
@@ -22,6 +21,7 @@ import { getRemindersOfToday } from './database/reminders.ts';
 import { handleMessageCreation } from './handlers/messageCreation.ts';
 import { logWithTime } from './utils/logging.ts';
 import { setupErrorHandlers } from './handlers/errors.ts';
+import { scheduleReminder } from './utils/managers/reminderManager.ts';
 
 const scope = 'startup';
 

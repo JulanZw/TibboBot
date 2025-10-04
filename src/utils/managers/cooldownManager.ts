@@ -1,4 +1,5 @@
-import { Command, CooldownResult, Subcommand } from './typesAndInterfaces.ts';
+import { Command, Subcommand } from '../../types/commands.ts';
+import { CooldownResult } from '../../types/cooldown.ts';
 
 /**
  * A tracker with the command name as key and a map as value.

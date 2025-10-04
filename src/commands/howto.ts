@@ -1,6 +1,7 @@
-import { embedBuilder } from '../utils/embeds.ts';
-import { commandBuilder, safeReply } from '../utils/general.ts';
-import { Subcommand } from '../utils/typesAndInterfaces.ts';
+import { Subcommand } from '../types/commands.ts';
+import { embedBuilder } from '../utils/discord/embeds.ts';
+import { safeReply } from '../utils/discord/editAndReply.ts';
+import { commandBuilder } from '../utils/discord/commandBuilder.ts';
 
 const eatGifLinks: string[] = [
   'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExemhjdXlwcXE5eWt3dzIzODFneGVrdmhheGdwZ3Jia2xuaXZraTN6dyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/d2ItDZZumUI6Y/giphy.gif',

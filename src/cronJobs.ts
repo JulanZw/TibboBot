@@ -4,14 +4,14 @@ import fs from 'fs';
 import cron from 'node-cron';
 import { Client, TextChannel } from 'discord.js';
 
-import { scheduleReminder } from './utils/general.ts';
 import { formatDateToString, getDaySuffix } from './utils/formatting.ts';
 import { getAllBirthdaysInGuildForGivenDate } from './database/birthday.ts';
 import { getAllGuilds, updateDumbScore } from './database/guild.ts';
 import { getRemindersOfToday } from './database/reminders.ts';
 import { logWithTime } from './utils/logging.ts';
 import { todayWinners } from './utils/globals.ts';
-import { getBotAction, getDefeatedMessage } from './utils/todayis.ts';
+import { getBotAction, getDefeatedMessage } from './utils/discord/todayis.ts';
+import { scheduleReminder } from './utils/managers/reminderManager.ts';
 
 export function setupCronJobs(client: Client): void {
   // eslint-disable-next-line @typescript-eslint/no-misused-promises

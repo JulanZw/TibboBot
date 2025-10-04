@@ -1,16 +1,20 @@
 import { ButtonStyle, ComponentType, ModalSubmitInteraction } from 'discord.js';
 
 import { deleteUser, getUser, insertUserData } from '../database/user.ts';
-import { handleConfirmModal, showConfirmModal } from '../utils/confirmation.ts';
-import { createButton, createButtonsRow } from '../utils/embeds.ts';
-import { commandBuilder, safeReply } from '../utils/general.ts';
+import {
+  handleConfirmModal,
+  showConfirmModal,
+} from '../utils/discord/confirmation.ts';
+import { createButton, createButtonsRow } from '../utils/discord/embeds.ts';
+import { safeReply } from '../utils/discord/editAndReply.ts';
 import { TIMES_MILISECONDS } from '../utils/globals.ts';
-import { optIn, optOut } from '../utils/optInOut.ts';
-import { Subcommand } from '../utils/typesAndInterfaces.ts';
+import { optIn, optOut } from '../utils/managers/optInOutManager.ts';
 import { deleteAllBirthdaysForUser } from '../database/birthday.ts';
 import { removeAllPointgiverRolesForUser } from '../database/guild.ts';
 import { deleteAllRemindersForUser } from '../database/reminders.ts';
 import { logWithTime } from '../utils/logging.ts';
+import { Subcommand } from '../types/commands.ts';
+import { commandBuilder } from '../utils/discord/commandBuilder.ts';
 
 const scope = 'opt';
 

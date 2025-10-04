@@ -2,9 +2,9 @@ import {
   booleanOption,
   userOption,
   integerOption,
-} from '../utils/slashCommandOptions.ts';
-import { embedBuilder } from '../utils/embeds.ts';
-import { commandBuilder, safeReply } from '../utils/general.ts';
+} from '../utils/discord/slashCommandOptions.ts';
+import { embedBuilder } from '../utils/discord/embeds.ts';
+import { safeReply } from '../utils/discord/editAndReply.ts';
 import { getPointGiverIdOfGuild, getGuild } from '../database/guild.ts';
 import {
   getAllUsersDataTodayIs,
@@ -13,11 +13,12 @@ import {
   updateUserPoints,
   setPointGiverOfGuild,
 } from '../database/user.ts';
-import { Subcommand } from '../utils/typesAndInterfaces.ts';
+import { Subcommand } from '../types/commands.ts';
 import { logWithTime } from '../utils/logging.ts';
 import { generateLeaderboard } from '../utils/generating.ts';
 import { TIMES_MILISECONDS, STANDARD_COLOR } from '../utils/globals.ts';
-import { hasOptedOut } from '../utils/optInOut.ts';
+import { hasOptedOut } from '../utils/managers/optInOutManager.ts';
+import { commandBuilder } from '../utils/discord/commandBuilder.ts';
 
 const scope = 'todayis';
 

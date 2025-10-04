@@ -1,7 +1,8 @@
 import wol from 'wol';
 import { ChatInputCommandInteraction } from 'discord.js';
 
-import { commandBuilder, safeReply } from '../utils/general.ts';
+import { safeReply } from '../utils/discord/editAndReply.ts';
+import { commandBuilder } from '../utils/discord/commandBuilder.ts';
 import { logWithTime } from '../utils/logging.ts';
 
 const scope = 'magic';

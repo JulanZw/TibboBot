@@ -1,4 +1,4 @@
-import { BotAction } from './typesAndInterfaces.ts';
+import { BotAction } from '../../types/bot.ts';
 
 const funnyWrongAnswers = [
   'Yesterday',
@@ -34,7 +34,7 @@ function getRandomFunnyAnswer(): string {
 export function getBotAction(dumbScore: number): BotAction {
   dumbScore = Math.max(0, Math.min(10, dumbScore));
 
-  const roll = Math.random(); // 0..1
+  const roll = Math.random();
 
   if (dumbScore >= 10) {
     return { type: 'skip', answer: '😴' };

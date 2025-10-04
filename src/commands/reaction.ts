@@ -8,16 +8,17 @@ import {
   stringOption,
   roleOption,
   channelOption,
-} from '../utils/slashCommandOptions.ts';
-import { commandBuilder, safeReply } from '../utils/general.ts';
+} from '../utils/discord/slashCommandOptions.ts';
+import { safeReply } from '../utils/discord/editAndReply.ts';
+import { commandBuilder } from '../utils/discord/commandBuilder.ts';
 import { logWithTime } from '../utils/logging.ts';
 import { pendingReactionRoleSetups } from '../utils/globals.ts';
-import { embedBuilder } from '../utils/embeds.ts';
+import { embedBuilder } from '../utils/discord/embeds.ts';
 import {
   getReactionRolesByMessage,
   addReactionRole,
 } from '../database/reactionRoles.ts';
-import { Subcommand } from '../utils/typesAndInterfaces.ts';
+import { Subcommand } from '../types/commands.ts';
 
 const scope = 'reaction';
 

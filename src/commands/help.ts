@@ -1,13 +1,14 @@
 import { ChatInputCommandInteraction, ComponentType } from 'discord.js';
 
-import { commandBuilder, safeReply } from '../utils/general.ts';
+import { safeReply } from '../utils/discord/editAndReply.ts';
 import {
   embedBuilder,
   createButtonsRow,
   createPaginationButtons,
-} from '../utils/embeds.ts';
+} from '../utils/discord/embeds.ts';
 import { commandNamesAndDescriptions } from '../commands.ts';
 import { TIMES_MILISECONDS } from '../utils/globals.ts';
+import { commandBuilder } from '../utils/discord/commandBuilder.ts';
 
 const helpCommand = commandBuilder({
   name: 'help',

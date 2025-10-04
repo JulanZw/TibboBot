@@ -2,7 +2,8 @@ import path, { dirname } from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 
-import { LogLevel } from './typesAndInterfaces.ts';
+import { LogLevel } from '../types/log.ts';
+
 import { formatDateToYYYYMMDDHHMMSS } from './formatting.ts';
 
 const logDir = path.resolve(

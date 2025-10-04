@@ -1,7 +1,8 @@
 import { ChatInputCommandInteraction } from 'discord.js';
 
-import { embedBuilder } from '../utils/embeds.ts';
-import { commandBuilder, safeReply } from '../utils/general.ts';
+import { embedBuilder } from '../utils/discord/embeds.ts';
+import { safeReply } from '../utils/discord/editAndReply.ts';
+import { commandBuilder } from '../utils/discord/commandBuilder.ts';
 import { logWithTime } from '../utils/logging.ts';
 
 const scope = 'cat';

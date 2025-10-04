@@ -1,6 +1,6 @@
 import { logWithTime } from '../utils/logging.ts';
-import { BotChannel } from '../utils/typesAndInterfaces.ts';
 import { prisma } from '../utils/globals.ts';
+import { BotChannel } from '../types/channel.ts';
 
 const scope = 'database_GUILD';
 

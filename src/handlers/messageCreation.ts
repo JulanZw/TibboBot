@@ -2,9 +2,9 @@ import { Message, MessageFlags, TextChannel } from 'discord.js';
 import { evaluate } from 'mathjs';
 
 import { pendingReactionRoleSetups, todayWinners } from '../utils/globals.ts';
-import { embedBuilder } from '../utils/embeds.ts';
+import { embedBuilder } from '../utils/discord/embeds.ts';
 import { logWithTime } from '../utils/logging.ts';
-import { preprocessNumerics } from '../utils/preproccessors.ts';
+import { preprocessNumerics } from '../utils/preprocessors.ts';
 import { client } from '../index.ts';
 import {
   checkAndUpdateCount,
@@ -16,8 +16,8 @@ import {
 } from '../database/guild.ts';
 import { addReactionRole } from '../database/reactionRoles.ts';
 import { updateCountsForUser } from '../database/user.ts';
-import { looksLikeMathExpression } from '../utils/general.ts';
 import { formatDateToString } from '../utils/formatting.ts';
+import { looksLikeMathExpression } from '../utils/math.ts';
 
 const scope = 'handler_MESSAGECREATION';
 

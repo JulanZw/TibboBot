@@ -7,8 +7,8 @@ import {
   ActionRowBuilder,
 } from 'discord.js';
 
-import { STANDARD_COLOR } from './globals.ts';
-import { PaginationButtonLocation } from './typesAndInterfaces.ts';
+import { PaginationButtonLocation } from '../../types/button.ts';
+import { STANDARD_COLOR } from '../globals.ts';
 
 /**
  * Util function for building an embed

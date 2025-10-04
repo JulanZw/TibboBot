@@ -5,15 +5,12 @@ import {
   ButtonInteraction,
   ModalSubmitInteraction,
   TextInputStyle,
+  ButtonStyle,
 } from 'discord.js';
 import { $Enums, Reminders } from '@prisma/client';
 
-import { stringOption } from '../utils/slashCommandOptions.ts';
-import {
-  commandBuilder,
-  safeReply,
-  scheduleReminder,
-} from '../utils/general.ts';
+import { stringOption } from '../utils/discord/slashCommandOptions.ts';
+import { safeReply } from '../utils/discord/editAndReply.ts';
 import { logWithTime } from '../utils/logging.ts';
 import { parseDurationOrDateString } from '../utils/parsers.ts';
 import {
@@ -21,9 +18,9 @@ import {
   createButtonsRow,
   createButton,
   createPaginationButtons,
-} from '../utils/embeds.ts';
+} from '../utils/discord/embeds.ts';
 import { capitalizeFirst, formatDateToDDMMYYYY } from '../utils/formatting.ts';
-import { Subcommand } from '../utils/typesAndInterfaces.ts';
+import { Subcommand } from '../types/commands.ts';
 import {
   createReminder,
   deleteReminder,
@@ -31,8 +28,10 @@ import {
   updateReminder,
 } from '../database/reminders.ts';
 import { TIMES_MILISECONDS } from '../utils/globals.ts';
-import { hasOptedOut } from '../utils/optInOut.ts';
-import { buildAndRegisterModal } from '../utils/modalRegistery.ts';
+import { hasOptedOut } from '../utils/managers/optInOutManager.ts';
+import { buildAndRegisterModal } from '../utils/discord/modalRegistry.ts';
+import { commandBuilder } from '../utils/discord/commandBuilder.ts';
+import { scheduleReminder } from '../utils/managers/reminderManager.ts';
 
 const scope = 'reminder';
 
@@ -220,18 +219,43 @@ const reminderCommands = commandBuilder({
                 break;
 
               case 'delete': {
+                const buttons = [
+                  createButton({
+                    type: 'confirm',
+                    label: 'Confirm',
+                    style: ButtonStyle.Primary,
+                  }),
+                  createButton({
+                    type: 'cancel',
+                    label: 'Cancel',
+                    style: ButtonStyle.Secondary,
+                  }),
+                ];
+
+                await btnInteraction.update({
+                  components: [createButtonsRow(buttons)],
+                });
+                break;
+              }
+
+              case 'confirm': {
                 await deleteReminder(reminders[index].id);
                 reminders.splice(index, 1);
-
                 if (!reminders.length) {
-                  collector.stop();
-                  return await btnInteraction.update({
+                  await btnInteraction.update({
                     content: 'All reminders deleted.',
                     embeds: [],
+                    components: [],
                   });
+                  collector.stop();
+                  return;
                 }
 
                 index = Math.min(index, reminders.length - 1);
+                break;
+              }
+
+              case 'cancel': {
                 break;
               }
 
@@ -326,11 +350,12 @@ const reminderCommands = commandBuilder({
               default:
                 return await safeReply(btnInteraction, 'Invalid action.', true);
             }
-
-            await btnInteraction.update({
-              embeds: buildEmbed(reminders[index], index),
-              components: buildButtons(reminders.length, index),
-            });
+            if (action !== 'delete') {
+              await btnInteraction.update({
+                embeds: buildEmbed(reminders[index], index),
+                components: buildButtons(reminders.length, index),
+              });
+            }
           });
 
           // eslint-disable-next-line @typescript-eslint/no-misused-promises

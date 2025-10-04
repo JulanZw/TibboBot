@@ -1,15 +1,19 @@
-import { booleanOption, userOption } from '../utils/slashCommandOptions.ts';
-import { embedBuilder } from '../utils/embeds.ts';
-import { commandBuilder, safeReply } from '../utils/general.ts';
+import {
+  booleanOption,
+  userOption,
+} from '../utils/discord/slashCommandOptions.ts';
+import { embedBuilder } from '../utils/discord/embeds.ts';
+import { safeReply } from '../utils/discord/editAndReply.ts';
 import { logWithTime } from '../utils/logging.ts';
+import { commandBuilder } from '../utils/discord/commandBuilder.ts';
 import {
   getAllUsersCharsAndMessages,
   getUserCharsAndMessages,
 } from '../database/user.ts';
-import { Subcommand } from '../utils/typesAndInterfaces.ts';
 import { TIMES_MILISECONDS, STANDARD_COLOR } from '../utils/globals.ts';
 import { generateLeaderboard } from '../utils/generating.ts';
-import { hasOptedOut } from '../utils/optInOut.ts';
+import { hasOptedOut } from '../utils/managers/optInOutManager.ts';
+import { Subcommand } from '../types/commands.ts';
 
 const scope = 'messages';
 

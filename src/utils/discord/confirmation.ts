@@ -5,8 +5,8 @@ import {
   ButtonInteraction,
 } from 'discord.js';
 
-import { safeReply } from './general.ts';
-import { buildAndRegisterModal } from './modalRegistery.ts';
+import { safeReply } from './editAndReply.ts';
+import { buildAndRegisterModal } from './modalRegistry.ts';
 
 /**
  * Sends a modal asking the user to type "CONFIRM" before proceeding.
