@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { pipeline } from 'stream/promises';
 import crypto from 'crypto';
+import { createRequire } from 'module';
 
 import archiver, { ArchiverOptions } from 'archiver';
 import fetch from 'node-fetch';
@@ -11,8 +12,10 @@ import { TextChannel, ChatInputCommandInteraction } from 'discord.js';
 import { logWithTime } from './logging.ts';
 import { safeEdit, safeReply } from './general.ts';
 
-// // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-require-imports
-// archiver.registerFormat('zip-encrypted', require('archiver-zip-encrypted')); // ? using a workaround I found here: https://github.com/artem-karpenko/archiver-zip-encrypted/issues/31#issuecomment-2404607515 since it doesnt have a type package
+const require = createRequire(import.meta.url); // have to do this because 'archiver-zip-encrypted' is not an ES module
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+archiver.registerFormat('zip-encrypted', require('archiver-zip-encrypted')); // using a workaround I found here: https://github.com/artem-karpenko/archiver-zip-encrypted/issues/31#issuecomment-2404607515 since it doesnt have a type package
 
 const backupQueue: ChatInputCommandInteraction[] = [];
 const scope = 'backup_queue';

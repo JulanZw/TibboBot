@@ -1,37 +1,39 @@
 import {
   CommandInteraction,
-  ModalBuilder,
-  TextInputBuilder,
   TextInputStyle,
-  ActionRowBuilder,
   ModalSubmitInteraction,
   ButtonInteraction,
 } from 'discord.js';
 
 import { safeReply } from './general.ts';
+import { buildAndRegisterModal } from './modalRegistery.ts';
 
 /**
- * Sends a modal asking the user to type "confirm" before proceeding.
+ * Sends a modal asking the user to type "CONFIRM" before proceeding.
  * @param interaction The command interaction to respond to.
  * @param customId Unique customId for the modal.
+ * @param onSubmit Function to call when the modal is submitted.
  */
 export async function showConfirmModal(
   interaction: CommandInteraction | ButtonInteraction,
   customId: string,
+  onSubmit: (interaction: ModalSubmitInteraction) => Promise<any>,
 ) {
-  const modal = new ModalBuilder()
-    .setCustomId(customId)
-    .setTitle('Confirm Purge');
-
-  const input = new TextInputBuilder()
-    .setCustomId('confirmation_input')
-    .setLabel('Type "confirm" to continue. CANT BE REVERTED')
-    .setStyle(TextInputStyle.Short)
-    .setPlaceholder('CONFIRM')
-    .setRequired(true);
-
-  const row = new ActionRowBuilder<TextInputBuilder>().addComponents(input);
-  modal.addComponents(row);
+  const modal = buildAndRegisterModal({
+    id: customId,
+    title: 'Confirm Action',
+    ephemeral: false,
+    fields: [
+      {
+        name: 'Type "CONFIRM" to continue. CANT BE REVERTED',
+        style: TextInputStyle.Short,
+        customId: 'confirmation_input',
+        placeholder: 'CONFIRM',
+        required: true,
+      },
+    ],
+    onSubmit,
+  });
 
   await interaction.showModal(modal);
 }

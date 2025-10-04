@@ -6,11 +6,13 @@ import {
   ChannelSelectMenuBuilder,
   ChannelType,
   MessageFlags,
+  ModalSubmitInteraction,
 } from 'discord.js';
 
 import { commandBuilder, safeReply } from '../utils/general.ts';
 import { logWithTime } from '../utils/logging.ts';
 import {
+  deleteGuild,
   getAllowBackup,
   getBotChannel,
   getGuild,
@@ -19,12 +21,12 @@ import {
 } from '../database/guild.ts';
 import { BotChannel, Subcommand } from '../utils/typesAndInterfaces.ts';
 import { TIMES_MILISECONDS } from '../utils/globals.ts';
-import { showConfirmModal } from '../utils/confirmation.ts';
+import { handleConfirmModal, showConfirmModal } from '../utils/confirmation.ts';
 import { createButton, createButtonsRow } from '../utils/embeds.ts';
 
 const scope = 'manage';
 
-export const manageChannelsCommand = commandBuilder({
+const manageChannelsCommand = commandBuilder({
   name: 'manage',
   description:
     'All commands related to managing things for the bot inside the guild',
@@ -341,7 +343,31 @@ export const manageChannelsCommand = commandBuilder({
             );
           }
 
-          await showConfirmModal(interaction, 'purge_guild_confirm_modal');
+          await showConfirmModal(
+            interaction,
+            'purge_guild_confirm_modal',
+            async (interaction: ModalSubmitInteraction) => {
+              const confirmed = await handleConfirmModal(interaction);
+              if (confirmed) {
+                const guild = await getGuild(interaction.guild!.id);
+                if (!guild) {
+                  return await safeReply(
+                    interaction,
+                    'Guild is not in the database.',
+                    true,
+                  );
+                }
+
+                await deleteGuild(guild.guildId);
+                logWithTime(`Deleted guild: ${guild.guildId}`, 'info', scope);
+
+                await safeReply(
+                  interaction,
+                  `**Deleted:**\nGuild: ${guild.guildId}`,
+                );
+              }
+            },
+          );
         },
         customize: (builder) => builder,
         permissionLevel: 'admin',

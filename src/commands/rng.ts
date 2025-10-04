@@ -3,7 +3,7 @@ import { ChatInputCommandInteraction } from 'discord.js';
 import { commandBuilder, safeReply } from '../utils/general.ts';
 import { integerOption } from '../utils/slashCommandOptions.ts';
 
-export const rngCommand = commandBuilder({
+const rngCommand = commandBuilder({
   name: 'rng',
   description:
     'Responds with a random number. If a range is provided, responds with a number within that range',

@@ -21,7 +21,7 @@ import { Subcommand } from '../utils/typesAndInterfaces.ts';
 
 const scope = 'reaction';
 
-export const reactionCommands = commandBuilder({
+const reactionCommands = commandBuilder({
   name: 'reaction',
   description: 'All commands for creating and updating a reaction message',
   subcommands: new Map<string, Subcommand>([

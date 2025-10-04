@@ -21,7 +21,7 @@ import { hasOptedOut } from '../utils/optInOut.ts';
 
 const scope = 'todayis';
 
-export const todayIsCommands = commandBuilder({
+const todayIsCommands = commandBuilder({
   name: 'today-is',
   description: 'All commands for today-is',
   subcommands: new Map<string, Subcommand>([

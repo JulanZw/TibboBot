@@ -3,9 +3,7 @@ import {
   SlashCommandSubcommandBuilder,
   ComponentType,
   ButtonInteraction,
-  ModalBuilder,
-  ActionRowBuilder,
-  TextInputBuilder,
+  ModalSubmitInteraction,
   TextInputStyle,
 } from 'discord.js';
 import { $Enums, Reminders } from '@prisma/client';
@@ -30,13 +28,15 @@ import {
   createReminder,
   deleteReminder,
   getUserReminders,
+  updateReminder,
 } from '../database/reminders.ts';
 import { TIMES_MILISECONDS } from '../utils/globals.ts';
 import { hasOptedOut } from '../utils/optInOut.ts';
+import { buildAndRegisterModal } from '../utils/modalRegistery.ts';
 
 const scope = 'reminder';
 
-export const reminderCommands = commandBuilder({
+const reminderCommands = commandBuilder({
   name: 'reminder',
   description: 'All commands related to your reminders',
   subcommands: new Map<string, Subcommand>([
@@ -237,34 +237,89 @@ export const reminderCommands = commandBuilder({
 
               case 'edit': {
                 const reminder = reminders[index];
-                const modal = new ModalBuilder()
-                  .setCustomId(`editReminderModal:${reminder.id}`)
-                  .setTitle('Edit Reminder')
-                  .addComponents(
-                    new ActionRowBuilder<TextInputBuilder>().addComponents(
-                      new TextInputBuilder()
-                        .setCustomId('editMessage')
-                        .setLabel('Reminder Message')
-                        .setStyle(TextInputStyle.Paragraph)
-                        .setRequired(true)
-                        .setValue(reminder.message),
-                    ),
-                    new ActionRowBuilder<TextInputBuilder>().addComponents(
-                      new TextInputBuilder()
-                        .setCustomId('editTime')
-                        .setLabel('Remind at (e.g. in 2 hours or in 3 days).')
-                        .setStyle(TextInputStyle.Short)
-                        .setRequired(false),
-                    ),
-                    new ActionRowBuilder<TextInputBuilder>().addComponents(
-                      new TextInputBuilder()
-                        .setCustomId('editRepeat')
-                        .setLabel('Repeat? (Daily, Weekly, None)')
-                        .setStyle(TextInputStyle.Short)
-                        .setRequired(true)
-                        .setValue(capitalizeFirst(reminder.remindInterval)),
-                    ),
-                  );
+                const modal = buildAndRegisterModal({
+                  id: `editReminderModal`,
+                  ephemeral: true,
+                  title: 'Edit Reminder',
+                  fields: [
+                    {
+                      customId: 'editMessage',
+                      name: 'Reminder Message',
+                      style: TextInputStyle.Paragraph,
+                      required: true,
+                      value: reminder.message,
+                    },
+                    {
+                      customId: 'editTime',
+                      name: 'Remind at (e.g. in 2 hours or in 3 days).',
+                      style: TextInputStyle.Short,
+                      required: false,
+                    },
+                    {
+                      customId: 'editRepeat',
+                      name: 'Repeat? (Daily, Weekly, None)',
+                      style: TextInputStyle.Short,
+                      required: true,
+                      value: capitalizeFirst(reminder.remindInterval),
+                    },
+                  ],
+                  onSubmit: async (interaction: ModalSubmitInteraction) => {
+                    const editMessage =
+                      interaction.fields.getTextInputValue('editMessage');
+                    const editTime =
+                      interaction.fields.getTextInputValue('editTime');
+                    const editRepeat =
+                      interaction.fields.getTextInputValue('editRepeat');
+
+                    const updateRepeat =
+                      editRepeat && editRepeat.toUpperCase() in $Enums.Intervals
+                        ? $Enums.Intervals[
+                            editRepeat.toUpperCase() as keyof typeof $Enums.Intervals
+                          ]
+                        : $Enums.Intervals.NONE;
+
+                    if (reminder.userId !== interaction.user.id) {
+                      return await safeReply(
+                        interaction,
+                        'Unauthorized.',
+                        true,
+                      );
+                    }
+
+                    let newRemindAt: Date;
+
+                    if (editTime) {
+                      const parsed = parseDurationOrDateString(editTime);
+
+                      if (!parsed || parsed < new Date()) {
+                        return await safeReply(
+                          interaction,
+                          'Invalid or past date.',
+                          true,
+                        );
+                      }
+
+                      newRemindAt = parsed;
+                    } else {
+                      newRemindAt = reminder.remindAt;
+                    }
+
+                    const editedReminder = await updateReminder(
+                      reminder.id,
+                      editMessage,
+                      newRemindAt,
+                      updateRepeat,
+                    );
+
+                    scheduleReminder(interaction.user, editedReminder);
+
+                    return await safeReply(
+                      interaction,
+                      `Reminder updated!\n**New Message:** ${editMessage}\n**New Time:** <t:${Math.floor(newRemindAt.getTime() / 1000)}:F>\n**Repeat:** ${capitalizeFirst(updateRepeat)}`,
+                      true,
+                    );
+                  },
+                });
                 return await btnInteraction.showModal(modal);
               }
 

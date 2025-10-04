@@ -13,7 +13,7 @@ import { hasOptedOut } from '../utils/optInOut.ts';
 
 const scope = 'messages';
 
-export const messageCommands = commandBuilder({
+const messageCommands = commandBuilder({
   name: 'messages',
   description: 'All commands related to messages',
   subcommands: new Map<string, Subcommand>([

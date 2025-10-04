@@ -65,3 +65,28 @@ export function capitalizeFirst(input: string): string {
   const lower = input.toLowerCase();
   return lower.charAt(0).toUpperCase() + lower.slice(1);
 }
+
+/**
+ * Formats a duration in milliseconds into a human-readable string.
+ * Examples:
+ *  - 4200 -> "4s"
+ *  - 65000 -> "1m 5s"
+ *  - 3723000 -> "1h 2m 3s"
+ *
+ * @param ms Duration in milliseconds
+ * @returns A formatted string
+ */
+export function formatDuration(ms: number): string {
+  let seconds = Math.floor(ms / 1000);
+  const hours = Math.floor(seconds / 3600);
+  seconds %= 3600;
+  const minutes = Math.floor(seconds / 60);
+  seconds %= 60;
+
+  const parts: string[] = [];
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+  if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`);
+
+  return parts.join(' ');
+}

@@ -32,7 +32,7 @@ import { deleteReminder, updateReminder } from '../database/reminders.ts';
 import {
   PermissionLevel,
   Command,
-  Registerable,
+  RegisterableCommand,
 } from './typesAndInterfaces.ts';
 import { logWithTime } from './logging.ts';
 import { addDays } from './parsers.ts';
@@ -218,7 +218,7 @@ export function getPermissionsForLevel(level: PermissionLevel): bigint | null {
  * @returns A `Registerable` object that can be passed to Discord.js for registration
  *          and executed when a slash command interaction occurs.
  */
-export function commandBuilder(cmd: Command): Registerable {
+export function commandBuilder(cmd: Command): RegisterableCommand {
   const builder = new SlashCommandBuilder()
     .setName(cmd.name)
     .setDescription(cmd.description);

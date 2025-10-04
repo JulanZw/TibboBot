@@ -2,9 +2,10 @@ import { ChatInputCommandInteraction } from 'discord.js';
 
 import { client } from '../index.ts';
 import { commands } from '../commands.ts';
-import { checkCooldown, formatDuration } from '../utils/cooldownManager.ts';
+import { checkCooldown } from '../utils/cooldownManager.ts';
 import { safeReply, checkPermission } from '../utils/general.ts';
 import { logWithTime } from '../utils/logging.ts';
+import { formatDuration } from '../utils/formatting.ts';
 
 const scope = 'handler_INTERACTIONCREATION_COMMAND';
 

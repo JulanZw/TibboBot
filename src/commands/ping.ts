@@ -2,7 +2,7 @@ import { ChatInputCommandInteraction } from 'discord.js';
 
 import { commandBuilder, safeReply } from '../utils/general.ts';
 
-export const pingCommand = commandBuilder({
+const pingCommand = commandBuilder({
   name: 'ping',
   description: 'Responds with "pong" to check if the bot is online.',
   execute: async (interaction: ChatInputCommandInteraction) => {

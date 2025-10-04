@@ -11,7 +11,7 @@ import reactionCommands from './commands/reaction.ts';
 import reminderCommands from './commands/reminders.ts';
 import sourceCommand from './commands/source.ts';
 import todayIsCommands from './commands/todayIs.ts';
-import { Registerable } from './utils/typesAndInterfaces.ts';
+import { RegisterableCommand } from './utils/typesAndInterfaces.ts';
 import { COMMANDS_PER_PAGE } from './utils/globals.ts';
 import encodeCommands from './commands/encode.ts';
 import optoutCommand from './commands/opt.ts';
@@ -33,7 +33,7 @@ import backupCommands from './commands/backup.ts';
  * @property execute - The function that runs when the command is used.
  */
 
-export const commands: Registerable[] = [
+export const commands: RegisterableCommand[] = [
   wolCommand,
   helpCommand,
   pingCommand,

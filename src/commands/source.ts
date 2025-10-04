@@ -9,7 +9,7 @@ import {
 import { commandBuilder } from '../utils/general.ts';
 import { STANDARD_COLOR } from '../utils/globals.ts';
 
-export const sourceCommand = commandBuilder({
+const sourceCommand = commandBuilder({
   name: 'source',
   description: 'Get a link to the source code',
   execute: async (interaction: ChatInputCommandInteraction) => {

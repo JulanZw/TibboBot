@@ -1,14 +1,20 @@
-import { ButtonStyle, ComponentType } from 'discord.js';
+import { ButtonStyle, ComponentType, ModalSubmitInteraction } from 'discord.js';
 
-import { getUser, insertUserData } from '../database/user.ts';
-import { showConfirmModal } from '../utils/confirmation.ts';
+import { deleteUser, getUser, insertUserData } from '../database/user.ts';
+import { handleConfirmModal, showConfirmModal } from '../utils/confirmation.ts';
 import { createButton, createButtonsRow } from '../utils/embeds.ts';
 import { commandBuilder, safeReply } from '../utils/general.ts';
 import { TIMES_MILISECONDS } from '../utils/globals.ts';
 import { optIn, optOut } from '../utils/optInOut.ts';
 import { Subcommand } from '../utils/typesAndInterfaces.ts';
+import { deleteAllBirthdaysForUser } from '../database/birthday.ts';
+import { removeAllPointgiverRolesForUser } from '../database/guild.ts';
+import { deleteAllRemindersForUser } from '../database/reminders.ts';
+import { logWithTime } from '../utils/logging.ts';
 
-export const optoutCommand = commandBuilder({
+const scope = 'opt';
+
+const optoutCommand = commandBuilder({
   name: 'opt',
   description: 'The commands for opting in and out of data collection',
   subcommands: new Map<string, Subcommand>([
@@ -98,14 +104,57 @@ export const optoutCommand = commandBuilder({
                 return;
               }
               case 'yes': {
-                await btn.update({ components: [] });
                 collector.stop();
-                await showConfirmModal(btn, 'purge_user_confirm_modal');
+                await showConfirmModal(
+                  btn,
+                  'purge_user_confirm_modal',
+                  async (modalInteraction: ModalSubmitInteraction) => {
+                    const confirmed =
+                      await handleConfirmModal(modalInteraction);
+                    if (confirmed) {
+                      const userId = modalInteraction.user.id;
+
+                      const deletedBirthdays =
+                        await deleteAllBirthdaysForUser(userId);
+                      logWithTime(
+                        `Removed all birthdays for user: ${userId}`,
+                        'info',
+                        scope,
+                      );
+                      const deletedReminders =
+                        await deleteAllRemindersForUser(userId);
+                      logWithTime(
+                        `Removed all reminders for user: ${userId}`,
+                        'info',
+                        scope,
+                      );
+                      const deletedPointGiverRoles =
+                        await removeAllPointgiverRolesForUser(userId);
+                      logWithTime(
+                        `Removed all pointgiver roles for user: ${userId}`,
+                        'info',
+                        scope,
+                      );
+                      await deleteUser(userId);
+                      logWithTime(`Deleted user: ${userId}`, 'info', scope);
+
+                      await safeReply(
+                        modalInteraction,
+                        `**Deleted:**\nBirthdays: ${deletedBirthdays.count}\nReminders: ${deletedReminders.count}${
+                          deletedPointGiverRoles.count > 0
+                            ? `\nPointgiver roles: ${deletedPointGiverRoles.count}`
+                            : ''
+                        }`,
+                      );
+                    }
+                  },
+                );
                 return;
               }
               case 'no': {
                 await btn.update({
-                  content: 'Opt-out complete. Your existing data was kept.',
+                  content:
+                    'Opt-out complete. Your existing data was kept but no more will be collected.',
                   components: [],
                 });
                 collector.stop();
