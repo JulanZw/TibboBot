@@ -136,6 +136,7 @@ client
       `Logged in as ${client.user ? `${client.user.username}#${client.user.discriminator}` : 'ERROR'}`,
       'info',
       scope,
+      true,
     ),
   )
   .catch((err: any) => {
