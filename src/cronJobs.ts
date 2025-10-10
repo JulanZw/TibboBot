@@ -1,5 +1,6 @@
-import path from 'path';
+import path, { dirname } from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 
 import cron from 'node-cron';
 import { Client, TextChannel } from 'discord.js';
@@ -73,7 +74,10 @@ export function setupCronJobs(client: Client): void {
   cron.schedule('0 0 * * 1', () => {
     const scope = 'cron_WEEKLY';
     try {
-      const logsDir = path.resolve(__dirname, '../logs');
+      const logsDir = path.resolve(
+        dirname(fileURLToPath(import.meta.url)),
+        '../logs',
+      );
       const latestLog = path.join(logsDir, 'latest.log');
       const now = new Date();
       const year = now.getFullYear();
