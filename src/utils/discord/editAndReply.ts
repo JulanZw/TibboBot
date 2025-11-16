@@ -23,7 +23,7 @@ import { logWithTime } from '../logging.ts';
 
 const scope = 'general';
 
-//#region SafeReply
+// #region SafeReply
 
 /**
  * Utility function so replies don't fail
@@ -99,9 +99,9 @@ export async function safeReply(
   }
 }
 
-//#endregion
+// #endregion
 
-//#region SafeEdit
+// #region SafeEdit
 
 /**
  * Utility function so edits don't fail
@@ -152,4 +152,4 @@ export async function safeEdit(
   }
 }
 
-//#endregion
+// #endregion

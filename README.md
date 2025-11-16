@@ -72,39 +72,49 @@ TibboBot
 
 ## Slash Commands
 
-─── PURGE ───\
-All commands related to data removal\
-› user - Removes all your data saved in this bot (birthdays, reminders, etc.).\
-› guild - Removes all the data of the guild.
+(This might not be fully up to date)
+
+─── BACKUP ───\
+All commands related to backups.\
+› create - Makes a backup of a channel.
+
+─── OPT ───\
+The commands for opting in and out of data collection\
+› out - Stops collection of message counts and similar stats for your account.\
+› in - Allows collection of message counts and similar stats for your account.
 
 ─── MANAGE ───\
 All commands related to managing things for the bot inside the guild\
-› channels - A command to manage the game channels
+› channels - A command to manage the game channels\
+› backups - Change if backups are allowed or not\
+› data - Removes all the data of the guild.
 
 ─── BIRTHDAY ───\
 All commands related to birthdays\
-› set – Set your birthday for this server
+› set - Set your birthday for this server\
+› calender - Get all the birthdays in this server
 
 ─── MESSAGES ───\
 All commands related to messages\
-› leaderboard   – Show the leaderboard for all characters and messages sent\
-› user          – Show the amount of messages and characters someone sent
+› leaderboard - Show the leaderboard for all characters and messages sent\
+› user - Show the amount of messages and characters someone sent
 
-─── REMINDERS ───\
+─── REMINDER ───\
 All commands related to your reminders\
-› add           – Set a new reminder\
-› list          – List and manage your reminders
+› add - Set a new reminder\
+› list - List and manage your reminders
 
 ─── REACTION ───\
 All commands for creating and updating a reaction message\
-› add           – Adds a reaction role to a message after creating a reaction role message.\
-› create        – Create a reaction role message
+› add - Adds a reaction role to a message after creating a reaction role message.\
+› create - Create a reaction role message
 
 ─── TODAY-IS ───\
-All commands related to today-is\
-› leaderboard   – Show the leaderboard for the today-is points\
-› add           – Give today-is points to someone\
-› pointgiver    – Set the servers pointgiver (admin only)
+All commands for today-is\
+› leaderboard - Show the leaderboard for the today-is points\
+› add - Give today-is points to someone\
+› deduct - Deduct today-is points from someone\
+› pointgiver - Set the servers pointgiver (admin only)
 
 ─── ENCODE ───\
 Encode or decode text using Base64 or Morse code\
@@ -112,13 +122,19 @@ Encode or decode text using Base64 or Morse code\
 › morse - Encode or decode Morse code\
 › caesar - Encode or decode using Caesar cipher
 
+─── HOWTO ───\
+All howto commands\
+› breathe - How does one breathe\
+› eat - How does one eat
+
 ─── OTHER ───\
 Other commands\
-› magic           – does some magic (bot owner only)\
-› help            – Displays all commands.\
-› ping            – Responds with "pong" to check if the bot is online.\
-› cat             – Sends a random cat picture.\
-› source          – Get a zipped archive of the source code
+› magic - does some magic (bot owner only)\
+› help - Displays all commands.\
+› ping - Responds with "pong" to check if the bot is online.\
+› rng - Responds with a random number. If a range is provided, responds with a number within that range\
+› cat - Sends a random cat picture.\
+› source - Get a link to the source code\
 
 Implementation can be found in [this file](./src/commands.ts)
 

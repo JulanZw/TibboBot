@@ -25,7 +25,7 @@ import { scheduleReminder } from './utils/managers/reminderManager.ts';
 
 const scope = 'startup';
 
-//#region Setup
+// #region Setup
 
 export const client = new Client({
   intents: [
@@ -39,9 +39,9 @@ export const client = new Client({
 });
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
-client.once('ready', async (client) => {
-  setupCronJobs(client);
-  setupErrorHandlers(client, prisma);
+client.once('ready', async (readyClient) => {
+  setupCronJobs(readyClient);
+  setupErrorHandlers(readyClient, prisma);
 
   if (!token || !process.env.DATABASE_URL) {
     logWithTime('Token or database url not set.', 'error', scope, true);
@@ -54,7 +54,7 @@ client.once('ready', async (client) => {
 
   const rest = new REST({ version: '10' }).setToken(token);
   try {
-    await rest.put(Routes.applicationCommands(client.user.id), {
+    await rest.put(Routes.applicationCommands(readyClient.user.id), {
       body: commandsToRegister,
     });
     logWithTime(
@@ -64,13 +64,15 @@ client.once('ready', async (client) => {
     );
 
     if (process.env.ENV !== 'dev') {
-      client.user.setStatus('online');
-      client.user.setActivity('commands', { type: ActivityType.Listening });
+      readyClient.user.setStatus('online');
+      readyClient.user.setActivity('commands', {
+        type: ActivityType.Listening,
+      });
       try {
         const todaysReminders = await getRemindersOfToday();
 
         for (const reminder of todaysReminders) {
-          const user = await client.users.fetch(reminder.userId);
+          const user = await readyClient.users.fetch(reminder.userId);
           scheduleReminder(user, reminder);
         }
 
@@ -88,8 +90,8 @@ client.once('ready', async (client) => {
         );
       }
     } else {
-      client.user.setStatus('dnd');
-      client.user.setActivity('Being tested', {
+      readyClient.user.setStatus('dnd');
+      readyClient.user.setActivity('Being tested', {
         type: ActivityType.Custom,
         state: 'Being tested',
       });

@@ -12,10 +12,13 @@ import { TextChannel, ChatInputCommandInteraction } from 'discord.js';
 import { logWithTime } from '../logging.ts';
 import { safeEdit, safeReply } from '../discord/editAndReply.ts';
 
-const require = createRequire(import.meta.url); // have to do this because 'archiver-zip-encrypted' is not an ES module
+// have to do this because 'archiver-zip-encrypted' is not an ES module
+const require = createRequire(import.meta.url);
+
+// using a workaround I found here: https://github.com/artem-karpenko/archiver-zip-encrypted/issues/31#issuecomment-2404607515 since it doesnt have a type package
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-archiver.registerFormat('zip-encrypted', require('archiver-zip-encrypted')); // using a workaround I found here: https://github.com/artem-karpenko/archiver-zip-encrypted/issues/31#issuecomment-2404607515 since it doesnt have a type package
+archiver.registerFormat('zip-encrypted', require('archiver-zip-encrypted'));
 
 const backupQueue: ChatInputCommandInteraction[] = [];
 const scope = 'backup_queue';
@@ -55,7 +58,7 @@ async function work(interaction: ChatInputCommandInteraction) {
     interaction.channel) as TextChannel;
 
   const download = false;
-  //interaction.options.getBoolean('download_attachments', false) ?? false; // ? will temporarily be off until I can find a proper file host solution
+  // interaction.options.getBoolean('download_attachments', false) ?? false; // ? will temporarily be off until I can find a proper file host solution
 
   const protect = interaction.options.getBoolean('password', false) ?? false;
 
@@ -137,7 +140,8 @@ async function work(interaction: ChatInputCommandInteraction) {
     }
 
     lastId = fetched.last()?.id;
-    await new Promise((r) => setTimeout(r, 1000)); // rate limit
+    // rate limit
+    await new Promise((r) => setTimeout(r, 1000));
   }
 
   const metadata = {

@@ -71,6 +71,12 @@ const reminderCommands = commandBuilder({
               'Reminders can only be up to 1 year in the future.',
               true,
             );
+          } else if (targetTime.getTime() < Date.now()) {
+            return await safeReply(
+              interaction,
+              'You cannot set a reminder in the past.',
+              true,
+            );
           }
 
           const userReminders = await getUserReminders(interaction.user.id);
@@ -144,9 +150,9 @@ const reminderCommands = commandBuilder({
           let index = 0;
           const userId = interaction.user.id;
 
-          const buildEmbed = (reminder: Reminders, index: number) => [
+          const buildEmbed = (reminder: Reminders, reminderIndex: number) => [
             embedBuilder({
-              title: `Reminder ${index + 1} of ${reminders.length}`,
+              title: `Reminder ${reminderIndex + 1} of ${reminders.length}`,
               fields: [
                 { name: 'Message', value: reminder.message },
                 {
@@ -166,13 +172,16 @@ const reminderCommands = commandBuilder({
             }),
           ];
 
-          const buildButtons = (length: number, index: number) => {
+          const buildButtons = (length: number, buttonIndex: number) => {
             const normalButtons = [
               createButton({ type: 'edit' }),
               createButton({ type: 'delete' }),
             ];
 
-            const paginationButtons = createPaginationButtons(index, length);
+            const paginationButtons = createPaginationButtons(
+              buttonIndex,
+              length,
+            );
 
             return [
               createButtonsRow(normalButtons, {
@@ -287,13 +296,15 @@ const reminderCommands = commandBuilder({
                       value: capitalizeFirst(reminder.remindInterval),
                     },
                   ],
-                  onSubmit: async (interaction: ModalSubmitInteraction) => {
+                  onSubmit: async (
+                    modalInteraction: ModalSubmitInteraction,
+                  ) => {
                     const editMessage =
-                      interaction.fields.getTextInputValue('editMessage');
+                      modalInteraction.fields.getTextInputValue('editMessage');
                     const editTime =
-                      interaction.fields.getTextInputValue('editTime');
+                      modalInteraction.fields.getTextInputValue('editTime');
                     const editRepeat =
-                      interaction.fields.getTextInputValue('editRepeat');
+                      modalInteraction.fields.getTextInputValue('editRepeat');
 
                     const updateRepeat =
                       editRepeat && editRepeat.toUpperCase() in $Enums.Intervals
@@ -302,9 +313,9 @@ const reminderCommands = commandBuilder({
                           ]
                         : $Enums.Intervals.NONE;
 
-                    if (reminder.userId !== interaction.user.id) {
+                    if (reminder.userId !== modalInteraction.user.id) {
                       return await safeReply(
-                        interaction,
+                        modalInteraction,
                         'Unauthorized.',
                         true,
                       );
@@ -317,7 +328,7 @@ const reminderCommands = commandBuilder({
 
                       if (!parsed || parsed < new Date()) {
                         return await safeReply(
-                          interaction,
+                          modalInteraction,
                           'Invalid or past date.',
                           true,
                         );
@@ -335,10 +346,10 @@ const reminderCommands = commandBuilder({
                       updateRepeat,
                     );
 
-                    scheduleReminder(interaction.user, editedReminder);
+                    scheduleReminder(modalInteraction.user, editedReminder);
 
                     return await safeReply(
-                      interaction,
+                      modalInteraction,
                       `Reminder updated!\n**New Message:** ${editMessage}\n**New Time:** <t:${Math.floor(newRemindAt.getTime() / 1000)}:F>\n**Repeat:** ${capitalizeFirst(updateRepeat)}`,
                       true,
                     );

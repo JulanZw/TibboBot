@@ -164,3 +164,10 @@ export async function getOptedOutUsers() {
     where: { optedout: true },
   });
 }
+
+export async function resetTodayIsPoints(discordId: string) {
+  return await prisma.user.update({
+    where: { discordId },
+    data: { points: BigInt(0) },
+  });
+}

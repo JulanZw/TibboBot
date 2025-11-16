@@ -26,7 +26,8 @@ const helpCommand = commandBuilder({
     ];
 
     const buildButtons = () => {
-      const buttons = createPaginationButtons(index, 0); //although they are pagination buttons, there are no other buttons so this works fine
+      // although they are pagination buttons, there are no other buttons so this works fine
+      const buttons = createPaginationButtons(index, 0);
       return [createButtonsRow(buttons)];
     };
 

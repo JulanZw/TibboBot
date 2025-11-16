@@ -1,6 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import { ChatInputCommandInteraction } from 'discord.js';
 
+import { TodayIsWinner } from '../types/todayIs.ts';
+
 /**
  * Standard color for embeds
  */
@@ -50,7 +52,7 @@ export const prisma = new PrismaClient();
  *
  * Resets at midnight every day.
  */
-export const todayWinners: Record<string, 'bot' | 'human' | null> = {};
+export const todayWinners: Record<string, TodayIsWinner> = {};
 
 /**
  * Common time durations in milliseconds.

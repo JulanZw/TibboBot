@@ -45,7 +45,8 @@ export async function executeCommand(interaction: ChatInputCommandInteraction) {
       if (!onCooldown.allowed) {
         return await safeReply(
           interaction,
-          `You need to wait ${formatDuration(onCooldown.remaining as number)} before using this command again.`, // idk why ts whines about it nog existing when its not allowed, but it does
+          // idk why ts whines about it nog existing when its not allowed, but it does
+          `You need to wait ${formatDuration(onCooldown.remaining as number)} before using this command again.`,
           true,
         );
       }
@@ -65,7 +66,8 @@ export async function executeCommand(interaction: ChatInputCommandInteraction) {
       if (!onCooldown.allowed) {
         return await safeReply(
           interaction,
-          `You need to wait ${formatDuration(onCooldown.remaining as number)} before using this command again.`, // idk why ts whines about it nog existing when its not allowed, but it does
+          // idk why ts whines about it nog existing when its not allowed, but it does
+          `You need to wait ${formatDuration(onCooldown.remaining as number)} before using this command again.`,
           true,
         );
       }

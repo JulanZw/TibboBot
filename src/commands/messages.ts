@@ -4,14 +4,16 @@ import {
 } from '../utils/discord/slashCommandOptions.ts';
 import { embedBuilder } from '../utils/discord/embeds.ts';
 import { safeReply } from '../utils/discord/editAndReply.ts';
-import { logWithTime } from '../utils/logging.ts';
 import { commandBuilder } from '../utils/discord/commandBuilder.ts';
 import {
   getAllUsersCharsAndMessages,
   getUserCharsAndMessages,
 } from '../database/user.ts';
 import { TIMES_MILISECONDS, STANDARD_COLOR } from '../utils/globals.ts';
-import { generateLeaderboard } from '../utils/generating.ts';
+import {
+  generateLeaderboard,
+  prepareLeaderboardData,
+} from '../utils/generating.ts';
 import { hasOptedOut } from '../utils/managers/optInOutManager.ts';
 import { Subcommand } from '../types/commands.ts';
 
@@ -29,6 +31,7 @@ const messageCommands = commandBuilder({
           'Show the leaderboard for all characters and messages sent',
         cooldown: TIMES_MILISECONDS.MINUTE,
         async execute(interaction, client) {
+          await interaction.deferReply();
           const guildOnlyFilter = interaction.options.getBoolean('guild_only');
 
           let users;
@@ -57,33 +60,13 @@ const messageCommands = commandBuilder({
             );
           }
 
-          const completeUsers: {
-            username: string;
-            number1: bigint;
-            number2: bigint;
-            avatar: string | null;
-          }[] = await Promise.all(
-            users.slice(0, 10).map(async (row, index) => {
-              try {
-                const user = await client.users.fetch(row.discordId);
-
-                return {
-                  username: `${index + 1}. ${user.displayName ?? user.username}`,
-                  number1: BigInt(row.msg_count),
-                  number2: row.char_count,
-                  avatar: user.displayAvatarURL({ extension: 'png' }),
-                };
-              } catch (err: any) {
-                logWithTime('Error fetching user:' + err, 'error', scope, true);
-                return {
-                  username: `Unknown User`,
-                  number1: BigInt(row.msg_count),
-                  number2: row.char_count,
-                  avatar: null,
-                };
-              }
-            }),
-          );
+          const completeUsers = await prepareLeaderboardData({
+            users,
+            client,
+            number1Key: 'msg_count',
+            number2Key: 'char_count',
+            scope,
+          });
 
           const image = await generateLeaderboard(completeUsers, scope);
 

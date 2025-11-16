@@ -15,7 +15,10 @@ import {
 } from '../database/user.ts';
 import { Subcommand } from '../types/commands.ts';
 import { logWithTime } from '../utils/logging.ts';
-import { generateLeaderboard } from '../utils/generating.ts';
+import {
+  generateLeaderboard,
+  prepareLeaderboardData,
+} from '../utils/generating.ts';
 import { TIMES_MILISECONDS, STANDARD_COLOR } from '../utils/globals.ts';
 import { hasOptedOut } from '../utils/managers/optInOutManager.ts';
 import { commandBuilder } from '../utils/discord/commandBuilder.ts';
@@ -33,6 +36,7 @@ const todayIsCommands = commandBuilder({
         description: 'Show the leaderboard for the today-is points',
         cooldown: TIMES_MILISECONDS.MINUTE,
         async execute(interaction, client) {
+          await interaction.deferReply();
           const guildOnlyFilter = interaction.options.getBoolean('guild_only');
 
           let users;
@@ -61,35 +65,12 @@ const todayIsCommands = commandBuilder({
             );
           }
 
-          const completeUsers: {
-            username: string;
-            number1: bigint;
-            avatar: string | null;
-          }[] = await Promise.all(
-            users.slice(0, 10).map(async (row, index) => {
-              try {
-                const user = await client.users.fetch(row.discordId);
-
-                return {
-                  username: `#${index + 1}. ${user.displayName ?? user.username}`,
-                  number1: row.points,
-                  avatar: user.displayAvatarURL({ extension: 'png' }),
-                };
-              } catch (err: any) {
-                logWithTime(
-                  'Error fetching user: ' + err,
-                  'error',
-                  scope,
-                  true,
-                );
-                return {
-                  username: `#${index + 1}: Unknown User`,
-                  number1: row.points,
-                  avatar: null,
-                };
-              }
-            }),
-          );
+          const completeUsers = await prepareLeaderboardData({
+            users,
+            client,
+            number1Key: 'points',
+            scope,
+          });
 
           const image = await generateLeaderboard(
             completeUsers,

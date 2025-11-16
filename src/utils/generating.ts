@@ -1,8 +1,17 @@
 import { createCanvas, loadImage } from 'canvas';
 import { AttachmentBuilder } from 'discord.js';
 
+import { PrepareLeaderboardOptions } from '../types/leaderboard.ts';
+
 import { logWithTime } from './logging.ts';
 
+/**
+ * Generates a leaderboard image using Canvas and returns it as an AttachmentBuilder.
+ * @param users An array of user objects containing username, number1, optional number2, and optional avatar URL.
+ * @param scope A string representing the scope of the leaderboard (e.g., "today-is", "messages").
+ * @param customText Optional custom text to display as the title of the leaderboard.
+ * @return An AttachmentBuilder containing the generated leaderboard image. The file name is `leaderboard.png`.
+ */
 export async function generateLeaderboard(
   users: {
     username: string;
@@ -92,4 +101,81 @@ export async function generateLeaderboard(
   }
 
   return new AttachmentBuilder(canvas.toBuffer(), { name: 'leaderboard.png' });
+}
+
+/**
+ * Fetches user data and prepares it for the `generateLeaderboard` function.
+ *
+ * It has the following options:
+ * @param {Object[]} users - Array of user records to process
+ * @param {Object} client - Discord client instance for fetching user data
+ * @param {string} number1Key - Key for the primary number to display
+ * @param {string} [number2Key] - Optional key for the secondary number to display
+ * @param {number} [limit=10] - Maximum number of users to include
+ * @param {boolean} [includeRankInUsername=true] - Whether to prefix usernames with ranks
+ * @param {string} [scope='leaderboard'] - Scope identifier for logging
+ * @returns an array of user data objects formatted for leaderboard display
+ */
+export async function prepareLeaderboardData({
+  users,
+  client,
+  number1Key,
+  number2Key,
+  limit = 10,
+  includeRankInUsername = true,
+  scope = 'leaderboard',
+}: PrepareLeaderboardOptions): Promise<
+  {
+    username: string;
+    number1: bigint;
+    number2?: bigint;
+    avatar: string | null;
+  }[]
+> {
+  return await Promise.all(
+    users.slice(0, limit).map(async (row, index) => {
+      try {
+        const user = await client.users.fetch(row.discordId);
+        const displayName = user.displayName ?? user.username;
+        const rank = includeRankInUsername ? `${index + 1}. ` : '';
+
+        const entry: {
+          username: string;
+          number1: bigint;
+          number2?: bigint;
+          avatar: string | null;
+        } = {
+          username: `${rank}${displayName}`,
+          number1: BigInt(row[number1Key]),
+          avatar: user.displayAvatarURL({ extension: 'png' }),
+        };
+
+        if (number2Key) {
+          entry.number2 = BigInt(row[number2Key]);
+        }
+
+        return entry;
+      } catch (err: any) {
+        logWithTime(`Error fetching user: ${err}`, 'error', scope, true);
+
+        const rank = includeRankInUsername ? `${index + 1}. ` : '';
+        const entry: {
+          username: string;
+          number1: bigint;
+          number2?: bigint;
+          avatar: string | null;
+        } = {
+          username: `${rank}Unknown User`,
+          number1: BigInt(row[number1Key]),
+          avatar: null,
+        };
+
+        if (number2Key) {
+          entry.number2 = BigInt(row[number2Key]);
+        }
+
+        return entry;
+      }
+    }),
+  );
 }

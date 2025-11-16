@@ -14,7 +14,8 @@ export function getPermissionsForLevel(level: PermissionLevel): bigint | null {
   }
 
   if (level === 'owner' || level === 'disabled') {
-    return BigInt(0); // disable the command by default
+    // disable the command by default
+    return BigInt(0);
   }
 
   if (typeof level === 'bigint' || typeof level === 'number') {
@@ -24,6 +25,6 @@ export function getPermissionsForLevel(level: PermissionLevel): bigint | null {
   if (Array.isArray(level)) {
     return new PermissionsBitField(level).bitfield;
   }
-
-  return null; // unrestricted
+  // unrestricted
+  return null;
 }

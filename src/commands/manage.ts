@@ -131,7 +131,8 @@ const manageChannelsCommand = commandBuilder({
 
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             buttonCollector.on('collect', async (buttonInteraction) => {
-              const [action, selected] = buttonInteraction.customId.split('_');
+              const [action, selectedChannel] =
+                buttonInteraction.customId.split('_');
 
               if (action === 'cancel') {
                 await buttonInteraction.update({
@@ -140,14 +141,18 @@ const manageChannelsCommand = commandBuilder({
                 });
                 return buttonCollector.stop();
               } else if (action === 'reset') {
-                await updateBotChannel(guildId, selected as BotChannel, null);
+                await updateBotChannel(
+                  guildId,
+                  selectedChannel as BotChannel,
+                  null,
+                );
                 logWithTime(
-                  `Reset ${selected} channel for ${guildId}`,
+                  `Reset ${selectedChannel} channel for ${guildId}`,
                   'info',
                   scope,
                 );
                 await buttonInteraction.update({
-                  content: `${selected} channel reset.`,
+                  content: `${selectedChannel} channel reset.`,
                   components: [],
                 });
                 return buttonCollector.stop();
@@ -155,7 +160,7 @@ const manageChannelsCommand = commandBuilder({
                 const channelSelect =
                   new ActionRowBuilder<ChannelSelectMenuBuilder>().addComponents(
                     new ChannelSelectMenuBuilder()
-                      .setCustomId(`choose_${selected}`)
+                      .setCustomId(`choose_${selectedChannel}`)
                       .setPlaceholder('Select a channel')
                       .addChannelTypes(ChannelType.GuildText),
                   );
@@ -169,7 +174,7 @@ const manageChannelsCommand = commandBuilder({
                   channelMsg.createMessageComponentCollector({
                     filter: (i) =>
                       i.user.id === interaction.user.id &&
-                      i.customId === `choose_${selected}`,
+                      i.customId === `choose_${selectedChannel}`,
                     componentType: ComponentType.ChannelSelect,
                     time: TIMES_MILISECONDS.MINUTE,
                   });
@@ -186,18 +191,18 @@ const manageChannelsCommand = commandBuilder({
 
                   await updateBotChannel(
                     guildId,
-                    selected as BotChannel,
+                    selectedChannel as BotChannel,
                     newChannel.id,
                   );
 
                   logWithTime(
-                    `Set ${selected} channel to ${newChannel.id} for ${guildId}`,
+                    `Set ${selectedChannel} channel to ${newChannel.id} for ${guildId}`,
                     'info',
                     scope,
                   );
 
                   await channelInteraction.update({
-                    content: `The ${selected} channel has been set to <#${newChannel.id}>.`,
+                    content: `The ${selectedChannel} channel has been set to <#${newChannel.id}>.`,
                     components: [],
                   });
 
@@ -351,24 +356,28 @@ const manageChannelsCommand = commandBuilder({
           await showConfirmModal(
             interaction,
             'purge_guild_confirm_modal',
-            async (interaction: ModalSubmitInteraction) => {
-              const confirmed = await handleConfirmModal(interaction);
+            async (modalInteraction: ModalSubmitInteraction) => {
+              const confirmed = await handleConfirmModal(modalInteraction);
               if (confirmed) {
-                const guild = await getGuild(interaction.guild!.id);
-                if (!guild) {
+                const modalGuild = await getGuild(modalInteraction.guild!.id);
+                if (!modalGuild) {
                   return await safeReply(
-                    interaction,
+                    modalInteraction,
                     'Guild is not in the database.',
                     true,
                   );
                 }
 
-                await deleteGuild(guild.guildId);
-                logWithTime(`Deleted guild: ${guild.guildId}`, 'info', scope);
+                await deleteGuild(modalGuild.guildId);
+                logWithTime(
+                  `Deleted guild: ${modalGuild.guildId}`,
+                  'info',
+                  scope,
+                );
 
                 await safeReply(
-                  interaction,
-                  `**Deleted:**\nGuild: ${guild.guildId}`,
+                  modalInteraction,
+                  `**Deleted:**\nGuild: ${modalGuild.guildId}`,
                 );
               }
             },

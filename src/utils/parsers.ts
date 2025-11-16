@@ -1,4 +1,4 @@
-//#region Date parser
+// #region Date parser
 
 /**
  * Parses a `string` input into a `Date` object, supporting multiple date and duration formats.
@@ -7,6 +7,9 @@
  * #### Absolute dates:
  *   - ISO format: YYYY-MM-DD (e.g., "2025-07-24")
  *   - European format: DD-MM-YYYY (e.g., "24-07-2025")
+ *   - Unix timestamp in seconds (e.g., "1234567890")
+ *   - Unix timestamp in milliseconds (e.g., "1234567890000")
+ *   - Discord timestamp format (e.g., "<t:1234567890>" or "<t:1234567890:f>")
  * #### Natural language keywords (English and Dutch):
  *   - "tomorrow", "the day after tomorrow"
  *   - "morgen", "overmorgen"
@@ -26,6 +29,10 @@
  * ### Examples of valid inputs:
  * - "2025-07-24"
  * - "24-07-2025"
+ * - "1234567890" (Unix timestamp in seconds)
+ * - "1234567890000" (Unix timestamp in milliseconds)
+ * - "<t:1234567890>" (Discord timestamp)
+ * - "<t:1734567890:F>" (Discord timestamp with format)
  * - "tomorrow"
  * - "overmorgen"
  * - "next monday"
@@ -44,6 +51,14 @@ export function parseDurationOrDateString(input: string): Date | null {
 
   const isoMatch = input.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   const altMatch = input.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  const unixMatch = input.match(/^\d+$/);
+  const discordMatch = input.match(/^<t:(\d+)(?::[tTdDfFR])?>$/);
+
+  // Unix timestamp (seconds or milliseconds)
+  if (unixMatch) returnDate = parseUnixTimestamp(input);
+
+  // Discord timestamp format
+  if (discordMatch) returnDate = parseUnixTimestamp(discordMatch[1]);
 
   // YYYY-MM-DD
   if (isoMatch) returnDate = parseAbsoluteIsoDate(isoMatch);
@@ -64,7 +79,7 @@ export function parseDurationOrDateString(input: string): Date | null {
 
   // Relative duration time
   const durationMatch = input.match(
-    /\b(?:in|over)\s+((?:\d+\s*(?:min(?:uut)?(?:en)?|u(?:ren)?|hours?|dagen?|days?|weken?|weeks?|maanden?|months?)\s*(?:en|and)?\s*)+)/i,
+    /((?:\d+(?:\.\d+)?\s*(?:min(?:uut)?(?:en)?|u(?:ren)?|hours?|dagen?|days?|weken?|weeks?|maanden?|months?)\s*(?:en|and)?\s*)+)/i,
   );
   if (durationMatch) {
     returnDate = parseRelativeTime(durationMatch);
@@ -86,7 +101,8 @@ function parseWeekDay(match: RegExpMatchArray): Date | null {
   const now = new Date();
   const currentDay = now.getDay();
   let daysToAdd = (targetDay + 7 - currentDay) % 7;
-  if (daysToAdd === 0) daysToAdd = 7; // always go to next, not today
+  // always go to next, not today
+  if (daysToAdd === 0) daysToAdd = 7;
 
   return addDays(daysToAdd);
 }
@@ -228,9 +244,27 @@ export function parseAbsoluteAltDate(match: RegExpMatchArray): Date | null {
   return new Date(`${y}-${m}-${d}T00:00:00`);
 }
 
-//#endregion
+export function parseUnixTimestamp(input: string): Date | null {
+  const timestamp = parseInt(input, 10);
+  if (isNaN(timestamp)) return null;
 
-//#region Birthday parser
+  // Determine if its in seconds or milliseconds
+  // Timestamps in seconds are typically 10 digits
+  // Timestamps in milliseconds are typically 13 digits
+  const isSeconds = input.length <= 10;
+  const ms = isSeconds ? timestamp * 1000 : timestamp;
+
+  const date = new Date(ms);
+
+  // Validate the date is reasonable (between 1970 and 2100)
+  if (date.getFullYear() < 1970 || date.getFullYear() > 2100) return null;
+
+  return date;
+}
+
+// #endregion
+
+// #region Birthday parser
 
 export function parseBirthdayDate(input: string): Date | null {
   let returnDate: Date | null = null;
@@ -252,4 +286,4 @@ export function parseBirthdayDate(input: string): Date | null {
   return returnDate;
 }
 
-//#endregion
+// #endregion

@@ -44,7 +44,8 @@ export function preprocessNumerics(expr: string): string {
     } else if (hasDot) {
       const parts = match.split('.');
       if (parts.length === 2 && parts[1].length <= 2) {
-        return match; // English decimal
+        // English decimal
+        return match;
       } else {
         // Dot as thousands separator
         return match.replace(/\.(?=\d{3})/g, '');
@@ -55,37 +56,42 @@ export function preprocessNumerics(expr: string): string {
   });
 
   // Additional numeric and symbol normalization
-  return normalized
-    .replace(/\b0([box])[0-9a-fA-F]+\b/g, (match) => {
-      const prefix = match.slice(0, 2);
-      let base: number;
-      switch (prefix) {
-        case '0b':
-          base = 2;
-          break;
-        case '0o':
-          base = 8;
-          break;
-        case '0x':
-          base = 16;
-          break;
-        default:
-          return match;
-      }
-      return parseInt(match.slice(2), base).toString();
-    }) // Binary, octal, hex
-    .replace(/[×✕]/g, '*')
-    .replace(/[÷]/g, '/')
-    .replace(/[−﹣‒–—―]/g, '-')
-    .replace(/[＋]/g, '+')
-    .replace(/(?<=\d)[\s\u00A0](?=\d)/g, '') // Spaces in numbers
-    .replace(/[（]/g, '(')
-    .replace(/[）]/g, ')')
-    .replace(/[［]/g, '[')
-    .replace(/[］]/g, ']')
-    .replace(/[｛]/g, '{')
-    .replace(/[｝]/g, '}')
-    .replace(/\+\++/g, '+')
-    .replace(/--+/g, '+') // Double minus becomes plus
-    .trim();
+  return (
+    normalized
+      // Binary, octal, hex
+      .replace(/\b0([box])[0-9a-fA-F]+\b/g, (match) => {
+        const prefix = match.slice(0, 2);
+        let base: number;
+        switch (prefix) {
+          case '0b':
+            base = 2;
+            break;
+          case '0o':
+            base = 8;
+            break;
+          case '0x':
+            base = 16;
+            break;
+          default:
+            return match;
+        }
+        return parseInt(match.slice(2), base).toString();
+      })
+      .replace(/[×✕]/g, '*')
+      .replace(/[÷]/g, '/')
+      .replace(/[−﹣‒–—―]/g, '-')
+      .replace(/[＋]/g, '+')
+      // Spaces in numbers
+      .replace(/(?<=\d)[\s\u00A0](?=\d)/g, '')
+      .replace(/[（]/g, '(')
+      .replace(/[）]/g, ')')
+      .replace(/[［]/g, '[')
+      .replace(/[］]/g, ']')
+      .replace(/[｛]/g, '{')
+      .replace(/[｝]/g, '}')
+      .replace(/\+\++/g, '+')
+      // Double minus becomes plus
+      .replace(/--+/g, '+')
+      .trim()
+  );
 }

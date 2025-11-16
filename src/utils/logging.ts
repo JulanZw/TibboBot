@@ -36,9 +36,12 @@ export function logWithTime(
 
   if (logToConsole) {
     const colorMap = {
-      info: '\x1b[36m', // Cyan
-      warn: '\x1b[33m', // Yellow
-      error: '\x1b[31m', // Red
+      // Cyan
+      info: '\x1b[36m',
+      // Yellow
+      warn: '\x1b[33m',
+      // Red
+      error: '\x1b[31m',
     };
     const reset = '\x1b[0m';
 

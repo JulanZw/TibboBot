@@ -10,9 +10,18 @@ import { getAllBirthdaysInGuildForGivenDate } from './database/birthday.ts';
 import { getAllGuilds, updateDumbScore } from './database/guild.ts';
 import { getRemindersOfToday } from './database/reminders.ts';
 import { logWithTime } from './utils/logging.ts';
-import { todayWinners } from './utils/globals.ts';
+import { STANDARD_COLOR, todayWinners } from './utils/globals.ts';
 import { getBotAction, getDefeatedMessage } from './utils/discord/todayis.ts';
 import { scheduleReminder } from './utils/managers/reminderManager.ts';
+import {
+  getAllUsersCharsAndMessages,
+  resetTodayIsPoints,
+} from './database/user.ts';
+import {
+  generateLeaderboard,
+  prepareLeaderboardData,
+} from './utils/generating.ts';
+import { embedBuilder } from './utils/discord/embeds.ts';
 
 export function setupCronJobs(client: Client): void {
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -40,21 +49,15 @@ export function setupCronJobs(client: Client): void {
 
           try {
             const channel = await client.channels.fetch(guild.todayIsChannelId);
-            if (!channel || !(channel instanceof TextChannel)) {
-              logWithTime(
-                `Channel for guild ${guild.guildId} not found or not text-based.`,
-                'error',
-                scope,
-                true,
-              );
-              return;
-            }
 
-            await channel.send(`🎆 Happy New Year!`);
-            logWithTime(
-              `Message sent in ${guild.guildId}: "🎆 Happy New Year!"`,
-              'info',
+            await sendYearlyMessage(channel as TextChannel, guild, scope);
+
+            await sendYearlyTodayIsLeaderboard(
+              channel as TextChannel,
+              guild.guildId,
               scope,
+              client,
+              guild.yearlyTodayIsReset,
             );
           } catch (err: any) {
             logWithTime(
@@ -115,11 +118,13 @@ async function runTodayIsMessages(
   const scope = 'cron_DAILY_TODAYIS';
 
   Object.keys(todayWinners).forEach((key) => delete todayWinners[key]);
-  const randomDelay = Math.floor(Math.random() * 2801) + 200; // 200–3000 ms
+  // 200–3000 ms
+  const randomDelay = Math.floor(Math.random() * 2801) + 200;
 
+  // the delay below 0 happend once so this is just in case
   await new Promise((resolve) =>
     setTimeout(resolve, randomDelay < 0 ? 1500 : randomDelay),
-  ); // the delay below 0 happend once so this is just in case
+  );
 
   await Promise.allSettled(
     guilds.map(async (guild) => {
@@ -264,5 +269,84 @@ async function scheduleReminders(client: Client) {
       scope,
       true,
     );
+  }
+}
+
+async function sendYearlyMessage(
+  channel: TextChannel,
+  guild: { guildId: string },
+  scope: string,
+) {
+  await channel.send(`🎆 Happy New Year!`);
+  logWithTime(
+    `Message sent in ${guild.guildId}: "🎆 Happy New Year!"`,
+    'info',
+    scope,
+  );
+}
+
+async function sendYearlyTodayIsLeaderboard(
+  channel: TextChannel,
+  guildId: string,
+  scope: string,
+  client: Client,
+  reset: boolean,
+) {
+  const discordGuild = client.guilds.cache.get(guildId);
+
+  if (!discordGuild) {
+    logWithTime(
+      `Guild with ID ${guildId} not found in client's cache.`,
+      'error',
+      scope,
+      true,
+    );
+    return;
+  }
+
+  const memberIds = await discordGuild.members
+    .fetch()
+    .then((members) => members.map((m) => m.id));
+
+  const users = await getAllUsersCharsAndMessages(memberIds);
+
+  if (!users || users.length === 0) {
+    return;
+  }
+
+  const completeUsers = await prepareLeaderboardData({
+    users,
+    client,
+    number1Key: 'points',
+    scope,
+  });
+
+  const image = await generateLeaderboard(
+    completeUsers,
+    scope,
+    `Top 10 users of ${new Date().getFullYear() - 1}`,
+  );
+
+  const leaderboardEmbed = embedBuilder({
+    title: `Today Is Leaderboard ${new Date().getFullYear() - 1}`,
+    description: 'Top 10 users ranked by today-is points for the past year 🎆',
+    color: STANDARD_COLOR,
+    customize: (embed) => embed.setImage('attachment://leaderboard.png'),
+  });
+
+  await channel.send({
+    embeds: [leaderboardEmbed],
+    files: [image],
+  });
+  logWithTime(
+    `Sent yearly todayIs leaderboard in guild ${guildId}`,
+    'info',
+    scope,
+  );
+
+  if (reset) {
+    for (const user of users) {
+      await resetTodayIsPoints(user.discordId);
+    }
   }
 }
