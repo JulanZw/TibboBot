@@ -201,7 +201,12 @@ export async function deleteGuild(guildId: string) {
 
 export async function updateDumbScore(guildId: string, humanWon: boolean) {
   const guild = await getGuild(guildId);
-  if (humanWon && guild && guild.dumbScore > 0) {
+  if (humanWon && guild && guild.dumbScore > 1) {
+    return await prisma.guild.update({
+      where: { guildId },
+      data: { dumbScore: { decrement: 2 } },
+    });
+  } else if (humanWon && guild && guild.dumbScore > 0) {
     return await prisma.guild.update({
       where: { guildId },
       data: { dumbScore: { decrement: 1 } },
@@ -211,6 +216,45 @@ export async function updateDumbScore(guildId: string, humanWon: boolean) {
       where: { guildId },
       data: { dumbScore: { increment: 1 } },
     });
+  }
+}
+
+export async function decayDumbScore(guildId: string) {
+  const guild = await getGuild(guildId);
+  if (guild && guild.dumbScore > 5) {
+    return await prisma.guild.update({
+      where: { guildId },
+      data: { dumbScore: { decrement: 1 } },
+    });
+  } else if (guild && guild.dumbScore < 5) {
+    return await prisma.guild.update({
+      where: { guildId },
+      data: { dumbScore: { increment: 1 } },
+    });
+  }
+}
+
+export function incrementDaysWithoutHumanParticipation(guildId: string) {
+  return prisma.guild.update({
+    where: { guildId },
+    data: { daysWithoutHumanParticipation: { increment: 1 } },
+  });
+}
+
+export async function shouldBotWakeUpInServer(guildId: string) {
+  const guild = await getGuild(guildId);
+  if (
+    guild &&
+    guild.daysWithoutHumanParticipation >= 3 &&
+    guild.dumbScore > 4
+  ) {
+    await prisma.guild.update({
+      where: { guildId },
+      data: { daysWithoutHumanParticipation: 0, dumbScore: 3 },
+    });
+    return true;
+  } else {
+    return false;
   }
 }
 

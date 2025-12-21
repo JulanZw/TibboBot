@@ -8,21 +8,22 @@ datasource db {
 }
 
 model Guild {
-  guildId            String   @id
-  countChannelId     String?
-  countNumber        Int      @default(0)
-  highestNumber      Int      @default(0)
-  lastCountUser      String?
-  todayIsChannelId   String?
-  birthdayChannelId  String?
-  dumbScore          Int      @default(0)
-  allowBackups       Boolean  @default(true)
-  yearlyTodayIsReset Boolean  @default(true)
+  guildId                       String   @id
+  countChannelId                String?
+  countNumber                   Int      @default(0)
+  highestNumber                 Int      @default(0)
+  lastCountUser                 String?
+  todayIsChannelId              String?
+  birthdayChannelId             String?
+  dumbScore                     Int      @default(0)
+  daysWithoutHumanParticipation Int      @default(0)
+  allowBackups                  Boolean  @default(true)
+  yearlyTodayIsReset            Boolean  @default(true)
 
-  pointGiverId       String?
-  pointGiver         User?    @relation(fields: [pointGiverId], references: [discordId])
+  pointGiverId                  String?
+  pointGiver                    User?    @relation(fields: [pointGiverId], references: [discordId])
 
-  birthdays          Birthday[]
+  birthdays                     Birthday[]
 }
 
 model User {

@@ -7,10 +7,20 @@ import { Client, TextChannel } from 'discord.js';
 
 import { formatDateToString, getDaySuffix } from './utils/formatting.ts';
 import { getAllBirthdaysInGuildForGivenDate } from './database/birthday.ts';
-import { getAllGuilds, updateDumbScore } from './database/guild.ts';
+import {
+  decayDumbScore,
+  getAllGuilds,
+  incrementDaysWithoutHumanParticipation,
+  shouldBotWakeUpInServer,
+  updateDumbScore,
+} from './database/guild.ts';
 import { getRemindersOfToday } from './database/reminders.ts';
 import { logWithTime } from './utils/logging.ts';
-import { STANDARD_COLOR, todayWinners } from './utils/globals.ts';
+import {
+  humanParticipatedToday,
+  STANDARD_COLOR,
+  todayWinners,
+} from './utils/globals.ts';
 import { getBotAction, getDefeatedMessage } from './utils/discord/todayis.ts';
 import { scheduleReminder } from './utils/managers/reminderManager.ts';
 import {
@@ -26,12 +36,40 @@ import { embedBuilder } from './utils/discord/embeds.ts';
 export function setupCronJobs(client: Client): void {
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   cron.schedule('0 0 * * *', async () => {
-    const scope = 'cron_DAILY';
+    const scope = 'cron_DAILY_START';
     try {
       const guilds = await getAllGuilds();
       await runTodayIsMessages(client, guilds);
       await runBirthdayMessages(client, guilds);
       await scheduleReminders(client);
+    } catch (err: any) {
+      logWithTime('Error in daily cron job:' + err, 'error', scope, true);
+    }
+  });
+
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  cron.schedule('59 23 * * *', async () => {
+    const scope = 'cron_DAILY_END';
+    try {
+      const guilds = await getAllGuilds();
+      await Promise.allSettled(
+        guilds.map(async (guild) => {
+          if (!guild.todayIsChannelId) return;
+
+          try {
+            await decayDumbScore(guild.guildId);
+            if (!humanParticipatedToday.includes(guild.guildId)) {
+              await incrementDaysWithoutHumanParticipation(guild.guildId);
+            }
+          } catch (err: any) {
+            logWithTime(
+              `Failed to decay dumbscore in guild ${guild.guildId}: ${err}`,
+              'error',
+              scope,
+            );
+          }
+        }),
+      );
     } catch (err: any) {
       logWithTime('Error in daily cron job:' + err, 'error', scope, true);
     }
@@ -150,38 +188,56 @@ async function runTodayIsMessages(
             scope,
           );
           return;
-        } else {
-          todayWinners[guild.guildId] = 'bot';
-          await updateDumbScore(guild.guildId, false);
         }
 
-        const botAction = getBotAction(guild.dumbScore);
-        if (botAction.type === 'skip') {
-          await channel.send(botAction.answer);
-          logWithTime(
-            `Skipping 'Today is' message in guild ${guild.guildId}: ${botAction.answer}`,
-            'info',
-            scope,
-          );
-          return;
-        } else if (botAction.type === 'funny') {
-          await channel.send(botAction.answer);
-          logWithTime(
-            `Sending funny 'Today is' message in guild ${guild.guildId}: ${botAction.answer}`,
-            'info',
-            scope,
-          );
-          return;
-        } else {
+        const wake = await shouldBotWakeUpInServer(guild.guildId);
+
+        if (wake) {
+          todayWinners[guild.guildId] = 'bot';
           const formattedDate = formatDateToString(new Date());
-          await channel.send(
-            `Today is ${formattedDate}, waited for ${randomDelay} ms`,
-          );
+          const msg = `Today is ${formattedDate}, waited for ${randomDelay} ms`;
+          await channel.send(msg);
           logWithTime(
-            `Message sent in ${guild.guildId}: "Today is ${formattedDate}"`,
+            `Message sent in ${guild.guildId}: "${msg}"`,
             'info',
             scope,
           );
+          await channel.send(`Where competition?`);
+          logWithTime(
+            `Message sent in ${guild.guildId}: "Where competition?"`,
+            'info',
+            scope,
+          );
+        } else {
+          const botAction = getBotAction(guild.dumbScore);
+          if (botAction.type === 'skip') {
+            await channel.send(botAction.answer);
+            logWithTime(
+              `Skipping 'Today is' message in guild ${guild.guildId}: ${botAction.answer}`,
+              'info',
+              scope,
+            );
+            return;
+          } else if (botAction.type === 'funny') {
+            await channel.send(botAction.answer);
+            logWithTime(
+              `Sending funny 'Today is' message in guild ${guild.guildId}: ${botAction.answer}`,
+              'info',
+              scope,
+            );
+            return;
+          } else {
+            todayWinners[guild.guildId] = 'bot';
+            const formattedDate = formatDateToString(new Date());
+            const msg = `Today is ${formattedDate}, waited for ${randomDelay} ms`;
+            await channel.send(msg);
+            logWithTime(
+              `Message sent in ${guild.guildId}: "${msg}"`,
+              'info',
+              scope,
+            );
+            await updateDumbScore(guild.guildId, false);
+          }
         }
       } catch (err: any) {
         logWithTime(

@@ -1,7 +1,11 @@
 import { Message, MessageFlags, TextChannel } from 'discord.js';
 import { evaluate } from 'mathjs';
 
-import { pendingReactionRoleSetups, todayWinners } from '../utils/globals.ts';
+import {
+  humanParticipatedToday,
+  pendingReactionRoleSetups,
+  todayWinners,
+} from '../utils/globals.ts';
 import { embedBuilder } from '../utils/discord/embeds.ts';
 import { logWithTime } from '../utils/logging.ts';
 import { preprocessNumerics } from '../utils/preprocessors.ts';
@@ -76,18 +80,21 @@ export async function handleMessageCreation(message: Message) {
           );
         }
       }
-    } else if (guild.todayIsChannelId === message.channelId) {
+    } else if (
+      guild.todayIsChannelId === message.channelId &&
+      message.content.toLowerCase().startsWith('today is')
+    ) {
       const now = new Date();
-      if (now.getHours() === 0 && now.getMinutes() < 1) {
-        const today = formatDateToString(now);
-        const expected = `Today is ${today}`;
-        if (!message.content.toLowerCase().includes(expected.toLowerCase())) {
-          return;
-        }
-        if (!todayWinners[guild.guildId]) {
-          todayWinners[guild.guildId] = 'human';
-          await updateDumbScore(guild.guildId, true);
-        }
+      const today = formatDateToString(now);
+      const expected = `today is ${today}`;
+      // the expected string still to lowercase for the month names
+      if (!message.content.toLowerCase().includes(expected.toLowerCase())) {
+        return;
+      }
+      if (!todayWinners[guild.guildId]) {
+        todayWinners[guild.guildId] = 'human';
+        humanParticipatedToday.push(guild.guildId);
+        await updateDumbScore(guild.guildId, true);
       }
     }
 
