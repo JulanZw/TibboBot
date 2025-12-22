@@ -275,3 +275,20 @@ export async function toggleAllowBackup(guildId: string) {
     data: { allowBackups: !result },
   });
 }
+
+export async function getYearlyTodayIsReset(guildId: string) {
+  const guild = await getGuild(guildId);
+  if (guild) {
+    return guild.yearlyTodayIsReset;
+  }
+}
+
+export async function toggleYearlyTodayIsReset(guildId: string) {
+  const guild = await getGuild(guildId);
+  if (guild) {
+    return await prisma.guild.update({
+      where: { guildId },
+      data: { yearlyTodayIsReset: !guild.yearlyTodayIsReset },
+    });
+  }
+}

@@ -17,7 +17,9 @@ import {
   getAllowBackup,
   getBotChannel,
   getGuild,
+  getYearlyTodayIsReset,
   toggleAllowBackup,
+  toggleYearlyTodayIsReset,
   updateBotChannel,
 } from '../database/guild.ts';
 import { TIMES_MILISECONDS } from '../utils/globals.ts';
@@ -384,6 +386,96 @@ const manageChannelsCommand = commandBuilder({
           );
         },
         customize: (builder) => builder,
+        permissionLevel: 'admin',
+        guildOnly: true,
+      },
+    ],
+    [
+      'todayis_reset',
+      {
+        name: 'todayis_reset',
+        description:
+          'Toggles whether the today-is stats reset yearly or not for this server.',
+        execute: async (interaction) => {
+          if (!interaction.guildId) {
+            return await safeReply(
+              interaction,
+              `Uhhh... Well this is akward... You arent supposed to see this message... Please contact the bot owner`,
+            );
+          }
+
+          const currentStatus = await getYearlyTodayIsReset(
+            interaction.guildId,
+          );
+
+          const buttons = [
+            createButton({
+              type: 'toggle',
+              label: 'Toggle',
+              style: ButtonStyle.Primary,
+            }),
+            createButton({
+              type: 'cancel',
+              label: 'Cancel',
+              style: ButtonStyle.Secondary,
+            }),
+          ];
+
+          await safeReply(
+            interaction,
+            `Currently the yearly today-is reset in the server is: \`${currentStatus ? 'on' : 'off'}\``,
+            false,
+            [],
+            [createButtonsRow(buttons)],
+          );
+
+          const msg = await interaction.fetchReply();
+
+          const collector = msg.createMessageComponentCollector({
+            componentType: ComponentType.Button,
+            time: TIMES_MILISECONDS.MINUTE,
+          });
+
+          // eslint-disable-next-line @typescript-eslint/no-misused-promises
+          collector.on('collect', async (buttonInteraction) => {
+            if (buttonInteraction.user.id !== interaction.user.id) {
+              return await safeReply(
+                buttonInteraction,
+                'You cannot use this button.',
+                true,
+              );
+            }
+
+            const action = buttonInteraction.customId;
+
+            switch (action) {
+              case 'toggle':
+                await toggleYearlyTodayIsReset(interaction.guildId as string);
+                await buttonInteraction.update({
+                  content: `Yearly today-is reset in the server is now turned: \`${!currentStatus ? 'on' : 'off'}\``,
+                  components: [],
+                });
+                return collector.stop();
+              case 'cancel':
+                await buttonInteraction.update({
+                  content: 'Action cancelled.',
+                  components: [],
+                });
+                return collector.stop();
+              default:
+                return await safeReply(
+                  buttonInteraction,
+                  'Invalid action.',
+                  true,
+                );
+            }
+          });
+
+          // eslint-disable-next-line @typescript-eslint/no-misused-promises
+          collector.on('end', async () => {
+            await interaction.editReply({ components: [] });
+          });
+        },
         permissionLevel: 'admin',
         guildOnly: true,
       },

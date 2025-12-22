@@ -90,13 +90,15 @@ export function setupCronJobs(client: Client): void {
 
             await sendYearlyMessage(channel as TextChannel, guild, scope);
 
-            await sendYearlyTodayIsLeaderboard(
-              channel as TextChannel,
-              guild.guildId,
-              scope,
-              client,
-              guild.yearlyTodayIsReset,
-            );
+            if (guild.yearlyTodayIsReset === true) {
+              await sendYearlyTodayIsLeaderboard(
+                channel as TextChannel,
+                guild.guildId,
+                scope,
+                client,
+                guild.yearlyTodayIsReset,
+              );
+            }
           } catch (err: any) {
             logWithTime(
               `Failed to send 'Happy new Year' message in guild ${guild.guildId}: ${err}`,
