@@ -15,6 +15,7 @@ import { deleteAllRemindersForUser } from '../database/reminders.ts';
 import { logWithTime } from '../utils/logging.ts';
 import { Subcommand } from '../types/commands.ts';
 import { commandBuilder } from '../utils/discord/commandBuilder.ts';
+import { deleteUserStats } from '../database/stats.ts';
 
 const scope = 'opt';
 
@@ -118,6 +119,7 @@ const optoutCommand = commandBuilder({
                     if (confirmed) {
                       const userId = modalInteraction.user.id;
 
+                      await deleteUserStats(userId);
                       const deletedBirthdays =
                         await deleteAllBirthdaysForUser(userId);
                       logWithTime(
