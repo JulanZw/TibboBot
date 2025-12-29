@@ -241,8 +241,8 @@ async function buildStatsImage({
   // Title
   ctx.fillStyle = '#ffffff';
 
-  const maxLen36px = 22;
-  const maxLen24px = 32;
+  const maxLen36px = 21;
+  const maxLen24px = 33;
   let lines;
 
   if (title.length > maxLen36px) {
