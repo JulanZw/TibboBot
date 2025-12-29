@@ -62,3 +62,16 @@ export async function getTotalOfMultipleUserStats(userIds: string[]) {
   }
   return totalStats;
 }
+
+export async function resetAllUserStats() {
+  await prisma.stats.updateMany({
+    data: {
+      messagesSentThisYear: 0,
+      charsSentThisYear: BigInt(0),
+      todayIsParticipationDays: 0,
+      todayIsWins: 0,
+      remindersSet: 0,
+      catsRequested: 0,
+    },
+  });
+}
