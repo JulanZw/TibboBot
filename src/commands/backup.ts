@@ -43,7 +43,7 @@ const backupCommands = commandBuilder({
           }
 
           const channel =
-            interaction.options.getChannel('backupChannel', false) ??
+            interaction.options.getChannel('backup_channel', false) ??
             interaction.channel;
           if (!channel || !(channel instanceof TextChannel)) {
             return await safeReply(

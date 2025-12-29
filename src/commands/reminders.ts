@@ -32,6 +32,7 @@ import { hasOptedOut } from '../utils/managers/optInOutManager.ts';
 import { buildAndRegisterModal } from '../utils/discord/modalRegistry.ts';
 import { commandBuilder } from '../utils/discord/commandBuilder.ts';
 import { scheduleReminder } from '../utils/managers/reminderManager.ts';
+import { incrementStatistic } from '../database/stats.ts';
 
 const scope = 'reminder';
 
@@ -112,6 +113,7 @@ const reminderCommands = commandBuilder({
             'info',
             scope,
           );
+          await incrementStatistic('remindersSet', interaction.user.id, 1);
         },
         customize: (builder: SlashCommandSubcommandBuilder) => {
           return builder

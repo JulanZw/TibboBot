@@ -33,6 +33,8 @@ model User {
   msg_count   Int
   optedout    Boolean    @default(false)
 
+  userStats   Stats?
+
   pointGiverIn Guild[]
 
   birthdays   Birthday[]
@@ -68,6 +70,17 @@ model Reminders {
   remindAt     DateTime
   createdAt    DateTime
   remindInterval Intervals @default(NONE)
+}
+
+model Stats {
+  userId                    String   @unique
+  messagesSentThisYear      Int      @default(0)
+  charsSentThisYear         BigInt   @default(0)
+  todayIsParticipationDays  Int      @default(0)
+  todayIsWins               Int      @default(0)
+  remindersSet              Int      @default(0)
+  catsRequested             Int      @default(0)
+  user                      User     @relation(fields: [userId], references: [discordId])
 }
 
 enum Intervals {

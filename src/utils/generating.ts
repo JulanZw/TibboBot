@@ -1,9 +1,42 @@
 import { createCanvas, loadImage } from 'canvas';
-import { AttachmentBuilder } from 'discord.js';
+import { AttachmentBuilder, Client } from 'discord.js';
 
 import { PrepareLeaderboardOptions } from '../types/leaderboard.ts';
+import {
+  getTotalOfMultipleUserStats,
+  getUserStats,
+} from '../database/stats.ts';
 
 import { logWithTime } from './logging.ts';
+
+async function getUserAvatarAndName(
+  userId: string,
+  client: Client,
+): Promise<{
+  displayName: string;
+  avatar: string | null;
+}> {
+  try {
+    const user = await client.users.fetch(userId);
+    const displayName = user.displayName ?? user.username;
+    const avatar = user.displayAvatarURL({ extension: 'png' });
+    return {
+      displayName,
+      avatar,
+    };
+  } catch (err: any) {
+    logWithTime(
+      `Error fetching user: ${err}`,
+      'error',
+      'prepareUserDataStats',
+      true,
+    );
+    return {
+      displayName: 'Unknown User',
+      avatar: null,
+    };
+  }
+}
 
 /**
  * Generates a leaderboard image using Canvas and returns it as an AttachmentBuilder.
@@ -135,8 +168,10 @@ export async function prepareLeaderboardData({
   return await Promise.all(
     users.slice(0, limit).map(async (row, index) => {
       try {
-        const user = await client.users.fetch(row.discordId);
-        const displayName = user.displayName ?? user.username;
+        const { displayName, avatar } = await getUserAvatarAndName(
+          row.discordId,
+          client,
+        );
         const rank = includeRankInUsername ? `${index + 1}. ` : '';
 
         const entry: {
@@ -147,7 +182,7 @@ export async function prepareLeaderboardData({
         } = {
           username: `${rank}${displayName}`,
           number1: BigInt(row[number1Key]),
-          avatar: user.displayAvatarURL({ extension: 'png' }),
+          avatar,
         };
 
         if (number2Key) {
@@ -178,4 +213,143 @@ export async function prepareLeaderboardData({
       }
     }),
   );
+}
+
+export async function generateGuildStatsImage(
+  userIds: string[],
+  guildId: string,
+  client: Client,
+  customText?: string,
+): Promise<AttachmentBuilder> {
+  const totalStats = await getTotalOfMultipleUserStats(userIds);
+  const guildImageUrl = await client.guilds
+    .fetch(guildId)
+    .then((guild) => guild.iconURL({ extension: 'png' }));
+
+  const width = 550;
+  const height = 250;
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext('2d');
+
+  // Background
+  ctx.fillStyle = '#2c2f33';
+  ctx.fillRect(0, 0, width, height);
+
+  // Title
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 36px Sans';
+  ctx.fillText(customText ? customText : 'Guild Stats', 130, 70);
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(70, 60, 50, 0, Math.PI * 2, true);
+  ctx.closePath();
+  ctx.clip();
+
+  // Guild Icon
+  if (guildImageUrl) {
+    try {
+      const guildIcon = await loadImage(guildImageUrl);
+      ctx.drawImage(guildIcon, 20, 10, 100, 100);
+    } catch {
+      logWithTime(
+        `Guild icon failed to load for guild: ${guildId} while building guild stats image`,
+        'warn',
+        'guild-stats',
+      );
+    }
+  }
+  ctx.restore();
+
+  // Stats
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '20px Sans';
+  ctx.fillText(
+    `Total Messages Sent: ${totalStats.messagesSentThisYear}`,
+    25,
+    150,
+  );
+  ctx.fillText(
+    `Total Characters Sent: ${totalStats.charsSentThisYear}`,
+    300,
+    150,
+  );
+  ctx.fillText(
+    `Participated in: ${totalStats.todayIsParticipationDays} Today-is's`,
+    25,
+    190,
+  );
+  ctx.fillText(`Total Today Is Wins: ${totalStats.todayIsWins}`, 300, 190);
+  ctx.fillText(`Total Reminders Set: ${totalStats.remindersSet}`, 25, 230);
+  ctx.fillText(`Total Cats Requested: ${totalStats.catsRequested}`, 300, 230);
+
+  return new AttachmentBuilder(canvas.toBuffer(), { name: 'guild_stats.png' });
+}
+
+export async function generateUserStatsImage(
+  userId: string,
+  client: Client,
+  customText?: string,
+): Promise<AttachmentBuilder> {
+  const totalStats = await getUserStats(userId);
+  const { avatar } = await getUserAvatarAndName(userId, client);
+
+  const width = 550;
+  const height = 250;
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext('2d');
+
+  // Background
+  ctx.fillStyle = '#2c2f33';
+  ctx.fillRect(0, 0, width, height);
+
+  // Title
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 36px Sans';
+  ctx.fillText(customText ? customText : `User Stats`, 130, 70);
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(70, 60, 50, 0, Math.PI * 2, true);
+  ctx.closePath();
+  ctx.clip();
+
+  // Guild Icon
+  if (avatar) {
+    try {
+      const guildIcon = await loadImage(avatar);
+      ctx.drawImage(guildIcon, 20, 10, 100, 100);
+    } catch {
+      logWithTime(
+        `User icon failed to load for user: ${userId} while building user stats image`,
+        'warn',
+        'user-stats',
+      );
+    }
+  }
+  ctx.restore();
+
+  // Stats
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '20px Sans';
+  ctx.fillText(
+    `Total Messages Sent: ${totalStats.messagesSentThisYear}`,
+    25,
+    150,
+  );
+  ctx.fillText(
+    `Total Characters Sent: ${totalStats.charsSentThisYear}`,
+    300,
+    150,
+  );
+  ctx.fillText(
+    `Participated in: ${totalStats.todayIsParticipationDays} Today-is's`,
+    25,
+    190,
+  );
+  ctx.fillText(`Total Today Is Wins: ${totalStats.todayIsWins}`, 300, 190);
+  ctx.fillText(`Total Reminders Set: ${totalStats.remindersSet}`, 25, 230);
+  ctx.fillText(`Total Cats Requested: ${totalStats.catsRequested}`, 300, 230);
+
+  return new AttachmentBuilder(canvas.toBuffer(), { name: 'user_stats.png' });
 }

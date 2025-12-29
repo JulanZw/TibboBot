@@ -4,6 +4,7 @@ import { embedBuilder } from '../utils/discord/embeds.ts';
 import { safeReply } from '../utils/discord/editAndReply.ts';
 import { commandBuilder } from '../utils/discord/commandBuilder.ts';
 import { logWithTime } from '../utils/logging.ts';
+import { incrementStatistic } from '../database/stats.ts';
 
 const scope = 'cat';
 
@@ -11,6 +12,7 @@ const catCommand = commandBuilder({
   name: 'cat',
   description: 'Sends a random cat picture.',
   execute: async (interaction: ChatInputCommandInteraction) => {
+    await incrementStatistic('catsRequested', interaction.user.id, 1);
     try {
       const response = await fetch(
         'https://api.thecatapi.com/v1/images/search',

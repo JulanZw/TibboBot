@@ -22,12 +22,19 @@ import { addReactionRole } from '../database/reactionRoles.ts';
 import { updateCountsForUser } from '../database/user.ts';
 import { formatDateToString } from '../utils/formatting.ts';
 import { looksLikeMathExpression } from '../utils/math.ts';
+import { incrementStatistic } from '../database/stats.ts';
 
 const scope = 'handler_MESSAGECREATION';
 
 export async function handleMessageCreation(message: Message) {
   if (message.author.bot) return;
   await updateCountsForUser(message.author, message.content);
+  await incrementStatistic(
+    'charsSentThisYear',
+    message.author.id,
+    message.content.length,
+  );
+  await incrementStatistic('messagesSentThisYear', message.author.id, 1);
   if (message.guildId) {
     const guild = await ensureGuildExistance(message.guildId);
 
@@ -84,6 +91,11 @@ export async function handleMessageCreation(message: Message) {
       guild.todayIsChannelId === message.channelId &&
       message.content.toLowerCase().startsWith('today is')
     ) {
+      await incrementStatistic(
+        'todayIsParticipationDays',
+        message.author.id,
+        1,
+      );
       const now = new Date();
       const today = formatDateToString(now);
       const expected = `today is ${today}`;
@@ -95,6 +107,7 @@ export async function handleMessageCreation(message: Message) {
         todayWinners[guild.guildId] = 'human';
         humanParticipatedToday.push(guild.guildId);
         await updateDumbScore(guild.guildId, true);
+        await incrementStatistic('todayIsWins', message.author.id, 1);
       }
     }
 

@@ -18,6 +18,7 @@ import howToCommands from './commands/howto.ts';
 import rngCommand from './commands/rng.ts';
 import backupCommands from './commands/backup.ts';
 import { RegisterableCommand } from './types/commands.ts';
+import statsCommands from './commands/stats.ts';
 
 /**
  * Represents a Discord slash command definition.
@@ -50,12 +51,15 @@ export const commands: RegisterableCommand[] = [
   todayIsCommands,
   encodeCommands,
   howToCommands,
+  statsCommands,
 ];
 
 export const commandNamesAndDescriptions: { name: string; value: string }[][] =
   (() => {
     const subcommandPages = [];
     const otherCommands: { name: string; value: string }[] = [];
+
+    commands.sort((a, b) => a.name.localeCompare(b.name));
 
     for (const command of commands) {
       if ('subcommands' in command) {
