@@ -242,7 +242,7 @@ async function buildStatsImage({
   ctx.fillStyle = '#ffffff';
 
   const maxLen36px = 22;
-  const maxLen24px = 33;
+  const maxLen24px = 32;
   let lines;
 
   if (title.length > maxLen36px) {
@@ -288,7 +288,7 @@ async function buildStatsImage({
   ctx.restore();
 
   const xValueFirstColumn = 25;
-  const xValueSecondColumn = 375;
+  const xValueSecondColumn = 400;
   const yValueFirstRow = 150;
   const yValueSecondRow = 190;
   const yValueThirdRow = 230;
