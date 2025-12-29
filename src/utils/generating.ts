@@ -6,6 +6,7 @@ import {
   getTotalOfMultipleUserStats,
   getUserStats,
 } from '../database/stats.ts';
+import { UserStatistics } from '../types/stats.ts';
 
 import { logWithTime } from './logging.ts';
 
@@ -215,6 +216,120 @@ export async function prepareLeaderboardData({
   );
 }
 
+async function buildStatsImage({
+  title,
+  avatarUrl,
+  stats,
+  filename,
+  logScope,
+}: {
+  title: string;
+  avatarUrl?: string | null;
+  stats: UserStatistics;
+  filename: string;
+  logScope: string;
+}): Promise<AttachmentBuilder> {
+  const width = 700;
+  const height = 250;
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext('2d');
+
+  // Background
+  ctx.fillStyle = '#2c2f33';
+  ctx.fillRect(0, 0, width, height);
+
+  // Title
+  ctx.fillStyle = '#ffffff';
+
+  const maxLen36px = 22;
+  const maxLen24px = 33;
+  let lines;
+
+  if (title.length > maxLen36px) {
+    lines = splitToLines(title, maxLen24px);
+  } else {
+    lines = [title];
+  }
+
+  if (lines.length > 1) {
+    ctx.font = 'bold 24px Sans';
+    if (lines.length === 2) {
+      ctx.fillText(lines[0], 130, 50);
+      ctx.fillText(lines[1], 130, 80);
+    } else {
+      ctx.fillText(lines[0], 130, 40);
+      ctx.fillText(lines[1], 130, 70);
+      ctx.fillText(lines[2], 130, 100);
+    }
+  } else {
+    ctx.font = 'bold 36px Sans';
+    ctx.fillText(lines[0], 130, 70);
+  }
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(70, 60, 50, 0, Math.PI * 2, true);
+  ctx.closePath();
+  ctx.clip();
+
+  // Avatar
+  if (avatarUrl) {
+    try {
+      const img = await loadImage(avatarUrl);
+      ctx.drawImage(img, 20, 10, 100, 100);
+    } catch {
+      logWithTime(
+        `Icon failed to load while building stats image`,
+        'warn',
+        logScope,
+      );
+    }
+  }
+  ctx.restore();
+
+  const xValueFirstColumn = 25;
+  const xValueSecondColumn = 375;
+  const yValueFirstRow = 150;
+  const yValueSecondRow = 190;
+  const yValueThirdRow = 230;
+
+  // Stats text
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '20px Sans';
+  ctx.fillText(
+    `Total Characters Sent: ${stats.charsSentThisYear}`,
+    xValueFirstColumn,
+    yValueFirstRow,
+  );
+  ctx.fillText(
+    `Total Messages Sent: ${stats.messagesSentThisYear}`,
+    xValueSecondColumn,
+    yValueFirstRow,
+  );
+  ctx.fillText(
+    `Total Today-is Participations: ${stats.todayIsParticipationDays}`,
+    xValueFirstColumn,
+    yValueSecondRow,
+  );
+  ctx.fillText(
+    `Total Today Is Wins: ${stats.todayIsWins}`,
+    xValueSecondColumn,
+    yValueSecondRow,
+  );
+  ctx.fillText(
+    `Total Reminders Set: ${stats.remindersSet}`,
+    xValueFirstColumn,
+    yValueThirdRow,
+  );
+  ctx.fillText(
+    `Total Cats Requested: ${stats.catsRequested}`,
+    xValueSecondColumn,
+    yValueThirdRow,
+  );
+
+  return new AttachmentBuilder(canvas.toBuffer(), { name: filename });
+}
+
 export async function generateGuildStatsImage(
   userIds: string[],
   guildId: string,
@@ -226,70 +341,13 @@ export async function generateGuildStatsImage(
     .fetch(guildId)
     .then((guild) => guild.iconURL({ extension: 'png' }));
 
-  const width = 600;
-  const height = 250;
-  const canvas = createCanvas(width, height);
-  const ctx = canvas.getContext('2d');
-
-  // Background
-  ctx.fillStyle = '#2c2f33';
-  ctx.fillRect(0, 0, width, height);
-
-  // Title
-  ctx.fillStyle = '#ffffff';
-  if (name.length > 10) {
-    ctx.font = 'bold 24px Sans';
-    ctx.fillText(`Stats of`, 130, 40);
-    ctx.fillText(`${name}`, 130, 70);
-  } else {
-    ctx.font = 'bold 36px Sans';
-    ctx.fillText(`Stats for ${name}`, 130, 70);
-  }
-
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(70, 60, 50, 0, Math.PI * 2, true);
-  ctx.closePath();
-  ctx.clip();
-
-  // Guild Icon
-  if (guildImageUrl) {
-    try {
-      const guildIcon = await loadImage(guildImageUrl);
-      ctx.drawImage(guildIcon, 20, 10, 100, 100);
-    } catch {
-      logWithTime(
-        `Guild icon failed to load for guild: ${guildId} while building guild stats image`,
-        'warn',
-        'guild-stats',
-      );
-    }
-  }
-  ctx.restore();
-
-  // Stats
-  ctx.fillStyle = '#ffffff';
-  ctx.font = '20px Sans';
-  ctx.fillText(
-    `Total Messages Sent: ${totalStats.messagesSentThisYear}`,
-    25,
-    150,
-  );
-  ctx.fillText(
-    `Total Characters Sent: ${totalStats.charsSentThisYear}`,
-    350,
-    150,
-  );
-  ctx.fillText(
-    `Participated in: ${totalStats.todayIsParticipationDays} Today-is's`,
-    25,
-    190,
-  );
-  ctx.fillText(`Total Today Is Wins: ${totalStats.todayIsWins}`, 350, 190);
-  ctx.fillText(`Total Reminders Set: ${totalStats.remindersSet}`, 25, 230);
-  ctx.fillText(`Total Cats Requested: ${totalStats.catsRequested}`, 350, 230);
-
-  return new AttachmentBuilder(canvas.toBuffer(), { name: 'guild_stats.png' });
+  return buildStatsImage({
+    title: `Stats for ${name}`,
+    avatarUrl: guildImageUrl ?? null,
+    stats: totalStats,
+    filename: 'guild_stats.png',
+    logScope: 'guild-stats',
+  });
 }
 
 export async function generateUserStatsImage(
@@ -299,68 +357,45 @@ export async function generateUserStatsImage(
   const totalStats = await getUserStats(userId);
   const { displayName, avatar } = await getUserAvatarAndName(userId, client);
 
-  const width = 600;
-  const height = 250;
-  const canvas = createCanvas(width, height);
-  const ctx = canvas.getContext('2d');
+  return buildStatsImage({
+    title: `Stats of ${displayName}`,
+    avatarUrl: avatar,
+    stats: totalStats,
+    filename: 'user_stats.png',
+    logScope: 'user-stats',
+  });
+}
 
-  // Background
-  ctx.fillStyle = '#2c2f33';
-  ctx.fillRect(0, 0, width, height);
+function splitToLines(title: string, max: number) {
+  const words = title.split(' ');
+  const lines: string[] = [];
+  let current = '';
 
-  // Title
-  ctx.fillStyle = '#ffffff';
-  if (displayName.length > 10) {
-    ctx.font = 'bold 24px Sans';
-    ctx.fillText(`Stats of`, 130, 50);
-    ctx.fillText(`${displayName}`, 130, 80);
-  } else {
-    ctx.font = 'bold 36px Sans';
-    ctx.fillText(`Stats of ${displayName}`, 130, 70);
-  }
-
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(70, 60, 50, 0, Math.PI * 2, true);
-  ctx.closePath();
-  ctx.clip();
-
-  // Guild Icon
-  if (avatar) {
-    try {
-      const guildIcon = await loadImage(avatar);
-      ctx.drawImage(guildIcon, 20, 10, 100, 100);
-    } catch {
-      logWithTime(
-        `User icon failed to load for user: ${userId} while building user stats image`,
-        'warn',
-        'user-stats',
-      );
+  const pushCurrent = () => {
+    if (current.length) {
+      lines.push(current);
+      current = '';
     }
+  };
+
+  for (let word of words) {
+    if (word.length > max) {
+      pushCurrent();
+      while (word.length > max) {
+        lines.push(word.slice(0, max));
+        word = word.slice(max);
+      }
+      if (word) current = word;
+    } else if (!current) {
+      current = word;
+    } else if (current.length + 1 + word.length <= max) {
+      current += ' ' + word;
+    } else {
+      pushCurrent();
+      current = word;
+    }
+    if (lines.length >= 3) break;
   }
-  ctx.restore();
-
-  // Stats
-  ctx.fillStyle = '#ffffff';
-  ctx.font = '20px Sans';
-  ctx.fillText(
-    `Total Messages Sent: ${totalStats.messagesSentThisYear}`,
-    25,
-    150,
-  );
-  ctx.fillText(
-    `Total Characters Sent: ${totalStats.charsSentThisYear}`,
-    350,
-    150,
-  );
-  ctx.fillText(
-    `Participated in: ${totalStats.todayIsParticipationDays} Today-is's`,
-    25,
-    190,
-  );
-  ctx.fillText(`Total Today Is Wins: ${totalStats.todayIsWins}`, 350, 190);
-  ctx.fillText(`Total Reminders Set: ${totalStats.remindersSet}`, 25, 230);
-  ctx.fillText(`Total Cats Requested: ${totalStats.catsRequested}`, 350, 230);
-
-  return new AttachmentBuilder(canvas.toBuffer(), { name: 'user_stats.png' });
+  if (lines.length < 3) pushCurrent();
+  return lines.slice(0, 3);
 }
