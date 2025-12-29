@@ -46,7 +46,7 @@ const statsCommands = commandBuilder({
             usersIds,
             interaction.guildId,
             interaction.client,
-            `Stats for ${interaction.guild.name}`,
+            interaction.guild.name,
           );
 
           const guildStatsEmbed = embedBuilder({
@@ -115,7 +115,6 @@ async function sendUserStats(
   const userImage = await generateUserStatsImage(
     interaction.user.id,
     interaction.client,
-    `Stats of ${interaction.user.displayName}`,
   );
 
   const userStatisticsEmbed = embedBuilder({

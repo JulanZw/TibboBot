@@ -219,14 +219,14 @@ export async function generateGuildStatsImage(
   userIds: string[],
   guildId: string,
   client: Client,
-  customText?: string,
+  name: string,
 ): Promise<AttachmentBuilder> {
   const totalStats = await getTotalOfMultipleUserStats(userIds);
   const guildImageUrl = await client.guilds
     .fetch(guildId)
     .then((guild) => guild.iconURL({ extension: 'png' }));
 
-  const width = 550;
+  const width = 600;
   const height = 250;
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
@@ -237,8 +237,14 @@ export async function generateGuildStatsImage(
 
   // Title
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 36px Sans';
-  ctx.fillText(customText ? customText : 'Guild Stats', 130, 70);
+  if (name.length > 10) {
+    ctx.font = 'bold 24px Sans';
+    ctx.fillText(`Stats of`, 130, 40);
+    ctx.fillText(`${name}`, 130, 70);
+  } else {
+    ctx.font = 'bold 36px Sans';
+    ctx.fillText(`Stats for ${name}`, 130, 70);
+  }
 
   ctx.save();
   ctx.beginPath();
@@ -271,7 +277,7 @@ export async function generateGuildStatsImage(
   );
   ctx.fillText(
     `Total Characters Sent: ${totalStats.charsSentThisYear}`,
-    300,
+    350,
     150,
   );
   ctx.fillText(
@@ -279,9 +285,9 @@ export async function generateGuildStatsImage(
     25,
     190,
   );
-  ctx.fillText(`Total Today Is Wins: ${totalStats.todayIsWins}`, 300, 190);
+  ctx.fillText(`Total Today Is Wins: ${totalStats.todayIsWins}`, 350, 190);
   ctx.fillText(`Total Reminders Set: ${totalStats.remindersSet}`, 25, 230);
-  ctx.fillText(`Total Cats Requested: ${totalStats.catsRequested}`, 300, 230);
+  ctx.fillText(`Total Cats Requested: ${totalStats.catsRequested}`, 350, 230);
 
   return new AttachmentBuilder(canvas.toBuffer(), { name: 'guild_stats.png' });
 }
@@ -289,12 +295,11 @@ export async function generateGuildStatsImage(
 export async function generateUserStatsImage(
   userId: string,
   client: Client,
-  customText?: string,
 ): Promise<AttachmentBuilder> {
   const totalStats = await getUserStats(userId);
-  const { avatar } = await getUserAvatarAndName(userId, client);
+  const { displayName, avatar } = await getUserAvatarAndName(userId, client);
 
-  const width = 550;
+  const width = 600;
   const height = 250;
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
@@ -305,8 +310,14 @@ export async function generateUserStatsImage(
 
   // Title
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 36px Sans';
-  ctx.fillText(customText ? customText : `User Stats`, 130, 70);
+  if (displayName.length > 10) {
+    ctx.font = 'bold 24px Sans';
+    ctx.fillText(`Stats of`, 130, 50);
+    ctx.fillText(`${displayName}`, 130, 80);
+  } else {
+    ctx.font = 'bold 36px Sans';
+    ctx.fillText(`Stats of ${displayName}`, 130, 70);
+  }
 
   ctx.save();
   ctx.beginPath();
@@ -339,7 +350,7 @@ export async function generateUserStatsImage(
   );
   ctx.fillText(
     `Total Characters Sent: ${totalStats.charsSentThisYear}`,
-    300,
+    350,
     150,
   );
   ctx.fillText(
@@ -347,9 +358,9 @@ export async function generateUserStatsImage(
     25,
     190,
   );
-  ctx.fillText(`Total Today Is Wins: ${totalStats.todayIsWins}`, 300, 190);
+  ctx.fillText(`Total Today Is Wins: ${totalStats.todayIsWins}`, 350, 190);
   ctx.fillText(`Total Reminders Set: ${totalStats.remindersSet}`, 25, 230);
-  ctx.fillText(`Total Cats Requested: ${totalStats.catsRequested}`, 300, 230);
+  ctx.fillText(`Total Cats Requested: ${totalStats.catsRequested}`, 350, 230);
 
   return new AttachmentBuilder(canvas.toBuffer(), { name: 'user_stats.png' });
 }
