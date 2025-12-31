@@ -45,7 +45,7 @@ const statsCommands = commandBuilder({
             (m) => m.id,
           );
 
-          const guildImageUrl = interaction.guild.iconURL();
+          const guildImageUrl = interaction.guild.iconURL({ extension: 'png' });
 
           const image = await generateGuildStatsImage(
             usersIds,

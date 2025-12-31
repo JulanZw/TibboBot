@@ -142,10 +142,11 @@ export function setupCronJobs(client: Client): void {
             );
 
             if (!channel || channel.type !== ChannelType.GuildText) return;
+
             await sendYearlyStatsImage(
               channel,
               usersIds,
-              discordGuild.iconURL(),
+              discordGuild.iconURL({ extension: 'png' }),
               discordGuild.name,
               scope,
             );

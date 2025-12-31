@@ -242,7 +242,7 @@ async function buildStatsImage({
   ctx.fillStyle = '#ffffff';
 
   const maxLen36px = 21;
-  const maxLen24px = 33;
+  const maxLen24px = 28;
   let lines;
 
   if (title.length > maxLen36px) {
