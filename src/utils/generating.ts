@@ -332,18 +332,14 @@ async function buildStatsImage({
 
 export async function generateGuildStatsImage(
   userIds: string[],
-  guildId: string,
-  client: Client,
+  guildImageUrl: string | null,
   name: string,
 ): Promise<AttachmentBuilder> {
   const totalStats = await getTotalOfMultipleUserStats(userIds);
-  const guildImageUrl = await client.guilds
-    .fetch(guildId)
-    .then((guild) => guild.iconURL({ extension: 'png' }));
 
   return buildStatsImage({
     title: `Stats for ${name}`,
-    avatarUrl: guildImageUrl ?? null,
+    avatarUrl: guildImageUrl,
     stats: totalStats,
     filename: 'guild_stats.png',
     logScope: 'guild-stats',

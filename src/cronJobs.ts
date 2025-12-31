@@ -3,7 +3,13 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 import cron from 'node-cron';
-import { Client, TextChannel } from 'discord.js';
+import {
+  ButtonStyle,
+  ChannelType,
+  Client,
+  ComponentType,
+  TextChannel,
+} from 'discord.js';
 
 import { formatDateToString, getDaySuffix } from './utils/formatting.ts';
 import { getAllBirthdaysInGuildForGivenDate } from './database/birthday.ts';
@@ -19,6 +25,7 @@ import { logWithTime } from './utils/logging.ts';
 import {
   humanParticipatedToday,
   STANDARD_COLOR,
+  TIMES_MILISECONDS,
   todayWinners,
 } from './utils/globals.ts';
 import { getBotAction, getDefeatedMessage } from './utils/discord/todayis.ts';
@@ -28,10 +35,17 @@ import {
   resetTodayIsPoints,
 } from './database/user.ts';
 import {
+  generateGuildStatsImage,
   generateLeaderboard,
   prepareLeaderboardData,
 } from './utils/generating.ts';
-import { embedBuilder } from './utils/discord/embeds.ts';
+import {
+  createButton,
+  createButtonsRow,
+  embedBuilder,
+} from './utils/discord/embeds.ts';
+import { resetAllUserStats } from './database/stats.ts';
+import { sendUserStats } from './commands/stats.ts';
 
 export function setupCronJobs(client: Client): void {
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -83,25 +97,61 @@ export function setupCronJobs(client: Client): void {
 
       await Promise.allSettled(
         guilds.map(async (guild) => {
-          if (!guild.todayIsChannelId) return;
+          // sent today is message for the servers that have a channel for it
+          if (guild.todayIsChannelId) {
+            try {
+              const channel = await client.channels.fetch(
+                guild.todayIsChannelId,
+              );
 
-          try {
-            const channel = await client.channels.fetch(guild.todayIsChannelId);
+              if (!channel || channel.type !== ChannelType.GuildText) return;
 
-            await sendYearlyMessage(channel as TextChannel, guild, scope);
+              await sendYearlyMessage(channel, guild.guildId, scope);
 
-            if (guild.yearlyTodayIsReset === true) {
-              await sendYearlyTodayIsLeaderboard(
-                channel as TextChannel,
-                guild.guildId,
+              if (guild.yearlyTodayIsReset === true) {
+                await sendYearlyTodayIsLeaderboard(
+                  channel,
+                  guild.guildId,
+                  scope,
+                  client,
+                  guild.yearlyTodayIsReset,
+                );
+              }
+            } catch (err: any) {
+              logWithTime(
+                `Failed to send 'Happy new Year' message in guild ${guild.guildId}: ${err}`,
+                'error',
                 scope,
-                client,
-                guild.yearlyTodayIsReset,
+                true,
               );
             }
+          }
+
+          // sent stats to a guild if they have either a publicUpdatesChannel or a todayIsChannel
+          try {
+            const discordGuild = await client.guilds.fetch(guild.guildId);
+            let channel;
+            if (discordGuild.publicUpdatesChannel) {
+              channel = discordGuild.publicUpdatesChannel;
+            } else if (guild.todayIsChannelId) {
+              channel = await client.channels.fetch(guild.todayIsChannelId);
+            }
+
+            const usersIds = (await discordGuild.members.fetch()).map(
+              (m) => m.id,
+            );
+
+            if (!channel || channel.type !== ChannelType.GuildText) return;
+            await sendYearlyStatsImage(
+              channel,
+              usersIds,
+              discordGuild.iconURL(),
+              discordGuild.name,
+              scope,
+            );
           } catch (err: any) {
             logWithTime(
-              `Failed to send 'Happy new Year' message in guild ${guild.guildId}: ${err}`,
+              `Failed to send yearly stats in guild ${guild.guildId}: ${err}`,
               'error',
               scope,
               true,
@@ -109,6 +159,8 @@ export function setupCronJobs(client: Client): void {
           }
         }),
       );
+      // reset all yearly stats of all users at the end
+      await resetAllUserStats();
     } catch (err: any) {
       logWithTime('Error in yearly cron job:' + err, 'error', scope, true);
     }
@@ -332,12 +384,12 @@ async function scheduleReminders(client: Client) {
 
 async function sendYearlyMessage(
   channel: TextChannel,
-  guild: { guildId: string },
+  guildId: string,
   scope: string,
 ) {
   await channel.send(`🎆 Happy New Year!`);
   logWithTime(
-    `Message sent in ${guild.guildId}: "🎆 Happy New Year!"`,
+    `Message sent in ${guildId}: "🎆 Happy New Year!"`,
     'info',
     scope,
   );
@@ -407,4 +459,59 @@ async function sendYearlyTodayIsLeaderboard(
       await resetTodayIsPoints(user.discordId);
     }
   }
+}
+
+async function sendYearlyStatsImage(
+  channel: TextChannel,
+  userIds: string[],
+  imageURL: string | null,
+  guildName: string,
+  scope: string,
+) {
+  const image = await generateGuildStatsImage(userIds, imageURL, guildName);
+
+  const guildStatsEmbed = embedBuilder({
+    title: `Guild statistics`,
+    description: `Here are the stats for **${guildName}** of ${new Date().getFullYear()}!`,
+    color: STANDARD_COLOR,
+    customize: (embed) => {
+      embed.setImage('attachment://guild_stats.png');
+      return embed;
+    },
+  });
+
+  const button = createButton({
+    type: 'view_self',
+    label: 'View your stats!',
+    style: ButtonStyle.Primary,
+  });
+
+  const msg = await channel.send({
+    embeds: [guildStatsEmbed],
+    components: [createButtonsRow([button])],
+    files: [image],
+  });
+
+  const collector = msg.createMessageComponentCollector({
+    componentType: ComponentType.Button,
+    time: TIMES_MILISECONDS.MINUTE * 2,
+  });
+
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  collector.on('collect', async (btnInteraction) => {
+    await sendUserStats(btnInteraction);
+  });
+
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  collector.on('end', async () => {
+    try {
+      await msg.edit({ components: [] });
+    } catch (err: any) {
+      logWithTime(
+        `Could not edit message after collector ended: ${err}`,
+        'warn',
+        scope,
+      );
+    }
+  });
 }

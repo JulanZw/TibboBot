@@ -18,6 +18,9 @@ import {
   embedBuilder,
 } from '../utils/discord/embeds.ts';
 import { STANDARD_COLOR, TIMES_MILISECONDS } from '../utils/globals.ts';
+import { logWithTime } from '../utils/logging.ts';
+
+const scope = 'stats';
 
 const statsCommands = commandBuilder({
   name: 'stats',
@@ -42,10 +45,11 @@ const statsCommands = commandBuilder({
             (m) => m.id,
           );
 
+          const guildImageUrl = interaction.guild.iconURL();
+
           const image = await generateGuildStatsImage(
             usersIds,
-            interaction.guildId,
-            interaction.client,
+            guildImageUrl,
             interaction.guild.name,
           );
 
@@ -85,6 +89,19 @@ const statsCommands = commandBuilder({
           collector.on('collect', async (btnInteraction) => {
             await sendUserStats(btnInteraction);
           });
+
+          // eslint-disable-next-line @typescript-eslint/no-misused-promises
+          collector.on('end', async () => {
+            try {
+              await interaction.editReply({ components: [] });
+            } catch (err: any) {
+              logWithTime(
+                `Could not edit message after collector ended: ${err}`,
+                'warn',
+                scope,
+              );
+            }
+          });
         },
         guildOnly: true,
         permissionLevel: 'user',
@@ -107,7 +124,7 @@ const statsCommands = commandBuilder({
 
 export default statsCommands;
 
-async function sendUserStats(
+export async function sendUserStats(
   interaction: ChatInputCommandInteraction | ButtonInteraction,
 ) {
   await interaction.deferReply();
