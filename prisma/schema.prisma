@@ -28,9 +28,9 @@ model Guild {
 
 model User {
   discordId   String     @id
-  points      BigInt
-  char_count  BigInt
-  msg_count   Int
+  points      BigInt     @default(0)
+  char_count  BigInt     @default(0)
+  msg_count   Int        @default(0)
   optedout    Boolean    @default(false)
 
   userStats   Stats?

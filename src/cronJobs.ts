@@ -30,10 +30,7 @@ import {
 } from './utils/globals.ts';
 import { getBotAction, getDefeatedMessage } from './utils/discord/todayis.ts';
 import { scheduleReminder } from './utils/managers/reminderManager.ts';
-import {
-  getAllUsersCharsAndMessages,
-  resetTodayIsPoints,
-} from './database/user.ts';
+import { getAllUsersDataTodayIs, resetTodayIsPoints } from './database/user.ts';
 import {
   generateGuildStatsImage,
   generateLeaderboard,
@@ -137,11 +134,11 @@ export function setupCronJobs(client: Client): void {
               channel = await client.channels.fetch(guild.todayIsChannelId);
             }
 
-            const usersIds = (await discordGuild.members.fetch()).map(
-              (m) => m.id,
-            );
+            const usersIds = discordGuild.members.cache.map((m) => m.id);
 
-            if (!channel || channel.type !== ChannelType.GuildText) return;
+            if (!channel || channel.type !== ChannelType.GuildText) {
+              return;
+            }
 
             await sendYearlyStatsImage(
               channel,
@@ -419,7 +416,7 @@ async function sendYearlyTodayIsLeaderboard(
     .fetch()
     .then((members) => members.map((m) => m.id));
 
-  const users = await getAllUsersCharsAndMessages(memberIds);
+  const users = await getAllUsersDataTodayIs(memberIds);
 
   if (!users || users.length === 0) {
     return;
@@ -457,7 +454,9 @@ async function sendYearlyTodayIsLeaderboard(
 
   if (reset) {
     for (const user of users) {
-      await resetTodayIsPoints(user.discordId);
+      if (user.points !== BigInt(0)) {
+        await resetTodayIsPoints(user.discordId);
+      }
     }
   }
 }

@@ -19,6 +19,7 @@ import rngCommand from './commands/rng.ts';
 import backupCommands from './commands/backup.ts';
 import { RegisterableCommand } from './types/commands.ts';
 import statsCommands from './commands/stats.ts';
+import devCommands from './commands/dev.ts';
 
 /**
  * Represents a Discord slash command definition.
@@ -53,6 +54,10 @@ export const commands: RegisterableCommand[] = [
   howToCommands,
   statsCommands,
 ];
+
+if (process.env.ENV === 'dev') {
+  commands.push(devCommands);
+}
 
 export const commandNamesAndDescriptions: { name: string; value: string }[][] =
   (() => {
