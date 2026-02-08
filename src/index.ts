@@ -11,7 +11,7 @@ import {
 } from 'discord.js';
 
 import { setupCronJobs } from './cronJobs.ts';
-import { commandsToRegister } from './commands.ts';
+import { getCommandsToRegister } from './commands.ts';
 import { ownerId, prisma, token } from './utils/globals.ts';
 import { handleInteractionCreation } from './handlers/interactionCreation.ts';
 import { handleReactionAdded } from './handlers/reactionAdded.ts';
@@ -54,14 +54,11 @@ client.once('ready', async (readyClient) => {
 
   const rest = new REST({ version: '10' }).setToken(token);
   try {
+    const commands = getCommandsToRegister();
     await rest.put(Routes.applicationCommands(readyClient.user.id), {
-      body: commandsToRegister,
+      body: commands,
     });
-    logWithTime(
-      `${commandsToRegister.length} Slash commands registered.`,
-      'info',
-      scope,
-    );
+    logWithTime(`${commands.length} Slash commands registered.`, 'info', scope);
 
     if (process.env.ENV !== 'dev') {
       readyClient.user.setStatus('online');

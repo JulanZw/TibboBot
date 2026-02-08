@@ -21,20 +21,6 @@ import { RegisterableCommand } from './types/commands.ts';
 import statsCommands from './commands/stats.ts';
 import devCommands from './commands/dev.ts';
 
-/**
- * Represents a Discord slash command definition.
- *
- * Used internally to register and execute slash commands,
- * and to apply custom restrictions like admin or guild-only use.
- *
- * @property data - The actual slash command builder used for Discord.
- * @property name - The name of the command.
- * @property description - The description of the command.
- * @property adminOnly - Whether the command can only be executed by an admin (internal check).
- * @property guildOnly - Whether the command can only be executed in a guild (internal check).
- * @property execute - The function that runs when the command is used.
- */
-
 export const commands: RegisterableCommand[] = [
   wolCommand,
   helpCommand,
@@ -101,10 +87,11 @@ export const commandNamesAndDescriptions: { name: string; value: string }[][] =
     return allPages;
   })();
 
-export const commandsToRegister: RESTPostAPIChatInputApplicationCommandsJSONBody[] =
-  commands.map((command) => {
+export function getCommandsToRegister(): RESTPostAPIChatInputApplicationCommandsJSONBody[] {
+  return commands.map((command) => {
     if (process.env.ENV === 'dev') {
       console.log(`Registering: ${command.name}`);
     }
     return command.data.toJSON();
   });
+}
