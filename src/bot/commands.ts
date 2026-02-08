@@ -6,7 +6,6 @@ import helpCommand from './commands/help.ts';
 import wolCommand from './commands/magic.ts';
 import manageChannelsCommand from './commands/manage.ts';
 import messageCommands from './commands/messages.ts';
-import pingCommand from './commands/ping.ts';
 import reactionCommands from './commands/reaction.ts';
 import reminderCommands from './commands/reminders.ts';
 import sourceCommand from './commands/source.ts';
@@ -20,11 +19,12 @@ import backupCommands from './commands/backup.ts';
 import { RegisterableCommand } from './types/commands.ts';
 import statsCommands from './commands/stats.ts';
 import devCommands from './commands/dev.ts';
+import { PingCommand } from './commands/ping.ts';
 
 export const commands: RegisterableCommand[] = [
   wolCommand,
   helpCommand,
-  pingCommand,
+  new PingCommand().toRegisterable(),
   rngCommand,
   catCommand,
   backupCommands,
