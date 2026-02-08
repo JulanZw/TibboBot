@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction } from 'discord.js';
 
-import { safeReply } from '../utils/discord/editAndReply.ts';
+import { safeReply } from '../../core/utils/editAndReply.ts';
 import { commandBuilder } from '../utils/discord/commandBuilder.ts';
 
 const pingCommand = commandBuilder({

@@ -8,7 +8,7 @@ import { formatDateToYYYYMMDDHHMMSS } from './formatting.ts';
 
 const logDir = path.resolve(
   dirname(fileURLToPath(import.meta.url)),
-  '../../logs',
+  '../../../logs',
 );
 
 if (!fs.existsSync(logDir)) {
