@@ -5,16 +5,16 @@ import {
   TextChannel,
 } from 'discord.js';
 
-import { safeReply } from '../utils/discord/editAndReply.ts';
-import { enqueue } from '../utils/managers/backupQueueManager.ts';
+import { safeReply } from '../../utils/discord/editAndReply.ts';
+import { enqueue } from '../../utils/managers/backupQueueManager.ts';
 import {
   booleanOption,
   channelOption,
-} from '../utils/discord/slashCommandOptions.ts';
-import { TIMES_MILISECONDS } from '../utils/globals.ts';
-import { getAllowBackup } from '../database/guild.ts';
-import { Subcommand } from '../types/commands.ts';
-import { commandBuilder } from '../utils/discord/commandBuilder.ts';
+} from '../../utils/discord/slashCommandOptions.ts';
+import { TIMES_MILISECONDS } from '../../utils/globals.ts';
+import { getAllowBackup } from '../../database/guild.ts';
+import { Subcommand } from '../../types/commands.ts';
+import { commandBuilder } from '../../utils/discord/commandBuilder.ts';
 
 const backupCommands = commandBuilder({
   name: 'backup',

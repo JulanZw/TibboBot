@@ -1,20 +1,19 @@
-import { ChatInputCommandInteraction, ComponentType } from 'discord.js';
+import { ChatInputCommandInteraction } from 'discord.js';
 
-import { stringOption } from '../utils/discord/slashCommandOptions.ts';
-import { safeReply } from '../utils/discord/editAndReply.ts';
-import { logWithTime } from '../utils/logging.ts';
+import { stringOption } from '../../utils/discord/slashCommandOptions.ts';
+import { safeReply } from '../../utils/discord/editAndReply.ts';
+import { logWithTime } from '../../utils/logging.ts';
+import { embedBuilder } from '../../utils/discord/embeds.ts';
+import { formatDateToString } from '../../utils/formatting.ts';
+import { parseBirthdayDate } from '../../utils/parsers.ts';
 import {
-  embedBuilder,
-  createButtonsRow,
-  createPaginationButtons,
-} from '../utils/discord/embeds.ts';
-import { formatDateToString } from '../utils/formatting.ts';
-import { parseBirthdayDate } from '../utils/parsers.ts';
-import { setBirthday, getAllBirthdaysInGuild } from '../database/birthday.ts';
-import { TIMES_MILISECONDS } from '../utils/globals.ts';
-import { hasOptedOut } from '../utils/managers/optInOutManager.ts';
-import { Subcommand } from '../types/commands.ts';
-import { commandBuilder } from '../utils/discord/commandBuilder.ts';
+  setBirthday,
+  getAllBirthdaysInGuild,
+} from '../../database/birthday.ts';
+import { hasOptedOut } from '../../utils/managers/optInOutManager.ts';
+import { Subcommand } from '../../types/commands.ts';
+import { commandBuilder } from '../../utils/discord/commandBuilder.ts';
+import { PaginatedEmbed } from '../../../core/utils/PaginatedEmbed.class.ts';
 
 const scope = 'birthday';
 
@@ -106,6 +105,13 @@ const birthdayCommands = commandBuilder({
 
           const birthdays = await getAllBirthdaysInGuild(interaction.guildId);
 
+          if (birthdays.length === 0) {
+            return await safeReply(
+              interaction,
+              'No birthdays have been set in this server yet.',
+            );
+          }
+
           const birthdayPages = new Map<
             string,
             { name: string; value: string }[]
@@ -149,69 +155,19 @@ const birthdayCommands = commandBuilder({
             (a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b),
           );
 
-          let index = 0;
-          const totalPages = birthdayPages.size;
+          const paginator = new PaginatedEmbed(
+            interaction,
+            months,
+            (month, index, total) => [
+              embedBuilder({
+                title: 'Calendar',
+                fields: birthdayPages.get(month) ?? [],
+                footer: `Page ${index + 1} of ${total}`,
+              }),
+            ],
+          );
 
-          const buildEmbed = () => [
-            embedBuilder({
-              title: 'Calender',
-              description: `The birthdays for: **${months[index]}**`,
-              fields: birthdayPages.get(months[index]) ?? [],
-              footer: `Page ${index + 1} of ${totalPages}`,
-            }),
-          ];
-
-          const buildButtons = () => {
-            const buttons = createPaginationButtons(index, totalPages);
-            return [createButtonsRow(buttons)];
-          };
-
-          await safeReply(interaction, '', false, buildEmbed(), buildButtons());
-
-          const msg = await interaction.fetchReply();
-
-          const collector = msg.createMessageComponentCollector({
-            componentType: ComponentType.Button,
-            time: TIMES_MILISECONDS.MINUTE * 2,
-          });
-
-          // eslint-disable-next-line @typescript-eslint/no-misused-promises
-          collector.on('collect', async (buttonInteraction) => {
-            if (buttonInteraction.user.id !== interaction.user.id) {
-              return await safeReply(
-                buttonInteraction,
-                'You cannot use this button.',
-                true,
-              );
-            }
-
-            const action = buttonInteraction.customId;
-
-            switch (action) {
-              case 'prev':
-                index = Math.max(0, index - 1);
-                break;
-              case 'next':
-                index = Math.min(totalPages - 1, index + 1);
-                break;
-              default:
-                return await safeReply(
-                  buttonInteraction,
-                  'Invalid action.',
-                  true,
-                );
-            }
-
-            await buttonInteraction.update({
-              embeds: buildEmbed(),
-              components: buildButtons(),
-            });
-          });
-
-          // eslint-disable-next-line @typescript-eslint/no-misused-promises
-          collector.on('end', async () => {
-            await interaction.editReply({ components: [] });
-          });
+          await paginator.start();
         },
         permissionLevel: 'user',
         guildOnly: true,

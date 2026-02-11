@@ -1,81 +1,31 @@
-import { ChatInputCommandInteraction, ComponentType } from 'discord.js';
+import { ChatInputCommandInteraction } from 'discord.js';
 
-import { safeReply } from '../utils/discord/editAndReply.ts';
-import {
-  embedBuilder,
-  createButtonsRow,
-  createPaginationButtons,
-} from '../utils/discord/embeds.ts';
-import { commandNamesAndDescriptions } from '../commands.ts';
-import { TIMES_MILISECONDS } from '../utils/globals.ts';
-import { commandBuilder } from '../utils/discord/commandBuilder.ts';
+import { embedBuilder } from '../utils/discord/embeds.ts';
+import { PaginatedEmbed } from '../../core/utils/PaginatedEmbed.class.ts';
+import { commandManager } from '../commands.ts';
 
-const helpCommand = commandBuilder({
-  name: 'help',
-  description: 'Displays all commands.',
-  execute: async (interaction: ChatInputCommandInteraction) => {
-    let index = 0;
-    const totalPages = commandNamesAndDescriptions.length;
-    const buildEmbed = () => [
-      embedBuilder({
-        title: 'List of Available Commands',
-        description: 'Here are the commands you can use:',
-        fields: commandNamesAndDescriptions[index],
-        footer: `Page ${index + 1} of ${totalPages}`,
-      }),
-    ];
+import { BotCommand } from './classes/BotCommand.class.ts';
 
-    const buildButtons = () => {
-      // although they are pagination buttons, there are no other buttons so this works fine
-      const buttons = createPaginationButtons(index, 0);
-      return [createButtonsRow(buttons)];
-    };
+export class HelpCommand extends BotCommand {
+  name = 'help';
+  description = 'Displays all commands.';
+  guildOnly = false;
+  permissionLevel = 'user' as const;
 
-    await safeReply(interaction, '', false, buildEmbed(), buildButtons());
+  protected async run(interaction: ChatInputCommandInteraction): Promise<void> {
+    const commandNamesAndDescriptions = commandManager.getHelpPages();
+    const paginator = new PaginatedEmbed(
+      interaction,
+      commandNamesAndDescriptions,
+      (_, index, total) => [
+        embedBuilder({
+          title: 'List of Available Commands',
+          fields: commandNamesAndDescriptions[index] ?? [],
+          footer: `Page ${index + 1} of ${total}`,
+        }),
+      ],
+    );
 
-    const msg = await interaction.fetchReply();
-
-    const collector = msg.createMessageComponentCollector({
-      componentType: ComponentType.Button,
-      time: TIMES_MILISECONDS.MINUTE * 2,
-    });
-
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    collector.on('collect', async (buttonInteraction) => {
-      if (buttonInteraction.user.id !== interaction.user.id) {
-        return await safeReply(
-          buttonInteraction,
-          'You cannot use this button.',
-          true,
-        );
-      }
-
-      const action = buttonInteraction.customId;
-
-      switch (action) {
-        case 'prev':
-          index = Math.max(0, index - 1);
-          break;
-        case 'next':
-          index = Math.min(totalPages - 1, index + 1);
-          break;
-        default:
-          return await safeReply(buttonInteraction, 'Invalid action.', true);
-      }
-
-      await buttonInteraction.update({
-        embeds: buildEmbed(),
-        components: buildButtons(),
-      });
-    });
-
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    collector.on('end', async () => {
-      await interaction.editReply({ components: [] });
-    });
-  },
-  guildOnly: false,
-  permissionLevel: 'user',
-});
-
-export default helpCommand;
+    await paginator.start();
+  }
+}

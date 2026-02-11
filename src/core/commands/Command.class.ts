@@ -3,20 +3,20 @@ import {
   ChatInputCommandInteraction,
   Client,
   SlashCommandBuilder,
+  SlashCommandSubcommandBuilder,
 } from 'discord.js';
 
 import { PermissionLevel } from '../types/permission.ts';
 import { safeReply } from '../utils/editAndReply.ts';
 import { getPermissionsForLevel } from '../utils/permissions.ts';
 import { logWithTime } from '../utils/logging.ts';
-// ! will be removed later
-import { RegisterableCommand } from '../../bot/types/commands.ts';
 
 export abstract class Command {
   abstract name: string;
   abstract description: string;
   abstract guildOnly: boolean;
   abstract permissionLevel: PermissionLevel;
+  cooldown?: number;
 
   protected validate(interaction: ChatInputCommandInteraction): string | null {
     if (this.guildOnly && !interaction.guildId) {
@@ -35,10 +35,11 @@ export abstract class Command {
 
   private async safeExecute(
     commandName: string,
-    scope: string,
     interaction: ChatInputCommandInteraction,
     fn: () => Promise<any>,
   ) {
+    const scope = `${commandName}_EXECUTION`;
+
     try {
       await fn();
       const subcommandName = interaction.options.getSubcommand(false);
@@ -54,13 +55,14 @@ export abstract class Command {
   }
 
   async execute(
-    scope: string,
     interaction: ChatInputCommandInteraction,
     client: Client,
   ): Promise<void> {
-    await this.safeExecute(this.name, scope, interaction, async () => {
+    await this.safeExecute(this.name, interaction, async () => {
       const error = this.validate(interaction);
+      console.log('Validation result for', this.name, ':', error);
       if (error) return await safeReply(interaction, error, true);
+      console.log('Validation passed for', this.name);
       await this.run(interaction, client);
     });
   }
@@ -70,25 +72,9 @@ export abstract class Command {
     client: Client,
   ): Promise<void>;
 
-  // ! backwards compatibility with old command system, will be removed later
-  toRegisterable(): RegisterableCommand {
-    const builder = new SlashCommandBuilder()
-      .setName(this.name)
-      .setDescription(this.description)
-      .setDefaultMemberPermissions(
-        getPermissionsForLevel(this.permissionLevel),
-      );
-
-    return {
-      name: this.name,
-      description: this.description,
-      guildOnly: this.guildOnly,
-      permissionLevel: this.permissionLevel,
-      data: builder,
-      execute: (interaction: ChatInputCommandInteraction, client: Client) =>
-        this.execute(`${this.name}_EXECUTION`, interaction, client),
-    };
-  }
+  customize?(
+    builder: SlashCommandBuilder | SlashCommandSubcommandBuilder,
+  ): SlashCommandBuilder | SlashCommandSubcommandBuilder;
 
   toJSON() {
     const builder = new SlashCommandBuilder()
@@ -97,6 +83,11 @@ export abstract class Command {
       .setDefaultMemberPermissions(
         getPermissionsForLevel(this.permissionLevel),
       );
+
+    if (this.customize) {
+      this.customize(builder);
+    }
+
     return builder.toJSON();
   }
 }

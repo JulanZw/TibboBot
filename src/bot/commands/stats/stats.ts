@@ -5,20 +5,20 @@ import {
   ComponentType,
 } from 'discord.js';
 
-import { Subcommand } from '../types/commands.ts';
-import { commandBuilder } from '../utils/discord/commandBuilder.ts';
-import { safeReply } from '../utils/discord/editAndReply.ts';
+import { Subcommand } from '../../types/commands.ts';
+import { commandBuilder } from '../../utils/discord/commandBuilder.ts';
+import { safeReply } from '../../utils/discord/editAndReply.ts';
 import {
   generateGuildStatsImage,
   generateUserStatsImage,
-} from '../utils/generating.ts';
+} from '../../utils/generating.ts';
 import {
   createButton,
   createButtonsRow,
   embedBuilder,
-} from '../utils/discord/embeds.ts';
-import { STANDARD_COLOR, TIMES_MILISECONDS } from '../utils/globals.ts';
-import { logWithTime } from '../utils/logging.ts';
+} from '../../utils/discord/embeds.ts';
+import { STANDARD_COLOR, TIMES_MILISECONDS } from '../../utils/globals.ts';
+import { logWithTime } from '../../utils/logging.ts';
 
 const scope = 'stats';
 

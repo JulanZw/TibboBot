@@ -1,6 +1,3 @@
-import { Command, Subcommand } from '../../types/commands.ts';
-import { CooldownResult } from '../../types/cooldown.ts';
-
 /**
  * A tracker with the command name as key and a map as value.
  *
@@ -24,17 +21,18 @@ const tracker: Map<string, Map<string, number>> = new Map();
  * @returns A CooldownResult with `allowed` and optional `remaining` time.
  */
 export function checkCooldown(
-  command: Command | Subcommand,
+  commandName: string,
+  commandCooldown: number | undefined,
   userId: string,
-): CooldownResult {
-  if (!command.cooldown) return { allowed: true };
+): number {
+  if (!commandCooldown) return 0;
 
   const now = Date.now();
-  let cooldownMap = tracker.get(command.name);
+  let cooldownMap = tracker.get(commandName);
 
   if (!cooldownMap) {
     cooldownMap = new Map();
-    tracker.set(command.name, cooldownMap);
+    tracker.set(commandName, cooldownMap);
   }
 
   // Clean up expired entries
@@ -47,13 +45,10 @@ export function checkCooldown(
   const canBeUsedAgainAt = cooldownMap.get(userId);
 
   if (canBeUsedAgainAt && now < canBeUsedAgainAt) {
-    return {
-      allowed: false,
-      remaining: canBeUsedAgainAt - now,
-    };
+    return canBeUsedAgainAt - now;
   }
 
-  cooldownMap.set(userId, now + command.cooldown);
+  cooldownMap.set(userId, now + commandCooldown);
 
-  return { allowed: true };
+  return 0;
 }

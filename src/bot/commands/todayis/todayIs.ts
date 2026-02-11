@@ -2,26 +2,26 @@ import {
   booleanOption,
   userOption,
   integerOption,
-} from '../utils/discord/slashCommandOptions.ts';
-import { embedBuilder } from '../utils/discord/embeds.ts';
-import { safeReply } from '../utils/discord/editAndReply.ts';
-import { getPointGiverIdOfGuild, getGuild } from '../database/guild.ts';
+} from '../../utils/discord/slashCommandOptions.ts';
+import { embedBuilder } from '../../utils/discord/embeds.ts';
+import { safeReply } from '../../utils/discord/editAndReply.ts';
+import { getPointGiverIdOfGuild, getGuild } from '../../database/guild.ts';
 import {
   getAllUsersDataTodayIs,
   getUserPoints,
   insertUserData,
   updateUserPoints,
   setPointGiverOfGuild,
-} from '../database/user.ts';
-import { Subcommand } from '../types/commands.ts';
-import { logWithTime } from '../utils/logging.ts';
+} from '../../database/user.ts';
+import { Subcommand } from '../../types/commands.ts';
+import { logWithTime } from '../../utils/logging.ts';
 import {
   generateLeaderboard,
   prepareLeaderboardData,
-} from '../utils/generating.ts';
-import { TIMES_MILISECONDS, STANDARD_COLOR } from '../utils/globals.ts';
-import { hasOptedOut } from '../utils/managers/optInOutManager.ts';
-import { commandBuilder } from '../utils/discord/commandBuilder.ts';
+} from '../../utils/generating.ts';
+import { TIMES_MILISECONDS, STANDARD_COLOR } from '../../utils/globals.ts';
+import { hasOptedOut } from '../../utils/managers/optInOutManager.ts';
+import { commandBuilder } from '../../utils/discord/commandBuilder.ts';
 
 const scope = 'todayis';
 

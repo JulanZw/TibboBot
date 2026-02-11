@@ -2,33 +2,19 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { ChatInputCommandInteraction } from 'discord.js';
 
-import { Subcommand } from '../types/commands.ts';
-import { commandBuilder } from '../utils/discord/commandBuilder.ts';
-import { resetAllUserStats } from '../database/stats.ts';
 import { safeReply } from '../utils/discord/editAndReply.ts';
+
+import { BotCommand } from './classes/BotCommand.class.ts';
 
 const testServerId = process.env.TEST_SERVER_ID;
 
-const devCommands = commandBuilder({
-  name: 'dev',
-  description: 'Dev.',
-  subcommands: new Map<string, Subcommand>([
-    [
-      'dev',
-      {
-        name: 'dev',
-        description:
-          'Does whatever the dev wants it to do. Mainly used for debugging functions if needed, else its empty.',
-        execute: async (interaction: ChatInputCommandInteraction) => {
-          await resetAllUserStats();
+export class DevCommand extends BotCommand {
+  name = 'dev';
+  description = 'Dev.';
+  guildOnly = false;
+  permissionLevel = 'owner' as const;
 
-          await safeReply(interaction,'command succesfully executed.');
-        },
-        guildOnly: false,
-        permissionLevel: 'owner',
-      },
-    ],
-  ]),
-});
-
-export default devCommands;
+  protected async run(interaction: ChatInputCommandInteraction): Promise<void> {
+    await safeReply(interaction,'command succesfully executed.');
+  }
+}

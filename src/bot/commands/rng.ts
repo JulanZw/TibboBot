@@ -1,14 +1,17 @@
 import { ChatInputCommandInteraction } from 'discord.js';
 
 import { safeReply } from '../utils/discord/editAndReply.ts';
-import { commandBuilder } from '../utils/discord/commandBuilder.ts';
-import { integerOption } from '../utils/discord/slashCommandOptions.ts';
 
-const rngCommand = commandBuilder({
-  name: 'rng',
-  description:
-    'Responds with a random number. If a range is provided, responds with a number within that range',
-  execute: async (interaction: ChatInputCommandInteraction) => {
+import { BotCommand } from './classes/BotCommand.class.ts';
+
+export class RngCommand extends BotCommand {
+  name = 'rng';
+  description =
+    'Responds with a random number. If a range is provided, responds with a number within that range';
+  guildOnly = false;
+  permissionLevel = 'user' as const;
+
+  protected async run(interaction: ChatInputCommandInteraction): Promise<void> {
     const min = interaction.options.getInteger('min', false);
     const max = interaction.options.getInteger('max', false);
 
@@ -17,11 +20,12 @@ const rngCommand = commandBuilder({
       (min && min > Number.MAX_SAFE_INTEGER) ||
       (max && max < Number.MIN_SAFE_INTEGER)
     ) {
-      return safeReply(
+      await safeReply(
         interaction,
         'Invalid range. Please provide a valid min and max.',
         true,
       );
+      return;
     }
 
     const randomNum =
@@ -32,18 +36,5 @@ const rngCommand = commandBuilder({
             1),
       ) + (min ?? Number.MIN_SAFE_INTEGER);
     await safeReply(interaction, `${randomNum}`);
-  },
-  guildOnly: false,
-  permissionLevel: 'user',
-  customize: (builder) => {
-    builder.addIntegerOption(
-      integerOption('min', 'The minimum value of the number', false),
-    );
-    builder.addIntegerOption(
-      integerOption('max', 'The maximum value of the number', false),
-    );
-    return builder;
-  },
-});
-
-export default rngCommand;
+  }
+}

@@ -2,16 +2,22 @@ import { ChatInputCommandInteraction } from 'discord.js';
 
 import { embedBuilder } from '../utils/discord/embeds.ts';
 import { safeReply } from '../utils/discord/editAndReply.ts';
-import { commandBuilder } from '../utils/discord/commandBuilder.ts';
 import { logWithTime } from '../utils/logging.ts';
 import { incrementStatistic } from '../database/stats.ts';
+import { TIMES_MILISECONDS } from '../../core/utils/globals.ts';
+
+import { BotCommand } from './classes/BotCommand.class.ts';
 
 const scope = 'cat';
 
-const catCommand = commandBuilder({
-  name: 'cat',
-  description: 'Sends a random cat picture.',
-  execute: async (interaction: ChatInputCommandInteraction) => {
+export class CatCommand extends BotCommand {
+  name = 'cat';
+  description = 'Sends a random cat picture.';
+  guildOnly = false;
+  permissionLevel = 'user' as const;
+  cooldown = TIMES_MILISECONDS.SECOND;
+
+  protected async run(interaction: ChatInputCommandInteraction): Promise<void> {
     await incrementStatistic('catsRequested', interaction.user.id, 1);
     try {
       const response = await fetch(
@@ -36,9 +42,5 @@ const catCommand = commandBuilder({
       logWithTime('Error fetching cat image:' + err, 'warn', scope, true);
       await safeReply(interaction, "Sorry, I couldn't fetch a cat image.");
     }
-  },
-  guildOnly: false,
-  permissionLevel: 'user',
-});
-
-export default catCommand;
+  }
+}

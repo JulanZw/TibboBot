@@ -9,30 +9,33 @@ import {
 } from 'discord.js';
 import { $Enums, Reminders } from '@prisma/client';
 
-import { stringOption } from '../utils/discord/slashCommandOptions.ts';
-import { safeReply } from '../utils/discord/editAndReply.ts';
-import { logWithTime } from '../utils/logging.ts';
-import { parseDurationOrDateString } from '../utils/parsers.ts';
+import { stringOption } from '../../utils/discord/slashCommandOptions.ts';
+import { safeReply } from '../../utils/discord/editAndReply.ts';
+import { logWithTime } from '../../utils/logging.ts';
+import { parseDurationOrDateString } from '../../utils/parsers.ts';
 import {
   embedBuilder,
   createButtonsRow,
   createButton,
   createPaginationButtons,
-} from '../utils/discord/embeds.ts';
-import { capitalizeFirst, formatDateToDDMMYYYY } from '../utils/formatting.ts';
-import { Subcommand } from '../types/commands.ts';
+} from '../../utils/discord/embeds.ts';
+import {
+  capitalizeFirst,
+  formatDateToDDMMYYYY,
+} from '../../utils/formatting.ts';
+import { Subcommand } from '../../types/commands.ts';
 import {
   createReminder,
   deleteReminder,
   getUserReminders,
   updateReminder,
-} from '../database/reminders.ts';
-import { TIMES_MILISECONDS } from '../utils/globals.ts';
-import { hasOptedOut } from '../utils/managers/optInOutManager.ts';
-import { buildAndRegisterModal } from '../utils/discord/modalRegistry.ts';
-import { commandBuilder } from '../utils/discord/commandBuilder.ts';
-import { scheduleReminder } from '../utils/managers/reminderManager.ts';
-import { incrementStatistic } from '../database/stats.ts';
+} from '../../database/reminders.ts';
+import { TIMES_MILISECONDS } from '../../utils/globals.ts';
+import { hasOptedOut } from '../../utils/managers/optInOutManager.ts';
+import { buildAndRegisterModal } from '../../utils/discord/modalRegistry.ts';
+import { commandBuilder } from '../../utils/discord/commandBuilder.ts';
+import { scheduleReminder } from '../../utils/managers/reminderManager.ts';
+import { incrementStatistic } from '../../database/stats.ts';
 
 const scope = 'reminder';
 

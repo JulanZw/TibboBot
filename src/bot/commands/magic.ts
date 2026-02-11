@@ -2,15 +2,19 @@ import wol from 'wol';
 import { ChatInputCommandInteraction } from 'discord.js';
 
 import { safeReply } from '../utils/discord/editAndReply.ts';
-import { commandBuilder } from '../utils/discord/commandBuilder.ts';
 import { logWithTime } from '../utils/logging.ts';
+
+import { BotCommand } from './classes/BotCommand.class.ts';
 
 const scope = 'magic';
 
-const wolCommand = commandBuilder({
-  name: 'magic',
-  description: 'does some magic (bot owner only)',
-  execute: async (interaction: ChatInputCommandInteraction) => {
+export class MagicCommand extends BotCommand {
+  name = 'magic';
+  description = 'does some magic (bot owner only)';
+  guildOnly = false;
+  permissionLevel = 'owner' as const;
+
+  protected async run(interaction: ChatInputCommandInteraction): Promise<void> {
     if (!process.env.WOL_MAC || !process.env.WOL_IP) {
       logWithTime(
         'Cannot execute WOL because MAC or IP is not set',
@@ -18,20 +22,15 @@ const wolCommand = commandBuilder({
         scope,
         true,
       );
-      return await safeReply(interaction, 'IP or MAC has not been set');
+      await safeReply(interaction, 'IP or MAC has not been set');
+      return;
     }
 
     const succes = await wol.wake(process.env.WOL_MAC, {
       address: process.env.WOL_IP,
       port: 9,
     });
-    return await safeReply(
-      interaction,
-      succes ? 'magic...' : 'magic failed... :(',
-    );
-  },
-  guildOnly: false,
-  permissionLevel: 'owner',
-});
-
-export default wolCommand;
+    await safeReply(interaction, succes ? 'magic...' : 'magic failed... :(');
+    return;
+  }
+}

@@ -6,13 +6,17 @@ import {
   EmbedBuilder,
 } from 'discord.js';
 
-import { commandBuilder } from '../utils/discord/commandBuilder.ts';
 import { STANDARD_COLOR } from '../utils/globals.ts';
 
-const sourceCommand = commandBuilder({
-  name: 'source',
-  description: 'Get a link to the source code',
-  execute: async (interaction: ChatInputCommandInteraction) => {
+import { BotCommand } from './classes/BotCommand.class.ts';
+
+export class SourceCommand extends BotCommand {
+  name = 'source';
+  description = 'Get a link to the source code';
+  guildOnly = false;
+  permissionLevel = 'user' as const;
+
+  protected async run(interaction: ChatInputCommandInteraction): Promise<void> {
     const repoUrl = 'https://github.com/JulanZw/TibboBot.git';
 
     const embed = new EmbedBuilder()
@@ -33,9 +37,5 @@ const sourceCommand = commandBuilder({
       embeds: [embed],
       components: [row],
     });
-  },
-  guildOnly: false,
-  permissionLevel: 'user',
-});
-
-export default sourceCommand;
+  }
+}

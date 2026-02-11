@@ -6,15 +6,15 @@ import {
   SlashCommandSubcommandBuilder,
 } from 'discord.js';
 
-import { PermissionLevel } from '../types/permission.ts';
 import { safeReply } from '../utils/editAndReply.ts';
 import { logWithTime } from '../utils/logging.ts';
+
+import { Command } from './Command.class.ts';
 
 export abstract class SubcommandGroup {
   abstract name: string;
   abstract description: string;
-  cooldown?: number;
-  protected abstract subcommands: Map<string, Subcommand>;
+  protected abstract subcommands: Map<string, Command>;
 
   private async safeExecute(
     commandName: string,
@@ -47,11 +47,10 @@ export abstract class SubcommandGroup {
       throw new Error(`Unknown subcommand: ${subcommandName}`);
     }
 
-    await this.safeExecute(
-      this.name,
-      `${subcommandName}_EXECUTION`,
-      interaction,
-      () => subcommand.execute(interaction, client),
+    const scope = `${subcommand.name}_EXECUTION`;
+
+    await this.safeExecute(this.name, scope, interaction, () =>
+      subcommand.execute(interaction, client),
     );
   }
 
@@ -61,11 +60,12 @@ export abstract class SubcommandGroup {
       .setDescription(this.description);
 
     for (const [name, sub] of this.subcommands) {
-      builder.addSubcommand((sc) =>
-        (sub.customize ?? ((b) => b))(
+      builder.addSubcommand((sc) => {
+        const configured = (sub.customize ?? ((b) => b))(
           sc.setName(name).setDescription(sub.description),
-        ),
-      );
+        );
+        return configured as SlashCommandSubcommandBuilder;
+      });
     }
 
     return builder.toJSON();
@@ -78,17 +78,3 @@ export abstract class SubcommandGroup {
     }));
   }
 }
-
-export type Subcommand = {
-  name: string;
-  description: string;
-  execute: (
-    interaction: ChatInputCommandInteraction,
-    client: Client,
-  ) => Promise<any>;
-  customize?: (
-    sub: SlashCommandSubcommandBuilder,
-  ) => SlashCommandSubcommandBuilder;
-  permissionLevel: PermissionLevel;
-  guildOnly: boolean;
-};

@@ -11,7 +11,7 @@ import {
 } from 'discord.js';
 
 import { setupCronJobs } from './cronJobs.ts';
-import { getCommandsToRegister } from './commands.ts';
+import { discordJSON } from './commands.ts';
 import { ownerId, prisma, token } from './utils/globals.ts';
 import { handleInteractionCreation } from './handlers/interactionCreation.ts';
 import { handleReactionAdded } from './handlers/reactionAdded.ts';
@@ -54,7 +54,7 @@ client.once('ready', async (readyClient) => {
 
   const rest = new REST({ version: '10' }).setToken(token);
   try {
-    const commands = getCommandsToRegister();
+    const commands = discordJSON;
     await rest.put(Routes.applicationCommands(readyClient.user.id), {
       body: commands,
     });

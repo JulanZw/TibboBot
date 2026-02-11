@@ -9,9 +9,9 @@ import {
   ModalSubmitInteraction,
 } from 'discord.js';
 
-import { safeReply } from '../utils/discord/editAndReply.ts';
-import { commandBuilder } from '../utils/discord/commandBuilder.ts';
-import { logWithTime } from '../utils/logging.ts';
+import { safeReply } from '../../utils/discord/editAndReply.ts';
+import { commandBuilder } from '../../utils/discord/commandBuilder.ts';
+import { logWithTime } from '../../utils/logging.ts';
 import {
   deleteGuild,
   getAllowBackup,
@@ -21,15 +21,15 @@ import {
   toggleAllowBackup,
   toggleYearlyTodayIsReset,
   updateBotChannel,
-} from '../database/guild.ts';
-import { TIMES_MILISECONDS } from '../utils/globals.ts';
+} from '../../database/guild.ts';
+import { TIMES_MILISECONDS } from '../../utils/globals.ts';
 import {
   handleConfirmModal,
   showConfirmModal,
-} from '../utils/discord/confirmation.ts';
-import { createButton, createButtonsRow } from '../utils/discord/embeds.ts';
-import { BotChannel } from '../types/channel.ts';
-import { Subcommand } from '../types/commands.ts';
+} from '../../utils/discord/confirmation.ts';
+import { createButton, createButtonsRow } from '../../utils/discord/embeds.ts';
+import { BotChannel } from '../../types/channel.ts';
+import { Subcommand } from '../../types/commands.ts';
 
 const scope = 'manage';
 

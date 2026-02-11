@@ -42,7 +42,7 @@ import {
   embedBuilder,
 } from './utils/discord/embeds.ts';
 import { resetAllUserStats } from './database/stats.ts';
-import { sendUserStats } from './commands/stats.ts';
+import { sendUserStats } from './commands/stats/stats.ts';
 
 export function setupCronJobs(client: Client): void {
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
