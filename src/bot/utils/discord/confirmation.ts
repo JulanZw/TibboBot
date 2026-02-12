@@ -5,7 +5,8 @@ import {
   ButtonInteraction,
 } from 'discord.js';
 
-import { safeReply } from './editAndReply.ts';
+import { safeReply } from '../../../core/utils/editAndReply.ts';
+
 import { buildAndRegisterModal } from './modalRegistry.ts';
 
 /**

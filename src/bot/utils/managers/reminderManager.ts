@@ -3,8 +3,8 @@ import { User } from 'discord.js';
 import cron, { ScheduledTask } from 'node-cron';
 
 import { updateReminder, deleteReminder } from '../../database/reminders.ts';
-import { logWithTime } from '../logging.ts';
 import { addDays } from '../parsers.ts';
+import { logWithTime } from '../../../core/utils/logging.ts';
 
 const scheduledReminderJobs = new Map<string, ScheduledTask>();
 

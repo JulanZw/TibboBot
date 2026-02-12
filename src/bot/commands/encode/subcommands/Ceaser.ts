@@ -1,9 +1,9 @@
 import { ChatInputCommandInteraction } from 'discord.js';
 
 import { PermissionLevel } from '../../../../core/types/permission.ts';
-import { BotCommand } from '../../classes/BotCommand.class.ts';
-import { safeReply } from '../../../utils/discord/editAndReply.ts';
+import { BotCommand } from '../../../impl/BotCommand.class.ts';
 import { builderEncodeDecodeCommand } from '../encodeDecodeHelper.ts';
+import { safeReply } from '../../../../core/utils/editAndReply.ts';
 
 export class CeaserCommand extends BotCommand {
   name = 'ceaser';

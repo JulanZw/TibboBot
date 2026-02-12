@@ -2,8 +2,8 @@ import { ChatInputCommandInteraction } from 'discord.js';
 
 import { client } from '../index.ts';
 import { commandManager } from '../commands.ts';
-import { safeReply } from '../utils/discord/editAndReply.ts';
-import { logWithTime } from '../utils/logging.ts';
+import { safeReply } from '../../core/utils/editAndReply.ts';
+import { logWithTime } from '../../core/utils/logging.ts';
 
 const scope = 'handler_INTERACTIONCREATION_COMMAND';
 

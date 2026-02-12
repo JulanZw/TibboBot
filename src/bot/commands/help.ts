@@ -1,10 +1,10 @@
 import { ChatInputCommandInteraction } from 'discord.js';
 
-import { embedBuilder } from '../utils/discord/embeds.ts';
 import { PaginatedEmbed } from '../../core/utils/PaginatedEmbed.class.ts';
 import { commandManager } from '../commands.ts';
-
-import { BotCommand } from './classes/BotCommand.class.ts';
+import { BotCommand } from '../impl/BotCommand.class.ts';
+import { embedBuilder } from '../../core/utils/embeds.ts';
+import { COMMANDS_PER_PAGE } from '../utils/globals.ts';
 
 export class HelpCommand extends BotCommand {
   name = 'help';
@@ -13,7 +13,8 @@ export class HelpCommand extends BotCommand {
   permissionLevel = 'user' as const;
 
   protected async run(interaction: ChatInputCommandInteraction): Promise<void> {
-    const commandNamesAndDescriptions = commandManager.getHelpPages();
+    const commandNamesAndDescriptions =
+      commandManager.getHelpPages(COMMANDS_PER_PAGE);
     const paginator = new PaginatedEmbed(
       interaction,
       commandNamesAndDescriptions,

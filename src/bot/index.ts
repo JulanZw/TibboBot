@@ -1,27 +1,20 @@
 import {
   ActivityType,
   Client,
-  Events,
   GatewayIntentBits,
-  Interaction,
-  Message,
   Partials,
   REST,
   Routes,
 } from 'discord.js';
 
+import { logWithTime } from '../core/utils/logging.ts';
+
 import { setupCronJobs } from './cronJobs.ts';
 import { discordJSON } from './commands.ts';
-import { ownerId, prisma, token } from './utils/globals.ts';
-import { handleInteractionCreation } from './handlers/interactionCreation.ts';
-import { handleReactionAdded } from './handlers/reactionAdded.ts';
-import { handleReactionRemoval } from './handlers/reactionRemoved.ts';
-import { handleMessageDeletion } from './handlers/messageDeletion.ts';
 import { getRemindersOfToday } from './database/reminders.ts';
-import { handleMessageCreation } from './handlers/messageCreation.ts';
-import { logWithTime } from './utils/logging.ts';
-import { setupErrorHandlers } from './handlers/errors.ts';
 import { scheduleReminder } from './utils/managers/reminderManager.ts';
+import { BotDiscordHandler } from './impl/BotDiscordHandler.class.ts';
+import { prisma, token, ownerId } from './utils/globals.ts';
 
 const scope = 'startup';
 
@@ -38,10 +31,13 @@ export const client = new Client({
   partials: [Partials.Message, Partials.Reaction, Partials.User],
 });
 
+const discordHandler = new BotDiscordHandler(client, prisma);
+discordHandler.setupErrorHandlers();
+await discordHandler.setupOtherHandlers();
+
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 client.once('ready', async (readyClient) => {
   setupCronJobs(readyClient);
-  setupErrorHandlers(readyClient, prisma);
 
   if (!token || !process.env.DATABASE_URL) {
     logWithTime('Token or database url not set.', 'error', scope, true);
@@ -101,31 +97,6 @@ client.once('ready', async (readyClient) => {
       true,
     );
   }
-});
-
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
-client.on(Events.MessageCreate, async (message: Message) => {
-  await handleMessageCreation(message);
-});
-
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
-client.on(Events.InteractionCreate, async (interaction: Interaction) => {
-  await handleInteractionCreation(interaction);
-});
-
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
-client.on(Events.MessageReactionAdd, async (reaction, user) => {
-  await handleReactionAdded(reaction, user);
-});
-
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
-client.on(Events.MessageReactionRemove, async (reaction, user) => {
-  await handleReactionRemoval(reaction, user);
-});
-
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
-client.on(Events.MessageDelete, async (message) => {
-  await handleMessageDeletion(message);
 });
 
 client

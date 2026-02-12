@@ -1,12 +1,11 @@
 import { ChatInputCommandInteraction } from 'discord.js';
 
-import { embedBuilder } from '../utils/discord/embeds.ts';
-import { safeReply } from '../utils/discord/editAndReply.ts';
-import { logWithTime } from '../utils/logging.ts';
 import { incrementStatistic } from '../database/stats.ts';
-import { TIMES_MILISECONDS } from '../../core/utils/globals.ts';
-
-import { BotCommand } from './classes/BotCommand.class.ts';
+import { TIMES_MILISECONDS } from '../../core/utils/miliseconds.ts';
+import { BotCommand } from '../impl/BotCommand.class.ts';
+import { safeReply } from '../../core/utils/editAndReply.ts';
+import { embedBuilder } from '../../core/utils/embeds.ts';
+import { logWithTime } from '../../core/utils/logging.ts';
 
 const scope = 'cat';
 

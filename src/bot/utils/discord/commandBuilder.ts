@@ -7,10 +7,9 @@ import {
 import { Command, RegisterableCommand } from '../../types/commands.ts';
 import { PermissionLevel } from '../../types/permission.ts';
 import { ownerId } from '../globals.ts';
-import { logWithTime } from '../logging.ts';
-
-import { safeReply } from './editAndReply.ts';
-import { getPermissionsForLevel } from './permissions.ts';
+import { safeReply } from '../../../core/utils/editAndReply.ts';
+import { logWithTime } from '../../../core/utils/logging.ts';
+import { getPermissionsForLevel } from '../../../core/utils/permissions.ts';
 
 const scope = 'commandBuilder';
 

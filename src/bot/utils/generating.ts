@@ -7,8 +7,7 @@ import {
   getUserStats,
 } from '../database/stats.ts';
 import { UserStatistics } from '../types/stats.ts';
-
-import { logWithTime } from './logging.ts';
+import { logWithTime } from '../../core/utils/logging.ts';
 
 async function getUserAvatarAndName(
   userId: string,

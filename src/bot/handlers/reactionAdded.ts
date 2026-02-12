@@ -5,8 +5,8 @@ import {
   PartialUser,
 } from 'discord.js';
 
-import { logWithTime } from '../utils/logging.ts';
 import { getRoleForReaction } from '../database/reactionRoles.ts';
+import { logWithTime } from '../../core/utils/logging.ts';
 
 const scope = 'handler_REACTIONADDING';
 

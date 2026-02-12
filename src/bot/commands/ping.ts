@@ -2,8 +2,7 @@ import { ChatInputCommandInteraction } from 'discord.js';
 
 import { safeReply } from '../../core/utils/editAndReply.ts';
 import { PermissionLevel } from '../../core/types/permission.ts';
-
-import { BotCommand } from './classes/BotCommand.class.ts';
+import { BotCommand } from '../impl/BotCommand.class.ts';
 
 export class PingCommand extends BotCommand {
   name = 'ping';

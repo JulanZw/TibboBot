@@ -11,7 +11,15 @@ import {
   TextChannel,
 } from 'discord.js';
 
-import { formatDateToString, getDaySuffix } from './utils/formatting.ts';
+import {
+  embedBuilder,
+  createButton,
+  createButtonsRow,
+} from '../core/utils/embeds.ts';
+import { formatDateToString, getDaySuffix } from '../core/utils/formatting.ts';
+import { TIMES_MILISECONDS } from '../core/utils/miliseconds.ts';
+import { logWithTime } from '../core/utils/logging.ts';
+
 import { getAllBirthdaysInGuildForGivenDate } from './database/birthday.ts';
 import {
   decayDumbScore,
@@ -21,11 +29,9 @@ import {
   updateDumbScore,
 } from './database/guild.ts';
 import { getRemindersOfToday } from './database/reminders.ts';
-import { logWithTime } from './utils/logging.ts';
 import {
   humanParticipatedToday,
   STANDARD_COLOR,
-  TIMES_MILISECONDS,
   todayWinners,
 } from './utils/globals.ts';
 import { getBotAction, getDefeatedMessage } from './utils/discord/todayis.ts';
@@ -36,13 +42,8 @@ import {
   generateLeaderboard,
   prepareLeaderboardData,
 } from './utils/generating.ts';
-import {
-  createButton,
-  createButtonsRow,
-  embedBuilder,
-} from './utils/discord/embeds.ts';
 import { resetAllUserStats } from './database/stats.ts';
-import { sendUserStats } from './commands/stats/stats.ts';
+import { sendUserStats } from './commands/stats/helper.ts';
 
 export function setupCronJobs(client: Client): void {
   // eslint-disable-next-line @typescript-eslint/no-misused-promises

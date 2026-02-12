@@ -2,9 +2,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { ChatInputCommandInteraction } from 'discord.js';
 
-import { safeReply } from '../utils/discord/editAndReply.ts';
-
-import { BotCommand } from './classes/BotCommand.class.ts';
+import { BotCommand } from '../impl/BotCommand.class.ts';
+import { safeReply } from '../../core/utils/editAndReply.ts';
 
 const testServerId = process.env.TEST_SERVER_ID;
 

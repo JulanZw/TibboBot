@@ -11,7 +11,7 @@ import {
 } from './embeds.ts';
 import { safeReply } from './editAndReply.ts';
 import { logWithTime } from './logging.ts';
-import { TIMES_MILISECONDS } from './globals.ts';
+import { TIMES_MILISECONDS } from './miliseconds.ts';
 
 export type PaginatedEmbedOptions<T> = {
   // Optional extra buttons

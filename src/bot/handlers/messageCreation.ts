@@ -6,8 +6,6 @@ import {
   pendingReactionRoleSetups,
   todayWinners,
 } from '../utils/globals.ts';
-import { embedBuilder } from '../utils/discord/embeds.ts';
-import { logWithTime } from '../utils/logging.ts';
 import { preprocessNumerics } from '../utils/preprocessors.ts';
 import { client } from '../index.ts';
 import {
@@ -20,9 +18,11 @@ import {
 } from '../database/guild.ts';
 import { addReactionRole } from '../database/reactionRoles.ts';
 import { updateCountsForUser } from '../database/user.ts';
-import { formatDateToString } from '../utils/formatting.ts';
 import { looksLikeMathExpression } from '../utils/math.ts';
 import { incrementStatistic } from '../database/stats.ts';
+import { embedBuilder } from '../../core/utils/embeds.ts';
+import { formatDateToString } from '../../core/utils/formatting.ts';
+import { logWithTime } from '../../core/utils/logging.ts';
 
 const scope = 'handler_MESSAGECREATION';
 

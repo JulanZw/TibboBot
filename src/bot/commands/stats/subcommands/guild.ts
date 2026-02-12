@@ -1,0 +1,97 @@
+import {
+  ChatInputCommandInteraction,
+  ButtonBuilder,
+  ButtonStyle,
+  ActionRowBuilder,
+  ComponentType,
+} from 'discord.js';
+
+import { safeReply } from '../../../../core/utils/editAndReply.ts';
+import { embedBuilder } from '../../../../core/utils/embeds.ts';
+import { TIMES_MILISECONDS } from '../../../../core/utils/miliseconds.ts';
+import { logWithTime } from '../../../../core/utils/logging.ts';
+import { BotCommand } from '../../../impl/BotCommand.class.ts';
+import { PermissionLevel } from '../../../types/permission.ts';
+import { generateGuildStatsImage } from '../../../utils/generating.ts';
+import { sendUserStats } from '../helper.ts';
+import { STANDARD_COLOR } from '../../../utils/globals.ts';
+
+const scope = 'stats_guild';
+
+export class GuildStatsCommand extends BotCommand {
+  name = 'guild';
+  description = 'Shows the stats of a guild.';
+  guildOnly = true;
+  permissionLevel: PermissionLevel = 'user';
+
+  protected async run(interaction: ChatInputCommandInteraction): Promise<void> {
+    if (!interaction.guild || !interaction.guildId) {
+      await safeReply(
+        interaction,
+        `Uhhh... Well this is akward... You arent supposed to see this message... Please contact the bot owner`,
+      );
+      return;
+    }
+
+    await interaction.deferReply();
+
+    const usersIds = (await interaction.guild.members.fetch()).map((m) => m.id);
+
+    const guildImageUrl = interaction.guild.iconURL({ extension: 'png' });
+
+    const image = await generateGuildStatsImage(
+      usersIds,
+      guildImageUrl,
+      interaction.guild.name,
+    );
+
+    const guildStatsEmbed = embedBuilder({
+      title: `Guild statistics`,
+      description: `Here are the stats for **${interaction.guild.name}** of ${new Date().getFullYear()}!`,
+      color: STANDARD_COLOR,
+      customize: (embed) => {
+        embed.setImage('attachment://guild_stats.png');
+        return embed;
+      },
+    });
+
+    const button = new ButtonBuilder()
+      .setCustomId('view_self')
+      .setLabel('View your stats!')
+      .setStyle(ButtonStyle.Primary);
+
+    await safeReply(
+      interaction,
+      '',
+      false,
+      [guildStatsEmbed],
+      [new ActionRowBuilder<ButtonBuilder>().addComponents(button)],
+      [image],
+    );
+
+    const msg = await interaction.fetchReply();
+
+    const collector = msg.createMessageComponentCollector({
+      componentType: ComponentType.Button,
+      time: TIMES_MILISECONDS.MINUTE * 2,
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    collector.on('collect', async (btnInteraction) => {
+      await sendUserStats(btnInteraction);
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    collector.on('end', async () => {
+      try {
+        await interaction.editReply({ components: [] });
+      } catch (err: any) {
+        logWithTime(
+          `Could not edit message after collector ended: ${err}`,
+          'warn',
+          scope,
+        );
+      }
+    });
+  }
+}

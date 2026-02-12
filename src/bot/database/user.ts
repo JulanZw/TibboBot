@@ -1,8 +1,8 @@
 import { User } from 'discord.js';
 
-import { logWithTime } from '../utils/logging.ts';
 import { prisma } from '../utils/globals.ts';
 import { hasOptedOut } from '../utils/managers/optInOutManager.ts';
+import { logWithTime } from '../../core/utils/logging.ts';
 
 const scope = 'database_USER';
 

@@ -8,8 +8,7 @@ import {
 } from 'discord.js';
 
 import { PaginationButtonLocation } from '../types/button.ts';
-
-import { STANDARD_COLOR } from './globals.ts';
+import { STANDARD_COLOR } from '../../bot/utils/globals.ts';
 
 /**
  * Util function for building an embed

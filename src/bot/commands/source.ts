@@ -7,8 +7,7 @@ import {
 } from 'discord.js';
 
 import { STANDARD_COLOR } from '../utils/globals.ts';
-
-import { BotCommand } from './classes/BotCommand.class.ts';
+import { BotCommand } from '../impl/BotCommand.class.ts';
 
 export class SourceCommand extends BotCommand {
   name = 'source';
