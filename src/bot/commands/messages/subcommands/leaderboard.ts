@@ -6,7 +6,7 @@ import {
 
 import { getAllUsersCharsAndMessages } from '../../../database/user.ts';
 import { BotCommand } from '../../../impl/BotCommand.class.ts';
-import { PermissionLevel } from '../../../types/permission.ts';
+import { PermissionLevel } from '../../../../core/types/permission.ts';
 import { booleanOption } from '../../../../core/utils/slashCommandOptions.ts';
 import { safeReply } from '../../../../core/utils/editAndReply.ts';
 import { embedBuilder } from '../../../../core/utils/embeds.ts';

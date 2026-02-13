@@ -1,4 +1,4 @@
-import { BotAction } from '../../types/bot.ts';
+import { BotAction } from '../types/bot.ts';
 
 const funnyWrongAnswers = [
   'Yesterday',

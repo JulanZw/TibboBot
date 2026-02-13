@@ -9,7 +9,7 @@ import { embedBuilder } from '../../../../core/utils/embeds.ts';
 import { TIMES_MILISECONDS } from '../../../../core/utils/miliseconds.ts';
 import { getAllUsersDataTodayIs } from '../../../database/user.ts';
 import { BotCommand } from '../../../impl/BotCommand.class.ts';
-import { PermissionLevel } from '../../../types/permission.ts';
+import { PermissionLevel } from '../../../../core/types/permission.ts';
 import {
   prepareLeaderboardData,
   generateLeaderboard,

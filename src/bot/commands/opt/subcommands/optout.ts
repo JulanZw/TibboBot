@@ -16,12 +16,12 @@ import { deleteAllRemindersForUser } from '../../../database/reminders.ts';
 import { deleteUserStats } from '../../../database/stats.ts';
 import { getUser, insertUserData, deleteUser } from '../../../database/user.ts';
 import { BotCommand } from '../../../impl/BotCommand.class.ts';
-import { PermissionLevel } from '../../../types/permission.ts';
 import {
   showConfirmModal,
   handleConfirmModal,
-} from '../../../utils/discord/confirmation.ts';
+} from '../../../utils/confirmation.ts';
 import { optOut } from '../../../utils/managers/optInOutManager.ts';
+import { PermissionLevel } from '../../../../core/types/permission.ts';
 
 const scope = 'opt';
 

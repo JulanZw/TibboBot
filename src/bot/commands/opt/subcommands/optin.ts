@@ -10,7 +10,7 @@ import { safeReply } from '../../../../core/utils/editAndReply.ts';
 import { TIMES_MILISECONDS } from '../../../../core/utils/miliseconds.ts';
 import { getUser, insertUserData } from '../../../database/user.ts';
 import { BotCommand } from '../../../impl/BotCommand.class.ts';
-import { PermissionLevel } from '../../../types/permission.ts';
+import { PermissionLevel } from '../../../../core/types/permission.ts';
 import { optIn } from '../../../utils/managers/optInOutManager.ts';
 
 export class OptInCommand extends BotCommand {

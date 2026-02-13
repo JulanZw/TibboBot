@@ -5,9 +5,9 @@ import {
   ButtonInteraction,
 } from 'discord.js';
 
-import { safeReply } from '../../../core/utils/editAndReply.ts';
+import { safeReply } from '../../core/utils/editAndReply.ts';
 
-import { buildAndRegisterModal } from './modalRegistry.ts';
+import { modalManager } from './globals.ts';
 
 /**
  * Sends a modal asking the user to type "CONFIRM" before proceeding.
@@ -20,7 +20,7 @@ export async function showConfirmModal(
   customId: string,
   onSubmit: (interaction: ModalSubmitInteraction) => Promise<any>,
 ) {
-  const modal = buildAndRegisterModal({
+  const modal = modalManager.buildAndRegister({
     id: customId,
     title: 'Confirm Action',
     ephemeral: false,

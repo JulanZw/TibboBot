@@ -9,7 +9,7 @@ import { getGuild, deleteGuild } from '../../../database/guild.ts';
 import {
   showConfirmModal,
   handleConfirmModal,
-} from '../../../utils/discord/confirmation.ts';
+} from '../../../utils/confirmation.ts';
 import { logWithTime } from '../../../../core/utils/logging.ts';
 
 const scope = 'manage_data';

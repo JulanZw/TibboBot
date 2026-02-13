@@ -13,7 +13,7 @@ import {
   updateUserPoints,
 } from '../../../database/user.ts';
 import { BotCommand } from '../../../impl/BotCommand.class.ts';
-import { PermissionLevel } from '../../../types/permission.ts';
+import { PermissionLevel } from '../../../../core/types/permission.ts';
 import { hasOptedOut } from '../../../utils/managers/optInOutManager.ts';
 import {
   userOption,

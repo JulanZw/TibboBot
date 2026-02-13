@@ -6,10 +6,12 @@ import {
   SlashCommandSubcommandBuilder,
 } from 'discord.js';
 
-import { PermissionLevel } from '../types/permission.ts';
 import { safeReply } from '../utils/editAndReply.ts';
 import { getPermissionsForLevel } from '../utils/permissions.ts';
 import { logWithTime } from '../utils/logging.ts';
+import { checkCooldown } from '../utils/cooldown.ts';
+import { formatDuration } from '../utils/formatting.ts';
+import { PermissionLevel } from '../types/permission.ts';
 
 /**
  * Abstract base class for Discord slash commands.
@@ -61,6 +63,15 @@ export abstract class Command {
   protected validate(interaction: ChatInputCommandInteraction): string | null {
     if (this.guildOnly && !interaction.guildId) {
       return 'This command can only be used in a server.';
+    }
+    const secondsRemaining = checkCooldown(
+      this.name,
+      this.cooldown,
+      interaction.user.id,
+    );
+
+    if (secondsRemaining > 0) {
+      return `You need to wait ${formatDuration(secondsRemaining)} before using this command again.`;
     }
 
     return this.additionalValidation(interaction);

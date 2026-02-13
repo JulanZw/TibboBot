@@ -34,7 +34,7 @@ import {
   STANDARD_COLOR,
   todayWinners,
 } from './utils/globals.ts';
-import { getBotAction, getDefeatedMessage } from './utils/discord/todayis.ts';
+import { getBotAction, getDefeatedMessage } from './utils/todayis.ts';
 import { scheduleReminder } from './utils/managers/reminderManager.ts';
 import { getAllUsersDataTodayIs, resetTodayIsPoints } from './database/user.ts';
 import {

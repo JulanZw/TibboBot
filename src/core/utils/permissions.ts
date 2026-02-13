@@ -1,6 +1,6 @@
 import { PermissionFlagsBits, PermissionsBitField } from 'discord.js';
 
-import { PermissionLevel } from '../types/permission.ts';
+import { PermissionLevel } from '../../core/types/permission.ts';
 
 /**
  * Utility function to return the proper permission bits

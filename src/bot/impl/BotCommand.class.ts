@@ -1,9 +1,7 @@
 import { ChatInputCommandInteraction } from 'discord.js';
 
 import { Command } from '../../core/classes/Command.class.ts';
-import { checkCooldown } from '../utils/managers/cooldownManager.ts';
 import { hasOptedOut } from '../utils/managers/optInOutManager.ts';
-import { formatDuration } from '../../core/utils/formatting.ts';
 
 export abstract class BotCommand extends Command {
   protected additionalValidation(
@@ -11,16 +9,6 @@ export abstract class BotCommand extends Command {
   ): string | null {
     if (hasOptedOut(interaction.user.id)) {
       return 'You have opted out of data collection.';
-    }
-
-    const secondsRemaining = checkCooldown(
-      this.name,
-      this.cooldown,
-      interaction.user.id,
-    );
-
-    if (secondsRemaining > 0) {
-      return `You need to wait ${formatDuration(secondsRemaining)} before using this command again.`;
     }
     return null;
   }

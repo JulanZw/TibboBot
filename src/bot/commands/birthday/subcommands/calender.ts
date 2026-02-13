@@ -6,7 +6,7 @@ import { formatDateToString } from '../../../../core/utils/formatting.ts';
 import { PaginatedEmbed } from '../../../../core/utils/PaginatedEmbed.class.ts';
 import { getAllBirthdaysInGuild } from '../../../database/birthday.ts';
 import { BotCommand } from '../../../impl/BotCommand.class.ts';
-import { PermissionLevel } from '../../../types/permission.ts';
+import { PermissionLevel } from '../../../../core/types/permission.ts';
 
 export class CalendarBirthdayCommand extends BotCommand {
   name = 'calender';

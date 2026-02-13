@@ -23,10 +23,10 @@ import {
   updateReminder,
 } from '../../../database/reminders.ts';
 import { BotCommand } from '../../../impl/BotCommand.class.ts';
-import { PermissionLevel } from '../../../types/permission.ts';
 import { scheduleReminder } from '../../../utils/managers/reminderManager.ts';
 import { parseDurationOrDateString } from '../../../utils/parsers.ts';
-import { buildAndRegisterModal } from '../../../utils/discord/modalRegistry.ts';
+import { PermissionLevel } from '../../../../core/types/permission.ts';
+import { modalManager } from '../../../index.ts';
 
 const scope = 'reminder_list';
 
@@ -180,7 +180,7 @@ export class ListRemindersCommand extends BotCommand {
 
         case 'edit': {
           const reminder = reminders[index];
-          const modal = buildAndRegisterModal({
+          const modal = modalManager.buildAndRegister({
             id: `editReminderModal`,
             ephemeral: true,
             title: 'Edit Reminder',

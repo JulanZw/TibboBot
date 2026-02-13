@@ -11,7 +11,7 @@ import {
   addReactionRole,
 } from '../../../database/reactionRoles.ts';
 import { BotCommand } from '../../../impl/BotCommand.class.ts';
-import { PermissionLevel } from '../../../types/permission.ts';
+import { PermissionLevel } from '../../../../core/types/permission.ts';
 import {
   stringOption,
   roleOption,

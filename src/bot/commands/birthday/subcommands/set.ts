@@ -8,7 +8,7 @@ import { formatDateToString } from '../../../../core/utils/formatting.ts';
 import { logWithTime } from '../../../../core/utils/logging.ts';
 import { setBirthday } from '../../../database/birthday.ts';
 import { BotCommand } from '../../../impl/BotCommand.class.ts';
-import { PermissionLevel } from '../../../types/permission.ts';
+import { PermissionLevel } from '../../../../core/types/permission.ts';
 import { hasOptedOut } from '../../../utils/managers/optInOutManager.ts';
 import { parseBirthdayDate } from '../../../utils/parsers.ts';
 import { stringOption } from '../../../../core/utils/slashCommandOptions.ts';

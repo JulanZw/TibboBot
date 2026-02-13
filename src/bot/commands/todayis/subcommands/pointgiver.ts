@@ -8,7 +8,7 @@ import { logWithTime } from '../../../../core/utils/logging.ts';
 import { getGuild } from '../../../database/guild.ts';
 import { setPointGiverOfGuild } from '../../../database/user.ts';
 import { BotCommand } from '../../../impl/BotCommand.class.ts';
-import { PermissionLevel } from '../../../types/permission.ts';
+import { PermissionLevel } from '../../../../core/types/permission.ts';
 import { userOption } from '../../../../core/utils/slashCommandOptions.ts';
 
 const scope = 'todayis_pointgiver';

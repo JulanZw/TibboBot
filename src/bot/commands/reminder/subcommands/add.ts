@@ -12,7 +12,7 @@ import {
 } from '../../../database/reminders.ts';
 import { incrementStatistic } from '../../../database/stats.ts';
 import { BotCommand } from '../../../impl/BotCommand.class.ts';
-import { PermissionLevel } from '../../../types/permission.ts';
+import { PermissionLevel } from '../../../../core/types/permission.ts';
 import { hasOptedOut } from '../../../utils/managers/optInOutManager.ts';
 import { scheduleReminder } from '../../../utils/managers/reminderManager.ts';
 import { parseDurationOrDateString } from '../../../utils/parsers.ts';

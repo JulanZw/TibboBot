@@ -11,7 +11,7 @@ import { embedBuilder } from '../../../../core/utils/embeds.ts';
 import { TIMES_MILISECONDS } from '../../../../core/utils/miliseconds.ts';
 import { logWithTime } from '../../../../core/utils/logging.ts';
 import { BotCommand } from '../../../impl/BotCommand.class.ts';
-import { PermissionLevel } from '../../../types/permission.ts';
+import { PermissionLevel } from '../../../../core/types/permission.ts';
 import { generateGuildStatsImage } from '../../../utils/generating.ts';
 import { sendUserStats } from '../helper.ts';
 import { STANDARD_COLOR } from '../../../utils/globals.ts';

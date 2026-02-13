@@ -11,7 +11,6 @@ import {
 
 import { BotCommand } from '../../../impl/BotCommand.class.ts';
 import { getBotChannel, updateBotChannel } from '../../../database/guild.ts';
-import { BotChannel } from '../../../types/channel.ts';
 import { safeReply } from '../../../../core/utils/editAndReply.ts';
 import {
   createButton,
@@ -19,6 +18,7 @@ import {
 } from '../../../../core/utils/embeds.ts';
 import { TIMES_MILISECONDS } from '../../../../core/utils/miliseconds.ts';
 import { logWithTime } from '../../../../core/utils/logging.ts';
+import { BotChannel } from '../../../../core/types/channel.ts';
 
 const scope = 'manage_channel';
 

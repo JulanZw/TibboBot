@@ -2,11 +2,17 @@ import { PrismaClient } from '@prisma/client';
 import { ChatInputCommandInteraction } from 'discord.js';
 
 import { TodayIsWinner } from '../types/todayIs.ts';
+import { ModalManager } from '../../core/classes/ModalManager.class.ts';
 
 /**
  * Standard color for embeds
  */
 export const STANDARD_COLOR = '#3F48CC';
+
+/**
+ * Modal manager instance to manage modals for the bot
+ */
+export const modalManager = new ModalManager();
 
 /**
  * Constant for the max amount of commands per embed page
