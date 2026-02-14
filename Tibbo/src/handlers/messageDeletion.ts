@@ -1,0 +1,26 @@
+import { Message, OmitPartialGroupDMChannel, PartialMessage } from 'discord.js';
+import { logWithTime } from '@julanzw/ttoolbox-discord-framework';
+
+import {
+  getReactionRolesByMessage,
+  removeReactionRolesByMessageId,
+} from '../database/reactionRoles.ts';
+
+const scope = 'handler_MESSAGEDELETION';
+
+export async function handleMessageDeletion(
+  message: OmitPartialGroupDMChannel<Message<boolean> | PartialMessage>,
+) {
+  if (!message.guild || !message.id) return;
+
+  const reactionRoles = await getReactionRolesByMessage(message.id);
+
+  if (reactionRoles && reactionRoles.length > 0) {
+    logWithTime(
+      `Message ${message.id} deleted. Removing ${reactionRoles.length} reaction role(s).`,
+      'info',
+      scope,
+    );
+    await removeReactionRolesByMessageId(message.id);
+  }
+}
