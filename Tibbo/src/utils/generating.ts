@@ -1,6 +1,5 @@
 import { createCanvas, loadImage } from 'canvas';
 import { AttachmentBuilder, Client } from 'discord.js';
-import { logWithTime } from '@julanzw/ttoolbox-discord-framework';
 
 import { PrepareLeaderboardOptions } from '../types/leaderboard.ts';
 import {
@@ -8,6 +7,7 @@ import {
   getUserStats,
 } from '../database/stats.ts';
 import { UserStatistics } from '../types/stats.ts';
+import { logger } from '../index.ts';
 
 async function getUserAvatarAndName(
   userId: string,
@@ -25,12 +25,7 @@ async function getUserAvatarAndName(
       avatar,
     };
   } catch (err: any) {
-    logWithTime(
-      `Error fetching user: ${err}`,
-      'error',
-      'prepareUserDataStats',
-      true,
-    );
+    logger.error(`Error fetching user: ${err}`, 'prepareUserDataStats', true);
     return {
       displayName: 'Unknown User',
       avatar: null,
@@ -93,9 +88,8 @@ export async function generateLeaderboard(
         const avatar = await loadImage(user.avatar);
         ctx.drawImage(avatar, 30, y, 40, 40);
       } catch {
-        logWithTime(
+        logger.warn(
           `Avatar failed to load for user: ${user.username} while building leaderboard`,
-          'warn',
           scope,
         );
       }
@@ -191,7 +185,7 @@ export async function prepareLeaderboardData({
 
         return entry;
       } catch (err: any) {
-        logWithTime(`Error fetching user: ${err}`, 'error', scope, true);
+        logger.error(`Error fetching user: ${err}`, scope, true);
 
         const rank = includeRankInUsername ? `${index + 1}. ` : '';
         const entry: {
@@ -277,11 +271,7 @@ async function buildStatsImage({
       const img = await loadImage(avatarUrl);
       ctx.drawImage(img, 20, 10, 100, 100);
     } catch {
-      logWithTime(
-        `Icon failed to load while building stats image`,
-        'warn',
-        logScope,
-      );
+      logger.warn(`Icon failed to load while building stats image`, logScope);
     }
   }
   ctx.restore();

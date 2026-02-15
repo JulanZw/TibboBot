@@ -14,25 +14,36 @@ import {
   InteractionEditReplyOptions,
   InteractionReplyOptions,
   JSONEncodable,
+  Message,
   MessageFlags,
   ModalSubmitInteraction,
   StringSelectMenuInteraction,
 } from 'discord.js';
 
-import { logWithTime } from './logging.js';
-
-const scope = 'general';
-
-// #region SafeReply
+import { InteractionError } from '../classes/InteractionError.class.js';
 
 /**
- * Utility function so replies don't fail
+ * Safely replies to an interaction, handling deferred/replied states.
  *
- * @param interaction - The interaction that should be replied to
- * @param content - The content of the reply
- * @param ephemeral - If it's ephemeral or not
- * @param embeds - Embeds that should be replied with
- * @param components - Components that should be replied with
+ * @param interaction - The interaction to reply to
+ * @param content - The message content
+ * @param ephemeral - Whether the reply should be ephemeral
+ * @param embeds - Optional embeds to include
+ * @param components - Optional components to include
+ * @param files - Optional files to attach
+ * @returns The message that was sent
+ * @throws {InteractionError} If the interaction is too old or fails
+ *
+ * @example
+ * ```typescript
+ * try {
+ *   await safeReply(interaction, 'Hello!', true);
+ * } catch (err) {
+ *   if (err instanceof InteractionError && err.reason === 'expired') {
+ *     this.logger?.warn('Interaction expired', 'command');
+ *   }
+ * }
+ * ```
  */
 export async function safeReply(
   interaction:
@@ -53,7 +64,19 @@ export async function safeReply(
     | AttachmentBuilder
     | AttachmentPayload
   )[],
-) {
+): Promise<Message> {
+  // Check if interaction is too old
+  const now = Date.now();
+  const threeMinutes = 3 * 60 * 1000;
+
+  if (now - interaction.createdTimestamp > threeMinutes) {
+    throw new InteractionError(
+      'Interaction is older than 3 minutes',
+      interaction.id,
+      'expired',
+    );
+  }
+
   const payload: InteractionReplyOptions = {
     ...(content ? { content } : {}),
     ...(ephemeral ? { flags: MessageFlags.Ephemeral } : {}),
@@ -62,54 +85,32 @@ export async function safeReply(
     ...(files ? { files } : {}),
   };
 
-  if (!interaction.replied && !interaction.deferred) {
-    try {
-      const now = Date.now();
-      const threeMinutes = 3 * 60 * 1000;
-
-      if (now - interaction.createdTimestamp > threeMinutes) {
-        logWithTime(
-          'This interaction is older than 3 minutes.',
-          'error',
-          scope,
-          true,
-        );
-        return;
-      }
-      return await interaction.reply(payload);
-    } catch {
-      logWithTime(
-        `Failed to reply to interaction: ${interaction.id}`,
-        'error',
-        scope,
-        true,
-      );
-    }
-  } else {
-    try {
+  try {
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply(payload);
+      return await interaction.fetchReply();
+    } else {
       return await interaction.followUp(payload);
-    } catch {
-      logWithTime(
-        `Failed to reply to interaction: ${interaction.id}`,
-        'error',
-        scope,
-        true,
-      );
     }
+  } catch (err: any) {
+    throw new InteractionError(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      `Failed to reply to interaction: ${err.message}`,
+      interaction.id,
+      'failed',
+    );
   }
 }
 
-// #endregion
-
-// #region SafeEdit
-
 /**
- * Utility function so edits don't fail
+ * Safely edits an interaction reply.
  *
- * @param interaction - The interaction that should be replied to
- * @param content - The content of the reply
- * @param embeds - Embeds that should be replied with
- * @param components - Components that should be replied with
+ * @param interaction - The interaction to edit
+ * @param content - The new message content
+ * @param embeds - Optional embeds to include
+ * @param components - Optional components to include
+ * @returns The edited message
+ * @throws {InteractionError} If the interaction is too old or fails
  */
 export async function safeEdit(
   interaction:
@@ -121,7 +122,19 @@ export async function safeEdit(
   content: string,
   embeds?: EmbedBuilder[],
   components?: ActionRowBuilder<any>[],
-) {
+): Promise<Message> {
+  // Check if interaction is too old
+  const now = Date.now();
+  const threeMinutes = 3 * 60 * 1000;
+
+  if (now - interaction.createdTimestamp > threeMinutes) {
+    throw new InteractionError(
+      'Interaction is older than 3 minutes',
+      interaction.id,
+      'expired',
+    );
+  }
+
   const editPayload: InteractionEditReplyOptions = {
     ...(content ? { content } : {}),
     ...(embeds ? { embeds } : {}),
@@ -129,27 +142,13 @@ export async function safeEdit(
   };
 
   try {
-    const now = Date.now();
-    const threeMinutes = 3 * 60 * 1000;
-
-    if (now - interaction.createdTimestamp > threeMinutes) {
-      logWithTime(
-        'This interaction is older than 3 minutes.',
-        'error',
-        scope,
-        true,
-      );
-      return;
-    }
     return await interaction.editReply(editPayload);
-  } catch {
-    logWithTime(
-      `Failed to edit interaction: ${interaction.id}`,
-      'error',
-      scope,
-      true,
+  } catch (err: any) {
+    throw new InteractionError(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      `Failed to edit interaction: ${err.message}`,
+      interaction.id,
+      'failed',
     );
   }
 }
-
-// #endregion

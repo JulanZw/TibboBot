@@ -8,11 +8,9 @@ import { createRequire } from 'module';
 import archiver, { ArchiverOptions } from 'archiver';
 import fetch from 'node-fetch';
 import { TextChannel, ChatInputCommandInteraction } from 'discord.js';
-import {
-  logWithTime,
-  safeEdit,
-  safeReply,
-} from '@julanzw/ttoolbox-discord-framework';
+import { safeEdit, safeReply } from '@julanzw/ttoolbox-discord-framework';
+
+import { logger } from '../../index.ts';
 
 // have to do this because 'archiver-zip-encrypted' is not an ES module
 const require = createRequire(import.meta.url);
@@ -47,7 +45,7 @@ async function processQueue() {
   try {
     await work(nextJob);
   } catch (err: any) {
-    logWithTime(`Backup job failed: ${err}`, 'error', scope);
+    logger.error(`Backup job failed: ${err}`, scope);
   } finally {
     isWorking = false;
     await processQueue();
@@ -64,9 +62,8 @@ async function work(interaction: ChatInputCommandInteraction) {
 
   const protect = interaction.options.getBoolean('password', false) ?? false;
 
-  logWithTime(
+  logger.info(
     `Started backup for user: ${interaction.user.globalName} (${interaction.user.id}) for channel: ${channel.id}`,
-    'info',
     scope,
   );
 
@@ -197,13 +194,12 @@ async function work(interaction: ChatInputCommandInteraction) {
       });
     }
 
-    logWithTime(
+    logger.info(
       `Completed backup for user: ${interaction.user.globalName} (${interaction.user.id}) for channel: ${channel.id}${protect ? `, protected with password: '${password}'` : ''}`,
-      'info',
       scope,
     );
   } catch (err: any) {
-    logWithTime(`Could not send backup via DM: ${err}`, 'error', scope, true);
+    logger.error(`Could not send backup via DM: ${err}`, scope, true);
     await safeReply(
       interaction,
       'Could not send you the backup file via DM. This is likely due to the bot not being able to DM you.',
@@ -215,12 +211,7 @@ async function work(interaction: ChatInputCommandInteraction) {
         await fsAsync.unlink(zipPath);
       }
     } catch (err: any) {
-      logWithTime(
-        `Failed to remove temporary zip: ${err}`,
-        'error',
-        scope,
-        true,
-      );
+      logger.error(`Failed to remove temporary zip: ${err}`, scope, true);
     }
   }
 }

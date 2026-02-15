@@ -17,7 +17,7 @@ import {
 } from 'discord.js';
 import { PrismaClient } from '@prisma/client';
 
-import { logWithTime } from '../utils/logging.js';
+import { TToolboxLogger } from '../utils/TToolboxLogger.class.js';
 
 /**
  * Abstract base class for Discord bot event handling.
@@ -48,15 +48,19 @@ export abstract class DiscordHandler {
   /** The Prisma database client instance, Optional */
   private prisma?: PrismaClient;
 
+  /** The TToolboxLogger instance used for logging */
+  private logger: TToolboxLogger;
+
   /**
    * Creates a new DiscordHandler instance.
    *
    * @param client - The Discord.js client instance
    * @param prisma - The Prisma database client instance
    */
-  constructor(client: Client, prisma?: PrismaClient) {
+  constructor(client: Client, logger: TToolboxLogger, prisma?: PrismaClient) {
     this.client = client;
     this.prisma = prisma;
+    this.logger = logger;
   }
 
   /**
@@ -71,18 +75,18 @@ export abstract class DiscordHandler {
    */
   setupErrorHandlers() {
     process.on('uncaughtException', (err: any) => {
-      logWithTime(`Uncaught Exception: ${err}`, 'error', 'errorhandler', true);
+      this.logger.error(`Uncaught Exception: ${err}`, 'errorhandler', true);
       process.exit(1);
     });
 
     process.on('unhandledRejection', (reason: any) => {
-      logWithTime(`Unhandled Rejection: ${reason}`, 'warn', 'errorhandler');
+      this.logger.warn(`Unhandled Rejection: ${reason}`, 'errorhandler');
     });
 
     process.on('SIGINT', () => void this.gracefulShutdown('SIGINT'));
     process.on('SIGTERM', () => void this.gracefulShutdown('SIGTERM'));
 
-    logWithTime('Error handlers set up.', 'info', 'startup');
+    this.logger.info('Error handlers set up.', 'startup');
   }
 
   /**
@@ -98,17 +102,16 @@ export abstract class DiscordHandler {
    */
   private async gracefulShutdown(signal: string) {
     const scope = 'shutdown';
-    logWithTime(`${signal} received. Cleaning up...`, 'info', scope);
+    this.logger.info(`${signal} received. Cleaning up...`, scope);
 
     try {
       if (this.client.isReady()) {
-        logWithTime(`Destroying Discord client...`, 'info', scope);
+        this.logger.info(`Destroying Discord client...`, scope);
         await this.client.destroy();
       }
     } catch (err: any) {
-      logWithTime(
+      this.logger.error(
         `Failed to destroy Discord client: ${err}`,
-        'error',
         scope,
         true,
       );
@@ -116,15 +119,11 @@ export abstract class DiscordHandler {
 
     if (this.prisma) {
       try {
-        logWithTime(`Disconnecting Prisma...`, 'info', scope);
+        this.logger.info(`Disconnecting Prisma...`, scope);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         await this.prisma.$disconnect();
       } catch (err: any) {
-        logWithTime(
-          `Failed to disconnect Prisma: ${err}`,
-          'error',
-          scope,
-          true,
-        );
+        this.logger.error(`Failed to disconnect Prisma: ${err}`, scope, true);
       }
     }
 
@@ -367,9 +366,8 @@ export abstract class DiscordHandler {
     handler: (...args: ClientEvents[K]) => Awaitable<void>,
   ): void {
     this.client.on(event, handler);
-    logWithTime(
+    this.logger.info(
       `Registered custom handler for event: ${event}`,
-      'info',
       'handler',
     );
   }

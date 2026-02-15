@@ -6,7 +6,6 @@ import {
 import {
   PermissionLevel,
   safeReply,
-  logWithTime,
   userOption,
   integerOption,
 } from '@julanzw/ttoolbox-discord-framework';
@@ -19,6 +18,7 @@ import {
 } from '../../../database/user.ts';
 import { BotCommand } from '../../../impl/BotCommand.class.ts';
 import { hasOptedOut } from '../../../utils/managers/optInOutManager.ts';
+import { logger } from '../../../index.ts';
 
 const scope = 'todayis_add';
 
@@ -56,9 +56,8 @@ export class AddCommand extends BotCommand {
     }
 
     if (amount < 0) {
-      logWithTime(
+      logger.error(
         `Error: Could not add '${amount}' points for '${targetUser.username}' (${targetUser.id}) as negative values are not accepted.`,
-        'error',
         scope,
         true,
       );
@@ -88,15 +87,14 @@ export class AddCommand extends BotCommand {
         interaction,
         `Thank you <@${interaction.user.id}> for the ${amount} points`,
       );
-      logWithTime(`${amount} points were given to the bot`, 'info', scope);
+      logger.info(`${amount} points were given to the bot`, scope);
     } else {
       await safeReply(
         interaction,
         `Added ${amount} points for <@${targetUser.id}>.`,
       );
-      logWithTime(
+      logger.info(
         `${amount} points were given to '${targetUser.username}' (${targetUser.id})`,
-        'info',
         scope,
       );
     }

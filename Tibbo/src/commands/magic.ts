@@ -1,8 +1,9 @@
 import wol from 'wol';
 import { ChatInputCommandInteraction } from 'discord.js';
-import { logWithTime, safeReply } from '@julanzw/ttoolbox-discord-framework';
+import { safeReply } from '@julanzw/ttoolbox-discord-framework';
 
 import { BotCommand } from '../impl/BotCommand.class.ts';
+import { logger } from '../index.ts';
 
 const scope = 'magic';
 
@@ -14,9 +15,8 @@ export class MagicCommand extends BotCommand {
 
   protected async run(interaction: ChatInputCommandInteraction): Promise<void> {
     if (!process.env.WOL_MAC || !process.env.WOL_IP) {
-      logWithTime(
+      logger.error(
         'Cannot execute WOL because MAC or IP is not set',
-        'error',
         scope,
         true,
       );

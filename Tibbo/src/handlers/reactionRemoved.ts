@@ -4,9 +4,9 @@ import {
   User,
   PartialUser,
 } from 'discord.js';
-import { logWithTime } from '@julanzw/ttoolbox-discord-framework';
 
 import { getRoleForReaction } from '../database/reactionRoles.ts';
+import { logger } from '../index.ts';
 
 const scope = 'handler_REACTIONREMOVAL';
 
@@ -31,12 +31,11 @@ export async function handleReactionRemoval(
 
     const member = await message.guild.members.fetch(user.id);
     await member.roles.remove(record.role);
-    logWithTime(
+    logger.info(
       `Removed role ${record.role} for user ${user.globalName} (${user.id}) in guild ${guildId}`,
-      'info',
       scope,
     );
   } catch (err: any) {
-    logWithTime('Failed to add role: ' + err, 'error', scope, true);
+    logger.error('Failed to add role: ' + err, scope, true);
   }
 }

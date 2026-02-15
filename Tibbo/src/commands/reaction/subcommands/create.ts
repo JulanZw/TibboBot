@@ -5,13 +5,13 @@ import {
 import {
   PermissionLevel,
   safeReply,
-  logWithTime,
   stringOption,
   channelOption,
 } from '@julanzw/ttoolbox-discord-framework';
 
 import { pendingReactionRoleSetups } from '../../../utils/globals.ts';
 import { BotCommand } from '../../../impl/BotCommand.class.ts';
+import { logger } from '../../../index.ts';
 
 const scope = 'reaction_create';
 
@@ -46,7 +46,7 @@ export class CreateReactionCommand extends BotCommand {
       'Please send the emoji + role pairs in this format: `🟥 @RedTeam`\nSend `done` when finished.',
       true,
     );
-    logWithTime('Reaction message process started', 'info', scope);
+    logger.info('Reaction message process started', scope);
   }
 
   customize(

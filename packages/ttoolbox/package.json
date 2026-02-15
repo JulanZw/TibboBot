@@ -1,6 +1,6 @@
 {
   "name": "@julanzw/ttoolbox-discord-framework",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "TToolbox is a framework I build for my bots. Its based on discord.js but simplifies some things.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

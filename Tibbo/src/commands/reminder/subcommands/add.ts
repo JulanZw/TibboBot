@@ -1,7 +1,6 @@
 import {
   PermissionLevel,
   safeReply,
-  logWithTime,
   stringOption,
 } from '@julanzw/ttoolbox-discord-framework';
 import { $Enums } from '@prisma/client';
@@ -19,6 +18,7 @@ import { BotCommand } from '../../../impl/BotCommand.class.ts';
 import { hasOptedOut } from '../../../utils/managers/optInOutManager.ts';
 import { scheduleReminder } from '../../../utils/managers/reminderManager.ts';
 import { parseDurationOrDateString } from '../../../utils/parsers.ts';
+import { logger } from '../../../index.ts';
 
 const scope = 'reminder_add';
 
@@ -93,9 +93,8 @@ export class AddReminderCommand extends BotCommand {
       interaction,
       `Reminder set for <t:${Math.floor(targetTime.getTime() / 1000)}:F>, make sure you have direct messages turned on for this server!`,
     );
-    logWithTime(
+    logger.info(
       `Created reminder for ${interaction.user.id} on ${targetTime.toISOString()}`,
-      'info',
       scope,
     );
     await incrementStatistic('remindersSet', interaction.user.id, 1);

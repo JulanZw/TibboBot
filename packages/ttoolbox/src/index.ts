@@ -10,6 +10,7 @@ export { PaginatedEmbed } from './utils/PaginatedEmbed.class.js';
 export type { PermissionLevel } from './types/permission.js';
 export type { Modal, ModalField } from './types/modal.js';
 export type { ButtonType } from './types/button.js';
+export type { ILogger } from './types/logger.js';
 
 // Utilities
 export { getPermissionsForLevel } from './utils/permissions.js';
@@ -36,5 +37,8 @@ export {
   getDaySuffix,
   capitalizeFirst,
 } from './utils/formatting.js';
-export { logWithTime } from './utils/logging.js';
 export { TIMES_MILISECONDS } from './utils/miliseconds.js';
+export { TToolboxLogger } from './utils/TToolboxLogger.class.js';
+
+// Errors
+export { InteractionError } from './classes/InteractionError.class.js';

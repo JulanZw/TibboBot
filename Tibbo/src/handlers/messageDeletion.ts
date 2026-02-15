@@ -1,10 +1,10 @@
 import { Message, OmitPartialGroupDMChannel, PartialMessage } from 'discord.js';
-import { logWithTime } from '@julanzw/ttoolbox-discord-framework';
 
 import {
   getReactionRolesByMessage,
   removeReactionRolesByMessageId,
 } from '../database/reactionRoles.ts';
+import { logger } from '../index.ts';
 
 const scope = 'handler_MESSAGEDELETION';
 
@@ -16,9 +16,8 @@ export async function handleMessageDeletion(
   const reactionRoles = await getReactionRolesByMessage(message.id);
 
   if (reactionRoles && reactionRoles.length > 0) {
-    logWithTime(
+    logger.info(
       `Message ${message.id} deleted. Removing ${reactionRoles.length} reaction role(s).`,
-      'info',
       scope,
     );
     await removeReactionRolesByMessageId(message.id);

@@ -1,10 +1,10 @@
 import { Reminders, $Enums } from '@prisma/client';
 import { User } from 'discord.js';
 import cron, { ScheduledTask } from 'node-cron';
-import { logWithTime } from '@julanzw/ttoolbox-discord-framework';
 
 import { updateReminder, deleteReminder } from '../../database/reminders.ts';
 import { addDays } from '../parsers.ts';
+import { logger } from '../../index.ts';
 
 const scheduledReminderJobs = new Map<string, ScheduledTask>();
 
@@ -22,46 +22,40 @@ export function scheduleReminder(user: User, reminder: Reminders) {
   const job = cron.schedule(cronExpression, async () => {
     try {
       await user.send(`**Reminder:** ${reminder.message}`);
-      logWithTime(
-        `Sent reminder ${reminder.id} to ${reminder.userId}`,
-        'info',
-        scope,
-      );
+      logger.info(`Sent reminder ${reminder.id} to ${reminder.userId}`, scope);
       if (reminder.remindInterval === $Enums.Intervals.DAILY) {
         await updateReminder(
           reminder.id,
           reminder.message,
           addDays(1, reminder.remindAt),
         );
-        logWithTime(`Updated daily reminder ${reminder.id}`, 'info', scope);
+        logger.info(`Updated daily reminder ${reminder.id}`, scope);
       } else if (reminder.remindInterval === $Enums.Intervals.WEEKLY) {
         await updateReminder(
           reminder.id,
           reminder.message,
           addDays(7, reminder.remindAt),
         );
-        logWithTime(`Updated weekly reminder ${reminder.id}`, 'info', scope);
+        logger.info(`Updated weekly reminder ${reminder.id}`, scope);
       } else {
         await deleteReminder(reminder.id);
-        logWithTime(`Deleted reminder ${reminder.id}`, 'info', scope);
+        logger.info(`Deleted reminder ${reminder.id}`, scope);
       }
     } catch (err: any) {
-      logWithTime(
+      logger.error(
         `Failed to send reminder ${reminder.id}: ${err}`,
-        'error',
         scope,
         true,
       );
     } finally {
       clearReminder(reminder.id);
-      logWithTime(`Cleaned up reminder ${reminder.id}`, 'info', scope);
+      logger.info(`Cleaned up reminder ${reminder.id}`, scope);
     }
   });
   scheduledReminderJobs.set(reminder.id, job);
 
-  logWithTime(
+  logger.info(
     `Scheduled reminder ${reminder.id} for ${date.toISOString()}`,
-    'info',
     scope,
   );
 }

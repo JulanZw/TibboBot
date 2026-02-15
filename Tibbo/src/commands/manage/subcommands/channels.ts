@@ -12,13 +12,13 @@ import {
   safeReply,
   createButton,
   createButtonsRow,
-  logWithTime,
   TIMES_MILISECONDS,
 } from '@julanzw/ttoolbox-discord-framework';
 
 import { BotCommand } from '../../../impl/BotCommand.class.ts';
 import { getBotChannel, updateBotChannel } from '../../../database/guild.ts';
 import { BotChannel } from '../../../types/channel.ts';
+import { logger } from '../../../index.ts';
 
 const scope = 'manage_channel';
 
@@ -121,11 +121,7 @@ export class ChannelCommand extends BotCommand {
           return buttonCollector.stop();
         } else if (action === 'reset') {
           await updateBotChannel(guildId, selectedChannel as BotChannel, null);
-          logWithTime(
-            `Reset ${selectedChannel} channel for ${guildId}`,
-            'info',
-            scope,
-          );
+          logger.info(`Reset ${selectedChannel} channel for ${guildId}`, scope);
           await buttonInteraction.update({
             content: `${selectedChannel} channel reset.`,
             components: [],
@@ -169,9 +165,8 @@ export class ChannelCommand extends BotCommand {
               newChannel.id,
             );
 
-            logWithTime(
+            logger.info(
               `Set ${selectedChannel} channel to ${newChannel.id} for ${guildId}`,
-              'info',
               scope,
             );
 

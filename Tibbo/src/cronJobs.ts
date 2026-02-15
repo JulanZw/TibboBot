@@ -11,7 +11,6 @@ import {
   TextChannel,
 } from 'discord.js';
 import {
-  logWithTime,
   formatDateToString,
   getDaySuffix,
   embedBuilder,
@@ -44,6 +43,7 @@ import {
 } from './utils/generating.ts';
 import { resetAllUserStats } from './database/stats.ts';
 import { sendUserStats } from './commands/stats/helper.ts';
+import { logger } from './index.ts';
 
 export function setupCronJobs(client: Client): void {
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -55,7 +55,7 @@ export function setupCronJobs(client: Client): void {
       await runBirthdayMessages(client, guilds);
       await scheduleReminders(client);
     } catch (err: any) {
-      logWithTime('Error in daily cron job:' + err, 'error', scope, true);
+      logger.error('Error in daily cron job:' + err, scope, true);
     }
   });
 
@@ -74,16 +74,15 @@ export function setupCronJobs(client: Client): void {
               await incrementDaysWithoutHumanParticipation(guild.guildId);
             }
           } catch (err: any) {
-            logWithTime(
+            logger.error(
               `Failed to decay dumbscore in guild ${guild.guildId}: ${err}`,
-              'error',
               scope,
             );
           }
         }),
       );
     } catch (err: any) {
-      logWithTime('Error in daily cron job:' + err, 'error', scope, true);
+      logger.error('Error in daily cron job:' + err, scope, true);
     }
   });
 
@@ -116,9 +115,8 @@ export function setupCronJobs(client: Client): void {
                 );
               }
             } catch (err: any) {
-              logWithTime(
+              logger.error(
                 `Failed to send 'Happy new Year' message in guild ${guild.guildId}: ${err}`,
-                'error',
                 scope,
                 true,
               );
@@ -149,9 +147,8 @@ export function setupCronJobs(client: Client): void {
               scope,
             );
           } catch (err: any) {
-            logWithTime(
+            logger.error(
               `Failed to send yearly stats in guild ${guild.guildId}: ${err}`,
-              'error',
               scope,
               true,
             );
@@ -161,7 +158,7 @@ export function setupCronJobs(client: Client): void {
       // reset all yearly stats of all users at the end
       await resetAllUserStats();
     } catch (err: any) {
-      logWithTime('Error in yearly cron job:' + err, 'error', scope, true);
+      logger.error('Error in yearly cron job:' + err, scope, true);
     }
   });
 
@@ -182,14 +179,14 @@ export function setupCronJobs(client: Client): void {
       if (fs.existsSync(latestLog)) {
         fs.renameSync(latestLog, newLogPath);
         fs.writeFileSync(latestLog, '');
-        logWithTime(`Rotated log: ${newLogName}`, 'info', scope);
+        logger.info(`Rotated log: ${newLogName}`, scope);
       }
     } catch (err: any) {
-      logWithTime('Error in weekly log rotation: ' + err, 'error', scope, true);
+      logger.error('Error in weekly log rotation: ' + err, scope, true);
     }
   });
 
-  logWithTime('Cron jobs have been set up successfully.', 'info', 'startup');
+  logger.info('Cron jobs have been set up successfully.', 'startup');
 }
 
 function getISOWeekNumber(date: Date): number {
@@ -224,9 +221,8 @@ async function runTodayIsMessages(
       try {
         const channel = await client.channels.fetch(guild.todayIsChannelId);
         if (!channel || !(channel instanceof TextChannel)) {
-          logWithTime(
+          logger.error(
             `Channel for guild ${guild.guildId} not found or not text-based.`,
-            'error',
             scope,
           );
           return;
@@ -235,11 +231,7 @@ async function runTodayIsMessages(
         if (todayWinners[guild.guildId]) {
           const message = getDefeatedMessage(guild.dumbScore);
           await channel.send(message);
-          logWithTime(
-            `Message sent in ${guild.guildId}: "${message}"`,
-            'info',
-            scope,
-          );
+          logger.info(`Message sent in ${guild.guildId}: "${message}"`, scope);
           return;
         }
 
@@ -250,32 +242,25 @@ async function runTodayIsMessages(
           const formattedDate = formatDateToString(new Date());
           const msg = `Today is ${formattedDate}, waited for ${randomDelay} ms`;
           await channel.send(msg);
-          logWithTime(
-            `Message sent in ${guild.guildId}: "${msg}"`,
-            'info',
-            scope,
-          );
+          logger.info(`Message sent in ${guild.guildId}: "${msg}"`, scope);
           await channel.send(`Where competition?`);
-          logWithTime(
+          logger.info(
             `Message sent in ${guild.guildId}: "Where competition?"`,
-            'info',
             scope,
           );
         } else {
           const botAction = getBotAction(guild.dumbScore);
           if (botAction.type === 'skip') {
             await channel.send(botAction.answer);
-            logWithTime(
+            logger.info(
               `Skipping 'Today is' message in guild ${guild.guildId}: ${botAction.answer}`,
-              'info',
               scope,
             );
             return;
           } else if (botAction.type === 'funny') {
             await channel.send(botAction.answer);
-            logWithTime(
+            logger.info(
               `Sending funny 'Today is' message in guild ${guild.guildId}: ${botAction.answer}`,
-              'info',
               scope,
             );
             return;
@@ -284,18 +269,13 @@ async function runTodayIsMessages(
             const formattedDate = formatDateToString(new Date());
             const msg = `Today is ${formattedDate}, waited for ${randomDelay} ms`;
             await channel.send(msg);
-            logWithTime(
-              `Message sent in ${guild.guildId}: "${msg}"`,
-              'info',
-              scope,
-            );
+            logger.info(`Message sent in ${guild.guildId}: "${msg}"`, scope);
             await updateDumbScore(guild.guildId, false);
           }
         }
       } catch (err: any) {
-        logWithTime(
+        logger.error(
           `Failed to send 'today is' message in guild ${guild.guildId}: ${err}`,
-          'error',
           scope,
         );
       }
@@ -316,9 +296,8 @@ async function runBirthdayMessages(
       try {
         const channel = await client.channels.fetch(guild.birthdayChannelId);
         if (!channel || !(channel instanceof TextChannel)) {
-          logWithTime(
+          logger.error(
             `Birthday channel in guild ${guild.guildId} not found or not text-based.`,
-            'error',
             scope,
             true,
           );
@@ -337,17 +316,15 @@ async function runBirthdayMessages(
             await channel.send(
               `Congratulations with your ${birthdayYear + getDaySuffix(birthdayYear)} birthday <@${birthday.userId}> 🎉!`,
             );
-            logWithTime(
+            logger.info(
               `Message send in ${birthday.guildId}: "Happy Birthday <@${birthday.userId}>!"`,
-              'info',
               scope,
             );
           }),
         );
       } catch (err: any) {
-        logWithTime(
+        logger.error(
           `Failed to send birthday messages in guild ${guild.guildId}: ${err}`,
-          'error',
           scope,
           true,
         );
@@ -366,18 +343,12 @@ async function scheduleReminders(client: Client) {
       scheduleReminder(user, reminder);
     }
 
-    logWithTime(
+    logger.info(
       `Scheduled ${todaysReminders.length} reminders for today.`,
-      'info',
       scope,
     );
   } catch (err: any) {
-    logWithTime(
-      `Failed to schedule today's reminders: ${err}`,
-      'error',
-      scope,
-      true,
-    );
+    logger.error(`Failed to schedule today's reminders: ${err}`, scope, true);
   }
 }
 
@@ -387,11 +358,7 @@ async function sendYearlyMessage(
   scope: string,
 ) {
   await channel.send(`🎆 Happy New Year!`);
-  logWithTime(
-    `Message sent in ${guildId}: "🎆 Happy New Year!"`,
-    'info',
-    scope,
-  );
+  logger.info(`Message sent in ${guildId}: "🎆 Happy New Year!"`, scope);
 }
 
 async function sendYearlyTodayIsLeaderboard(
@@ -404,9 +371,8 @@ async function sendYearlyTodayIsLeaderboard(
   const discordGuild = client.guilds.cache.get(guildId);
 
   if (!discordGuild) {
-    logWithTime(
+    logger.error(
       `Guild with ID ${guildId} not found in client's cache.`,
-      'error',
       scope,
       true,
     );
@@ -447,11 +413,7 @@ async function sendYearlyTodayIsLeaderboard(
     embeds: [leaderboardEmbed],
     files: [image],
   });
-  logWithTime(
-    `Sent yearly todayIs leaderboard in guild ${guildId}`,
-    'info',
-    scope,
-  );
+  logger.info(`Sent yearly todayIs leaderboard in guild ${guildId}`, scope);
 
   if (reset) {
     for (const user of users) {
@@ -508,9 +470,8 @@ async function sendYearlyStatsImage(
     try {
       await msg.edit({ components: [] });
     } catch (err: any) {
-      logWithTime(
+      logger.warn(
         `Could not edit message after collector ended: ${err}`,
-        'warn',
         scope,
       );
     }

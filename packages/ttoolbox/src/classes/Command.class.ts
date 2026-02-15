@@ -8,10 +8,10 @@ import {
 
 import { safeReply } from '../utils/editAndReply.js';
 import { getPermissionsForLevel } from '../utils/permissions.js';
-import { logWithTime } from '../utils/logging.js';
 import { checkCooldown } from '../utils/cooldown.js';
 import { formatDuration } from '../utils/formatting.js';
 import { PermissionLevel } from '../types/permission.js';
+import { ILogger } from '../types/logger.js';
 
 /**
  * Abstract base class for Discord slash commands.
@@ -49,6 +49,9 @@ export abstract class Command {
 
   /** Optional cooldown in milliseconds between command uses per user */
   cooldown?: number;
+
+  /** Logger instance to use inside the command */
+  protected logger?: ILogger;
 
   /**
    * Validates whether the command can be executed in the current context.
@@ -125,13 +128,19 @@ export abstract class Command {
     try {
       await fn();
       const subcommandName = interaction.options.getSubcommand(false);
-      logWithTime(
+      this.logger?.log(
         `${commandName} ${subcommandName ? `(${subcommandName}) ` : ``}command executed`,
         'info',
         scope,
       );
     } catch (err: any) {
-      logWithTime('An Error occured' + err, 'error', scope, true);
+      this.logger?.log(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        `An Error occurred: ${err.message ?? err}`,
+        'error',
+        scope,
+        true,
+      );
       return await safeReply(interaction, 'An unexpected error occurred.');
     }
   }
@@ -236,5 +245,31 @@ export abstract class Command {
     }
 
     return builder.toJSON();
+  }
+
+  /**
+   * Sets the logger for this command.
+   *
+   * @param logger - Logger instance implementing ILogger interface
+   */
+  setLogger(logger: ILogger): void {
+    this.logger = logger;
+  }
+
+  /**
+   * Log a message using the configured logger.
+   *
+   * @param message - The message to log
+   * @param level - The log level
+   * @param scope - The scope/context
+   * @param logToConsole - Whether to also log to console
+   */
+  protected log(
+    message: string,
+    level: string,
+    scope: string,
+    logToConsole: boolean = false,
+  ): void {
+    this.logger?.log(message, level, scope, logToConsole);
   }
 }

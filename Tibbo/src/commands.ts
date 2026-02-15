@@ -19,29 +19,29 @@ import { ReactionSubcommandGroup } from './commands/reaction/ReactionSubcommandG
 import { BirthdaySubcommandGroup } from './commands/birthday/BirthdaySubcommandGroup.ts';
 import { BackupCommand } from './commands/backup.ts';
 
-export const commandManager = new CommandManager().registerMultiple([
-  new PingCommand(),
-  new SourceCommand(),
-  new EncodeCommands(),
-  new CatCommand(),
-  new HelpCommand(),
-  new MagicCommand(),
-  new RngCommand(),
-  new EncodeCommands(),
-  new TodayIsSubcommandGroup(),
-  new HowToSubcommandGroup(),
-  new ManageSubcommandGroup(),
-  new MessagesSubcommandGroup(),
-  new OptOutSubcommandGroup(),
-  new StatsSubcommandGroup(),
-  new ReminderSubcommandGroup(),
-  new ReactionSubcommandGroup(),
-  new BirthdaySubcommandGroup(),
-  new BackupCommand(),
-]);
+export function registerCommands(commandManager: CommandManager) {
+  commandManager.registerMultiple([
+    new PingCommand(),
+    new SourceCommand(),
+    new EncodeCommands(),
+    new CatCommand(),
+    new HelpCommand(),
+    new MagicCommand(),
+    new RngCommand(),
+    new EncodeCommands(),
+    new TodayIsSubcommandGroup(),
+    new HowToSubcommandGroup(),
+    new ManageSubcommandGroup(),
+    new MessagesSubcommandGroup(),
+    new OptOutSubcommandGroup(),
+    new StatsSubcommandGroup(),
+    new ReminderSubcommandGroup(),
+    new ReactionSubcommandGroup(),
+    new BirthdaySubcommandGroup(),
+    new BackupCommand(),
+  ]);
 
-if (process.env.ENV === 'dev') {
-  commandManager.register(new DevCommand());
+  if (process.env.ENV === 'dev') {
+    commandManager.register(new DevCommand());
+  }
 }
-
-export const discordJSON = commandManager.toDiscordJSON();

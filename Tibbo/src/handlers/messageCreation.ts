@@ -1,7 +1,6 @@
 import { Message, MessageFlags, TextChannel } from 'discord.js';
 import { evaluate } from 'mathjs';
 import {
-  logWithTime,
   formatDateToString,
   embedBuilder,
 } from '@julanzw/ttoolbox-discord-framework';
@@ -12,7 +11,7 @@ import {
   todayWinners,
 } from '../utils/globals.ts';
 import { preprocessNumerics } from '../utils/preprocessors.ts';
-import { client } from '../index.ts';
+import { client, logger } from '../index.ts';
 import {
   checkAndUpdateCount,
   ensureGuildExistance,
@@ -82,11 +81,7 @@ export async function handleMessageCreation(message: Message) {
             await setLastCountUser(guild.guildId, message.author.id);
           }
         } catch (err: any) {
-          logWithTime(
-            `Invalid math expression: "${content}" — ${err}`,
-            'warn',
-            scope,
-          );
+          logger.warn(`Invalid math expression: "${content}" — ${err}`, scope);
         }
       }
     } else if (
@@ -153,9 +148,8 @@ export async function handleMessageCreation(message: Message) {
           if (newReactionRole) {
             await sentMessage.react(newReactionRole.emoji);
           } else {
-            logWithTime(
+            logger.error(
               `Something went wrong while creating a reaction message`,
-              'error',
               scope,
               true,
             );
@@ -172,11 +166,7 @@ export async function handleMessageCreation(message: Message) {
             const msgToDelete = await channel.messages.fetch(id);
             if (msgToDelete.deletable) await msgToDelete.delete();
           } catch (err: any) {
-            logWithTime(
-              `Failed to delete message ${id}: ` + err,
-              'warn',
-              scope,
-            );
+            logger.warn(`Failed to delete message ${id}: ` + err, scope);
           }
         }
 

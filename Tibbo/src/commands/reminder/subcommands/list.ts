@@ -15,7 +15,6 @@ import {
   capitalizeFirst,
   formatDateToDDMMYYYY,
   TIMES_MILISECONDS,
-  logWithTime,
 } from '@julanzw/ttoolbox-discord-framework';
 
 import {
@@ -27,6 +26,7 @@ import { BotCommand } from '../../../impl/BotCommand.class.ts';
 import { scheduleReminder } from '../../../utils/managers/reminderManager.ts';
 import { parseDurationOrDateString } from '../../../utils/parsers.ts';
 import { modalManager } from '../../../utils/globals.ts';
+import { logger } from '../../../index.ts';
 
 const scope = 'reminder_list';
 
@@ -279,9 +279,8 @@ export class ListRemindersCommand extends BotCommand {
       try {
         await interaction.editReply({ components: [] });
       } catch (err: any) {
-        logWithTime(
+        logger.warn(
           `Could not edit message after collector ended: ${err}`,
-          'warn',
           scope,
         );
       }

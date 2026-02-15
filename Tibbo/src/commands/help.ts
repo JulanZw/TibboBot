@@ -4,9 +4,9 @@ import {
   embedBuilder,
 } from '@julanzw/ttoolbox-discord-framework';
 
-import { commandManager } from '../commands.ts';
 import { BotCommand } from '../impl/BotCommand.class.ts';
 import { COMMANDS_PER_PAGE } from '../utils/globals.ts';
+import { commandManager } from '../index.ts';
 
 export class HelpCommand extends BotCommand {
   name = 'help';

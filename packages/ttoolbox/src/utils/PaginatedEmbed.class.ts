@@ -4,13 +4,14 @@ import {
   ComponentType,
 } from 'discord.js';
 
+import { InteractionError } from '../classes/InteractionError.class.js';
+
 import {
   createButton,
   createButtonsRow,
   createPaginationButtons,
 } from './embeds.js';
 import { safeReply } from './editAndReply.js';
-import { logWithTime } from './logging.js';
 import { TIMES_MILISECONDS } from './miliseconds.js';
 
 export type PaginatedEmbedOptions<T> = {
@@ -148,10 +149,11 @@ export class PaginatedEmbed<T> {
       try {
         await this.interaction.editReply({ components: [] });
       } catch (err: any) {
-        logWithTime(
-          `Could not clear components: ${err}`,
-          'warn',
-          'PaginatedEmbed',
+        throw new InteractionError(
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          `Failed to clear components: ${err.message}`,
+          this.interaction.id,
+          'failed',
         );
       }
     });

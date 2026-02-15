@@ -4,7 +4,6 @@ import {
 } from 'discord.js';
 import {
   PermissionLevel,
-  logWithTime,
   embedBuilder,
   stringOption,
   safeReply,
@@ -16,6 +15,7 @@ import {
   addReactionRole,
 } from '../../../database/reactionRoles.ts';
 import { BotCommand } from '../../../impl/BotCommand.class.ts';
+import { logger } from '../../../index.ts';
 
 const scope = 'reaction_add';
 
@@ -78,9 +78,8 @@ export class AddReactionCommand extends BotCommand {
       );
 
       if (!newReactionRole) {
-        logWithTime(
+        logger.error(
           'Something went wrong while creating a reaction role',
-          'error',
           scope,
           true,
         );

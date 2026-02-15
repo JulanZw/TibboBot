@@ -10,13 +10,13 @@ import {
   safeReply,
   embedBuilder,
   TIMES_MILISECONDS,
-  logWithTime,
 } from '@julanzw/ttoolbox-discord-framework';
 
 import { generateGuildStatsImage } from '../../../utils/generating.ts';
 import { sendUserStats } from '../helper.ts';
 import { STANDARD_COLOR } from '../../../utils/globals.ts';
 import { BotCommand } from '../../../impl/BotCommand.class.ts';
+import { logger } from '../../../index.ts';
 
 const scope = 'stats_guild';
 
@@ -88,9 +88,8 @@ export class GuildStatsCommand extends BotCommand {
       try {
         await interaction.editReply({ components: [] });
       } catch (err: any) {
-        logWithTime(
+        logger.warn(
           `Could not edit message after collector ended: ${err}`,
-          'warn',
           scope,
         );
       }

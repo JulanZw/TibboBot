@@ -4,16 +4,22 @@ import {
   RESTPostAPIChatInputApplicationCommandsJSONBody,
 } from 'discord.js';
 
+import { ILogger } from '../types/logger.js';
+
 import { Command } from './Command.class.js';
 import { SubcommandGroup } from './SubcommandGroup.class.js';
 
 export class CommandManager {
   private commands: Map<string, Command | SubcommandGroup> = new Map();
+  protected logger?: ILogger;
 
   /**
    * Register a single command or subcommand group
    */
   register(command: Command | SubcommandGroup): this {
+    if (this.logger) {
+      command.setLogger(this.logger);
+    }
     this.commands.set(command.name, command);
     return this;
   }
@@ -164,5 +170,16 @@ export class CommandManager {
    */
   getCommandNames(): string[] {
     return Array.from(this.commands.keys());
+  }
+
+  setLogger(logger: ILogger): this {
+    this.logger = logger;
+
+    // Inject logger into all already-registered commands
+    for (const command of this.commands.values()) {
+      command.setLogger(logger);
+    }
+
+    return this;
   }
 }

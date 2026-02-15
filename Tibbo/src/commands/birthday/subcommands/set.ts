@@ -5,7 +5,6 @@ import {
 import {
   PermissionLevel,
   safeReply,
-  logWithTime,
   formatDateToString,
   stringOption,
 } from '@julanzw/ttoolbox-discord-framework';
@@ -14,6 +13,7 @@ import { setBirthday } from '../../../database/birthday.ts';
 import { BotCommand } from '../../../impl/BotCommand.class.ts';
 import { hasOptedOut } from '../../../utils/managers/optInOutManager.ts';
 import { parseBirthdayDate } from '../../../utils/parsers.ts';
+import { logger } from '../../../index.ts';
 
 const scope = 'birthday_set';
 
@@ -68,9 +68,8 @@ export class SetBirthdayCommand extends BotCommand {
       return;
     }
 
-    logWithTime(
+    logger.info(
       `Set birthday for ${newBirthday.userId} on ${formatDateToString(newBirthday.birthday)}`,
-      'info',
       scope,
     );
 

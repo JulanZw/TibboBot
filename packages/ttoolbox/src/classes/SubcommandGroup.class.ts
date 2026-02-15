@@ -6,7 +6,7 @@ import {
 } from 'discord.js';
 
 import { safeReply } from '../utils/editAndReply.js';
-import { logWithTime } from '../utils/logging.js';
+import { ILogger } from '../types/logger.js';
 
 import { Command } from './Command.class.js';
 
@@ -42,6 +42,9 @@ export abstract class SubcommandGroup {
   /** Map of subcommand names to Command instances */
   protected abstract subcommands: Map<string, Command>;
 
+  /** The logger instance used in the subcommand group */
+  protected logger?: ILogger;
+
   /**
    * Safely executes a function with error handling and logging.
    *
@@ -64,13 +67,13 @@ export abstract class SubcommandGroup {
     try {
       await fn();
       const subcommandName = interaction.options.getSubcommand(false);
-      logWithTime(
+      this.logger?.log(
         `${commandName} ${subcommandName ? `(${subcommandName}) ` : ``}command executed`,
         'info',
         scope,
       );
     } catch (err: any) {
-      logWithTime('An Error occured' + err, 'error', scope, true);
+      this.logger?.log('An Error occured' + err, 'error', scope, true);
       return await safeReply(interaction, 'An unexpected error occurred.');
     }
   }
@@ -175,5 +178,31 @@ export abstract class SubcommandGroup {
       name: sub.name,
       description: sub.description,
     }));
+  }
+
+  /**
+   * Sets the logger for this subcommand group.
+   *
+   * @param logger - Logger instance implementing ILogger interface
+   */
+  setLogger(logger: ILogger): void {
+    this.logger = logger;
+  }
+
+  /**
+   * Log a message using the configured logger.
+   *
+   * @param message - The message to log
+   * @param level - The log level
+   * @param scope - The scope/context
+   * @param logToConsole - Whether to also log to console
+   */
+  protected log(
+    message: string,
+    level: string,
+    scope: string,
+    logToConsole: boolean = false,
+  ): void {
+    this.logger?.log(message, level, scope, logToConsole);
   }
 }

@@ -10,7 +10,6 @@ import {
   PermissionLevel,
   safeReply,
   TIMES_MILISECONDS,
-  logWithTime,
 } from '@julanzw/ttoolbox-discord-framework';
 
 import { deleteAllBirthdaysForUser } from '../../../database/birthday.ts';
@@ -24,6 +23,7 @@ import {
   handleConfirmModal,
 } from '../../../utils/confirmation.ts';
 import { optOut } from '../../../utils/managers/optInOutManager.ts';
+import { logger } from '../../../index.ts';
 
 const scope = 'opt';
 
@@ -121,27 +121,18 @@ export class OptOutCommand extends BotCommand {
                 await deleteUserStats(userId);
                 const deletedBirthdays =
                   await deleteAllBirthdaysForUser(userId);
-                logWithTime(
-                  `Removed all birthdays for user: ${userId}`,
-                  'info',
-                  scope,
-                );
+                logger.info(`Removed all birthdays for user: ${userId}`, scope);
                 const deletedReminders =
                   await deleteAllRemindersForUser(userId);
-                logWithTime(
-                  `Removed all reminders for user: ${userId}`,
-                  'info',
-                  scope,
-                );
+                logger.info(`Removed all reminders for user: ${userId}`, scope);
                 const deletedPointGiverRoles =
                   await removeAllPointgiverRolesForUser(userId);
-                logWithTime(
+                logger.info(
                   `Removed all pointgiver roles for user: ${userId}`,
-                  'info',
                   scope,
                 );
                 await deleteUser(userId);
-                logWithTime(`Deleted user: ${userId}`, 'info', scope);
+                logger.info(`Deleted user: ${userId}`, scope);
 
                 await safeReply(
                   modalInteraction,

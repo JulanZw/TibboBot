@@ -1,7 +1,6 @@
 import {
   PermissionLevel,
   safeReply,
-  logWithTime,
   userOption,
   integerOption,
 } from '@julanzw/ttoolbox-discord-framework';
@@ -19,6 +18,7 @@ import {
 } from '../../../database/user.ts';
 import { BotCommand } from '../../../impl/BotCommand.class.ts';
 import { hasOptedOut } from '../../../utils/managers/optInOutManager.ts';
+import { logger } from '../../../index.ts';
 
 const scope = 'todayis_deduct';
 
@@ -58,9 +58,8 @@ export class DeductCommand extends BotCommand {
     }
 
     if (amount < 0) {
-      logWithTime(
+      logger.error(
         `Error: Could not deduct '${amount}' points for '${targetUser.username}' (${targetUser.id}) as negative values are not accepted.`,
-        'error',
         scope,
         true,
       );
@@ -98,15 +97,14 @@ export class DeductCommand extends BotCommand {
         interaction,
         `Oh... You took away ${amount} points from me...`,
       );
-      logWithTime(`${amount} points were deducted from the bot`, 'info', scope);
+      logger.info(`${amount} points were deducted from the bot`, scope);
     } else {
       await safeReply(
         interaction,
         `Deducted ${amount} points form <@${targetUser.id}>.`,
       );
-      logWithTime(
+      logger.info(
         `${amount} points were deducted from '${targetUser.username}' (${targetUser.id})`,
-        'info',
         scope,
       );
     }

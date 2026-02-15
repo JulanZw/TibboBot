@@ -1,7 +1,6 @@
 import {
   PermissionLevel,
   safeReply,
-  logWithTime,
   userOption,
 } from '@julanzw/ttoolbox-discord-framework';
 import {
@@ -12,6 +11,7 @@ import {
 import { getGuild } from '../../../database/guild.ts';
 import { setPointGiverOfGuild } from '../../../database/user.ts';
 import { BotCommand } from '../../../impl/BotCommand.class.ts';
+import { logger } from '../../../index.ts';
 
 const scope = 'todayis_pointgiver';
 
@@ -46,9 +46,8 @@ export class PointgiverCommand extends BotCommand {
         ? `set <@${targetUser.id}> as the server's point giver`
         : `set <@${targetUser.id}> as the server's point giver. Dont forget to also set a todayIs channel!`,
     );
-    logWithTime(
+    logger.info(
       `Set ${targetUser.id} as pointgiver for ${guild.guildId}`,
-      'info',
       scope,
     );
   }

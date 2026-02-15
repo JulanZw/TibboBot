@@ -1,8 +1,8 @@
 import { ChatInputCommandInteraction } from 'discord.js';
-import { logWithTime, safeReply } from '@julanzw/ttoolbox-discord-framework';
+import { safeReply } from '@julanzw/ttoolbox-discord-framework';
 
-import { client } from '../index.ts';
-import { commandManager } from '../commands.ts';
+import { client, logger } from '../index.ts';
+import { commandManager } from '../index.ts';
 
 const scope = 'handler_INTERACTIONCREATION_COMMAND';
 
@@ -14,9 +14,8 @@ export async function executeCommand(interaction: ChatInputCommandInteraction) {
       client,
     );
   } catch (err: any) {
-    logWithTime(
+    logger.error(
       `Error executing command ${interaction.commandName}: ` + err,
-      'error',
       scope,
       true,
     );

@@ -1,8 +1,8 @@
 import { User } from 'discord.js';
-import { logWithTime } from '@julanzw/ttoolbox-discord-framework';
 
 import { prisma } from '../utils/globals.ts';
 import { hasOptedOut } from '../utils/managers/optInOutManager.ts';
+import { logger } from '../index.ts';
 
 const scope = 'database_USER';
 
@@ -125,16 +125,14 @@ export async function updateCountsForUser(author: User, content: string) {
     const newCharCount = user.char_count + BigInt(messageLength);
     const newMsgCount = user.msg_count + 1;
     await updateUserCharMsgCount(userId, newCharCount, newMsgCount);
-    logWithTime(
+    logger.info(
       `Updated user messages and characters for ${author.id} [${author.username}]`,
-      'info',
       scope,
     );
   } else {
     await insertUserData(userId, BigInt(messageLength), 1);
-    logWithTime(
+    logger.info(
       `Added new user for counting messages and characters for ${author.id} [${author.username}]`,
-      'info',
       scope,
     );
   }

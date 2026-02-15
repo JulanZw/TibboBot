@@ -2,7 +2,7 @@ import {
   ChatInputCommandInteraction,
   ModalSubmitInteraction,
 } from 'discord.js';
-import { safeReply, logWithTime } from '@julanzw/ttoolbox-discord-framework';
+import { safeReply } from '@julanzw/ttoolbox-discord-framework';
 
 import { BotCommand } from '../../../impl/BotCommand.class.ts';
 import { getGuild, deleteGuild } from '../../../database/guild.ts';
@@ -10,6 +10,7 @@ import {
   showConfirmModal,
   handleConfirmModal,
 } from '../../../utils/confirmation.ts';
+import { logger } from '../../../index.ts';
 
 const scope = 'manage_data';
 
@@ -41,7 +42,7 @@ export class DataCommand extends BotCommand {
           }
 
           await deleteGuild(modalGuild.guildId);
-          logWithTime(`Deleted guild: ${modalGuild.guildId}`, 'info', scope);
+          logger.info(`Deleted guild: ${modalGuild.guildId}`, scope);
 
           await safeReply(
             modalInteraction,

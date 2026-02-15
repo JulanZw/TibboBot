@@ -3,11 +3,11 @@ import {
   TIMES_MILISECONDS,
   embedBuilder,
   safeReply,
-  logWithTime,
 } from '@julanzw/ttoolbox-discord-framework';
 
 import { incrementStatistic } from '../database/stats.ts';
 import { BotCommand } from '../impl/BotCommand.class.ts';
+import { logger } from '../index.ts';
 
 const scope = 'cat';
 
@@ -40,7 +40,7 @@ export class CatCommand extends BotCommand {
 
       await safeReply(interaction, '', false, [catEmbed]);
     } catch (err: any) {
-      logWithTime('Error fetching cat image:' + err, 'warn', scope, true);
+      logger.warn('Error fetching cat image:' + err, scope, true);
       await safeReply(interaction, "Sorry, I couldn't fetch a cat image.");
     }
   }

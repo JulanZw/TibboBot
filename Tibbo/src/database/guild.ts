@@ -1,5 +1,4 @@
-import { logWithTime } from '@julanzw/ttoolbox-discord-framework';
-
+import { logger } from '../index.ts';
 import { BotChannel } from '../types/channel.ts';
 import { prisma } from '../utils/globals.ts';
 
@@ -107,32 +106,28 @@ export async function updateBotChannel(
     case 'count':
       updateData.countChannelId = channelId;
       await setLastCountUser(guildId, '0');
-      logWithTime(
+      logger.info(
         `Count channel updated to ${channelId} for guild ${guildId}`,
-        'info',
         scope,
       );
       break;
     case 'today-is':
       updateData.todayIsChannelId = channelId;
-      logWithTime(
+      logger.info(
         `Today-is channel updated to ${channelId} for guild ${guildId}`,
-        'info',
         scope,
       );
       break;
     case 'birthday':
       updateData.birthdayChannelId = channelId;
-      logWithTime(
+      logger.info(
         `Birthday channel updated to ${channelId} for guild ${guildId}`,
-        'info',
         scope,
       );
       break;
     default:
-      return logWithTime(
+      return logger.error(
         `Invalid channel type: ${channelType as BotChannel}`,
-        'error',
         scope,
         true,
       );
@@ -165,9 +160,8 @@ export async function getBotChannel(
       selectField.birthdayChannelId = true;
       break;
     default:
-      logWithTime(
+      logger.error(
         `Invalid channel type: ${channelType as string}`,
-        'error',
         scope,
         true,
       );
