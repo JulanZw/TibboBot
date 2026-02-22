@@ -6,7 +6,10 @@ import {
   REST,
   Routes,
 } from 'discord.js';
-import { CommandManager } from '@julanzw/ttoolbox-discordjs-framework';
+import {
+  CommandManager,
+  ErrorReporter,
+} from '@julanzw/ttoolbox-discordjs-framework';
 
 import { BotLogger } from './impl/BotLogger.class.ts';
 import { setupCronJobs } from './cronJobs.ts';
@@ -32,8 +35,17 @@ export const client = new Client({
 });
 
 export const logger = new BotLogger();
-export const commandManager = new CommandManager().setLogger(logger);
+export const errorReporter = new ErrorReporter(
+  client,
+  process.env.ERROR_CHANNEL_ID!,
+  logger,
+);
+
+export const commandManager = new CommandManager()
+  .setLogger(logger)
+  .setErrorReporter(errorReporter);
 registerCommands(commandManager);
+
 const discordHandler = new BotDiscordHandler(client, logger, prisma);
 discordHandler.setupErrorHandlers();
 await discordHandler.setupOtherHandlers();
