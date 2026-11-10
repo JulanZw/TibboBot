@@ -2,7 +2,6 @@ services:
   tibbobot:
     build: .
     image: tibbobot
-    container_name: tibbobot
     restart: unless-stopped
     # Compose parses .env like dotenv (strips the quotes around values),
     # unlike `docker run --env-file`, which passes them through literally.
