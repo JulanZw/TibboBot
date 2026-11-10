@@ -1,24 +1,33 @@
 import path from 'path';
+import fs from 'fs';
 
 import { TToolboxLogger } from '@julanzw/ttoolbox-discordjs-framework';
 
 export class BotLogger extends TToolboxLogger {
   /**
-   * Creates a new log file with a week-based name and returns a new logger instance.
+   * Creates a new log file with a timestamp-based name
+   * and moves content of the current log to that file.
    *
-   * Used for log rotation - creates a new file while keeping the old one.
-   * @returns A new BotLogger instance pointing to the new log file
+   * @returns This logger instance
+   *
+   * @example
+   * ```typescript
+   * logger.rotate();
+   * logger.info('New log file started', 'logger');
+   * ```
    */
   override rotate(): this {
     const now = new Date();
     const year = now.getFullYear();
-    const week = getISOWeekNumber(now);
-    const newLogName = `${year}_W${week}.log`;
+    const weekNumber = getISOWeekNumber(now);
+    const logName = `${year}_W${weekNumber}.log`;
     const logDir = path.dirname(this.getLogFilePath());
 
-    this.logFilePath = path.join(logDir, newLogName);
+    fs.copyFileSync(this.logFilePath, path.join(logDir, logName));
 
-    this.info(`Rotated log. New logfile: ${newLogName}`, 'logger');
+    this.clearLog();
+
+    this.info(`Rotated log. New logfile: ${logName}`, 'logger');
 
     return this;
   }

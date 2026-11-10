@@ -1,4 +1,7 @@
-import { SubcommandGroup, Command } from '@julanzw/ttoolbox-discordjs-framework';
+import {
+  SubcommandGroup,
+  Command,
+} from '@julanzw/ttoolbox-discordjs-framework';
 
 import { LeaderboardCommand } from './subcommands/leaderboard.ts';
 import { AddCommand } from './subcommands/add.ts';
