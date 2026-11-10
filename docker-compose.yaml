@@ -1,0 +1,26 @@
+services:
+  tibbobot:
+    build: .
+    image: tibbobot
+    container_name: tibbobot
+    restart: unless-stopped
+    # Compose parses .env like dotenv (strips the quotes around values),
+    # unlike `docker run --env-file`, which passes them through literally.
+    # On Dokploy this .env is generated from the Environment tab.
+    env_file: .env
+    environment:
+      # Overrides the relative path from .env so the db lives in the data volume
+      DATABASE_URL: file:/app/data/JZZWutils.db
+    # Needed for the Wake-on-LAN (magic) command to reach the LAN
+    network_mode: host
+    # Named volumes: they survive redeploys (Dokploy re-clones the repo each
+    # deploy, which would wipe ./ bind mounts) and work with Dokploy volume backups
+    volumes:
+      - tibbo-data:/app/data
+      - tibbo-logs:/app/logs
+      - tibbo-backups:/app/backups
+
+volumes:
+  tibbo-data:
+  tibbo-logs:
+  tibbo-backups:
