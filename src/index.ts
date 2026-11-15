@@ -22,6 +22,7 @@ import { handleMessageCreation } from './handlers/messageCreation.ts';
 import { logWithTime } from './utils/logging.ts';
 import { setupErrorHandlers } from './handlers/errors.ts';
 import { scheduleReminder } from './utils/managers/reminderManager.ts';
+import { startHealthServer } from './utils/healthServer.ts';
 
 const scope = 'startup';
 
@@ -37,6 +38,9 @@ export const client = new Client({
   ],
   partials: [Partials.Message, Partials.Reaction, Partials.User],
 });
+
+// Started before login so uptime checkers get a 503 (instead of no answer) while connecting
+startHealthServer(client);
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 client.once('ready', async (readyClient) => {

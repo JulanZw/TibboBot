@@ -65,6 +65,6 @@ export const humanParticipatedToday: string[] = [];
 export enum TIMES_MILISECONDS {
   MINUTE = 60000,
   TEN_MINUTES = 600000,
-  HOUR = 6000000,
-  DAY = 14400000,
+  HOUR = 3600000,
+  DAY = 86400000,
 }

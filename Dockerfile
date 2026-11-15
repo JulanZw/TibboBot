@@ -29,5 +29,9 @@ VOLUME ["/app/data", "/app/logs", "/app/backups"]
 
 USER node
 
+# Marks the container unhealthy in Docker/Dokploy when /health stops returning 200
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+    CMD node -e "fetch('http://127.0.0.1:' + (process.env.HEALTH_PORT || 8090) + '/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+
 # Apply pending migrations (creates the db on first run), then start the bot
 CMD ["sh", "-c", "npx prisma migrate deploy && exec node --loader ts-node/esm src/index.ts"]
